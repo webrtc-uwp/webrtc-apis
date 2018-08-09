@@ -16,7 +16,7 @@
     },
     "includes": {
       "include": [
-        "../../../zsLib/zsLib/idl/config.json"
+        "../../third_party/idl/zsLib/zsLib/idl/config.json"
       ]
     },
     "sources": {

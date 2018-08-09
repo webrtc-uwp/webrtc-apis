@@ -1,0 +1,31 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//third_party/idl/zsLib-eventing/zslib_eventing_tool.gni")
+
+webrtc_sources = []
+if(current_os != "winuwp"){
+  webrtc_sources = [
+    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/c/c_helpers.cpp",
+    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/c/c_helpers.h",
+  ]
+}
+
+if(current_os == "winuwp"){
+  webrtc_sources = [
+    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/cx/cx_Helpers.cpp",
+    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/cx/cx_Helpers.h",
+  ]
+}
+
+compile_idl_macro("webrtc_idl") {
+  
+  sources = [
+    "../idl/config.json",
+  ]
+    
+  outputs = webrtc_sources
+
+  idlAlreadyCompletedFlag =  "webrtcIdlCompiledFlag.flg"
+}
