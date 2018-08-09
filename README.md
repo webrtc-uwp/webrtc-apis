@@ -1,5 +1,5 @@
-# webrtc-windows-apis
-Dependency library for WebRTC put under webrtc/xplatform/webrtc/sdk/windows
+# webrtc-apis
+Dependency library for WebRTC put under webrtc/xplatform/webrtc/sdk/...
 
 Please clone this repo:
 git clone --recursive https://github.com/webrtc-uwp/webrtc-uwp-sdk
