@@ -6,17 +6,25 @@ import("//third_party/idl/zsLib-eventing/zslib_eventing_tool.gni")
 
 webrtc_sources = []
 if(current_os != "winuwp"){
+  #print("SOURCES1", target_gen_dir)
   webrtc_sources = [
-    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/c/c_helpers.cpp",
-    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/c/c_helpers.h",
+    "$target_gen_dir/../../../../../sdk/windows/wrapper/generated/c/c_helpers.cpp",
+    "$target_gen_dir/../../../../../sdk/windows/wrapper/generated/c/c_helpers.h",
   ]
 }
 
 if(current_os == "winuwp"){
+  #print("SOURCES2", target_gen_dir)
   webrtc_sources = [
-    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/cx/cx_Helpers.cpp",
-    "$target_gen_dir/../../../../../../sdk/windows/wrapper/generated/cx/cx_Helpers.h",
+    "$target_gen_dir/../../../../../sdk/windows/wrapper/generated/cx/cx_Helpers.cpp",
+    "$target_gen_dir/../../../../../sdk/windows/wrapper/generated/cx/cx_Helpers.h",
   ]
+}
+
+group("webrtc_wrappers") {
+    public_deps = [
+      "//third_party/idl:idl"
+    ]
 }
 
 compile_idl_macro("webrtc_idl") {
@@ -27,5 +35,6 @@ compile_idl_macro("webrtc_idl") {
     
   outputs = webrtc_sources
 
+  idlOutputPath = "../windows"
   idlAlreadyCompletedFlag =  "webrtcIdlCompiledFlag.flg"
 }
