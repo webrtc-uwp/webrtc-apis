@@ -33,7 +33,6 @@ namespace wrapper {
           bool get_ended() noexcept override;
           String get_kind() noexcept override;
           wrapper::org::webRtc::RTCPriorityType get_priority() noexcept override;
-          void wrapper_init_org_webRtc_RTCVideoHandlerStats() noexcept override;
 
           // properties RTCVideoHandlerStats
           unsigned long get_frameWidth() noexcept override;

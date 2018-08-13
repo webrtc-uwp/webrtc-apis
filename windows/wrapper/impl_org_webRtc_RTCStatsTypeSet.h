@@ -17,6 +17,8 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCStatsTypeSet, WrapperImplType);
           RTCStatsTypeSetWeakPtr thisWeak_;
 
+          set< wrapper::org::webRtc::RTCStatsType > values_;
+
           RTCStatsTypeSet() noexcept;
           virtual ~RTCStatsTypeSet() noexcept;
 

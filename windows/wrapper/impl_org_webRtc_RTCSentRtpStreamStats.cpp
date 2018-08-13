@@ -135,11 +135,6 @@ unsigned long long wrapper::impl::org::webRtc::RTCSentRtpStreamStats::get_qpSum(
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::RTCSentRtpStreamStats::wrapper_init_org_webRtc_RTCSentRtpStreamStats() noexcept
-{
-}
-
-//------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCSentRtpStreamStats::get_packetsSent() noexcept
 {
   unsigned long result {};

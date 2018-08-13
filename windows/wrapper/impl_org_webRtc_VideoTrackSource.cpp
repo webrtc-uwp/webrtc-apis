@@ -2,6 +2,7 @@
 #include "impl_org_webRtc_VideoTrackSource.h"
 #include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_VideoCapturer.h"
+#include "impl_org_webRtc_VideoTrackSourceStats.h"
 #include "impl_org_webRtc_WebrtcLib.h"
 #include "impl_org_webRtc_enums.h"
 
@@ -134,9 +135,16 @@ Optional< bool > wrapper::impl::org::webRtc::VideoTrackSource::get_needsDenoisin
 //------------------------------------------------------------------------------
 Optional< wrapper::org::webRtc::VideoTrackSourceStatsPtr > wrapper::impl::org::webRtc::VideoTrackSource::get_stats() noexcept
 {
-#pragma ZS_BUILD_NOTE("TODO","(robin) get_stats")
   Optional< wrapper::org::webRtc::VideoTrackSourceStatsPtr > result {};
-  return result;
+
+  ZS_ASSERT(native_);
+  if (!native_) return result;
+
+  NativeType::Stats stats;
+
+  if (!native_->GetStats(&stats)) return result;
+
+  return VideoTrackSourceStats::toWrapper(stats);
 }
 
 //------------------------------------------------------------------------------

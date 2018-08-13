@@ -70,4 +70,8 @@ namespace webrtc
   class RTCError;
 
   class VideoFrame;
+
+  class RTCStats;
+  class RTCStatsReport;
+  class RTCStatsCollectorCallback;
 }

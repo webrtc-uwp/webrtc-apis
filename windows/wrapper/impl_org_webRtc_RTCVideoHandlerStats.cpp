@@ -44,11 +44,6 @@ wrapper::impl::org::webRtc::RTCVideoHandlerStats::~RTCVideoHandlerStats() noexce
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::RTCVideoHandlerStats::wrapper_init_org_webRtc_RTCVideoHandlerStats() noexcept
-{
-}
-
-//------------------------------------------------------------------------------
 ::zsLib::Time wrapper::impl::org::webRtc::RTCVideoHandlerStats::get_timestamp() noexcept
 {
   ::zsLib::Time result {};

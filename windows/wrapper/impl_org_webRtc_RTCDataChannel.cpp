@@ -2,6 +2,8 @@
 #include "impl_org_webRtc_RTCDataChannel.h"
 #include "impl_org_webRtc_MessageEvent.h"
 #include "impl_org_webRtc_WebrtcLib.h"
+#include "impl_org_webRtc_RTCStatsProvider.h"
+#include "impl_org_webRtc_RTCError.h"
 #include "impl_org_webRtc_helpers.h"
 #include "impl_org_webRtc_enums.h"
 
@@ -94,9 +96,16 @@ void wrapper::impl::org::webRtc::RTCDataChannel::wrapper_dispose() noexcept
 //------------------------------------------------------------------------------
 shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCStatsReportPtr > > wrapper::impl::org::webRtc::RTCDataChannel::getStats(wrapper::org::webRtc::RTCStatsTypeSetPtr statTypes) noexcept(false)
 {
-#pragma ZS_BUILD_NOTE("TODO","getStats")
-  shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCStatsReportPtr > > result {};
-  return result;
+  typedef shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCStatsReportPtr > > ResultType;
+
+  auto promise = ResultType::element_type::create(UseWebrtcLib::delegateQueue());
+
+  ZS_ASSERT(native_);
+
+  auto error = RTCError::toWrapper(::webrtc::RTCError(::webrtc::RTCErrorType::UNSUPPORTED_OPERATION));
+  error->reject(promise);
+
+  return promise;
 }
 
 //------------------------------------------------------------------------------

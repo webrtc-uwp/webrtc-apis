@@ -221,6 +221,7 @@ namespace org
       /// <summary>
       /// Gets the unique identifier of the transport on which this codec is being used, which can be used to look up the corresponding RTCTransportStats object.
       /// </summary>
+      [getter]
       string           transportId;
 
       /// <summary>
@@ -559,7 +560,7 @@ namespace org
       /// <summary>
       /// Constructs an empty instance of an RTCSentRtpStreamStats object.
       /// </summary>
-      [constructor, default]
+      [constructor, default, delete]
       void RTCSentRtpStreamStats();
     };
 
@@ -894,6 +895,9 @@ namespace org
       /// </summary>
       [getter]
       double framesPerSecond;
+
+      [constructor, default, delete]
+      void RTCVideoHandlerStats();
     };
 
     /// <summary>
@@ -1334,6 +1338,9 @@ namespace org
       /// </summary>
       [getter]
       unsigned long long bytesReceived;
+
+      [constructor, default, delete]
+      void RTCDataChannelStats();
     };
 
     /// <summary>
@@ -1785,7 +1792,7 @@ namespace org
     {
       typedef StringList IdList;
 
-      [constructor, delete]
+      [constructor, default, delete]
       void RTCStatsReport();
 
       /// <summary>

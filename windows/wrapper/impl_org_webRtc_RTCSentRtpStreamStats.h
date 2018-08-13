@@ -39,7 +39,6 @@ namespace wrapper {
           unsigned long long get_qpSum() noexcept override;
 
           // methods RTCSentRtpStreamStats
-          void wrapper_init_org_webRtc_RTCSentRtpStreamStats() noexcept override;
 
           // properties RTCSentRtpStreamStats
           unsigned long get_packetsSent() noexcept override;

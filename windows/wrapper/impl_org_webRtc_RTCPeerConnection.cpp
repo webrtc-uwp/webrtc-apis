@@ -23,6 +23,8 @@
 #include "impl_org_webRtc_RTCError.h"
 #include "impl_org_webRtc_RTCBitrateParameters.h"
 #include "impl_org_webRtc_RTCKeyParams.h"
+#include "impl_org_webRtc_RTCStatsReport.h"
+#include "impl_org_webRtc_RTCStatsProvider.h"
 #include "impl_org_webRtc_WebrtcLib.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -175,8 +177,23 @@ void wrapper::impl::org::webRtc::RTCPeerConnection::wrapper_dispose() noexcept
 //------------------------------------------------------------------------------
 shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCStatsReportPtr > > wrapper::impl::org::webRtc::RTCPeerConnection::getStats(wrapper::org::webRtc::RTCStatsTypeSetPtr statTypes) noexcept(false)
 {
-  shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCStatsReportPtr > > result {};
-  return result;
+  typedef shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCStatsReportPtr > > ResultType;
+
+  auto promise = ResultType::element_type::create(UseWebrtcLib::delegateQueue());
+  auto provider = impl::org::webRtc::RTCStatsProvider::toWrapper(promise);
+  auto observer = impl::org::webRtc::RTCStatsProvider::getObserver(provider);
+
+  ZS_ASSERT(native_);
+
+  if ((!observer) || (!native_)) {
+    auto error = RTCError::toWrapper(::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_PARAMETER));
+    error->reject(promise);
+    return promise;
+  }
+
+  native_->GetStats(observer.get());
+
+  return promise;
 }
 
 //------------------------------------------------------------------------------

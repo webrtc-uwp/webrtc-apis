@@ -51,13 +51,13 @@ void wrapper::impl::org::webRtc::RTCStatsTypeSet::wrapper_init_org_webRtc_RTCSta
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::RTCStatsTypeSet::wrapper_init_org_webRtc_RTCStatsTypeSet(shared_ptr< set< wrapper::org::webRtc::RTCStatsType > > values) noexcept
 {
+  if (!values) return;
+
+  values_ = (*values);
 }
 
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::RTCStatsTypeSet::hasStatType(wrapper::org::webRtc::RTCStatsType type) noexcept
 {
-  bool result {};
-  return result;
+  return values_.find(type) != values_.end();
 }
-
-
