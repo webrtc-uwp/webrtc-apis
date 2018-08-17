@@ -193,7 +193,7 @@ WrapperTypePtr WrapperImplType::toWrapper(NativeTypeUniPtr value) noexcept
   if (!native) return ::zsLib::Time();
 
   auto since1970 = native->timestamp_us();
-  zsLib::Time t = day_point(jan / 1 / 1970);
+  zsLib::Time t = sys_days(jan / 1 / 1970);
   zsLib::Milliseconds converted = zsLib::Milliseconds(SafeInt<zsLib::Microseconds::rep>(since1970));
   return t + converted;
 }

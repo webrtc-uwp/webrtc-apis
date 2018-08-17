@@ -66,7 +66,7 @@ wrapper::impl::org::webRtc::RTCCertificate::~RTCCertificate() noexcept
   if (!native_) return zsLib::Time();
 
   auto msSince1970 = native_->Expires();
-  zsLib::Time t = day_point(jan / 1 / 1970);
+  zsLib::Time t = sys_days(jan / 1 / 1970);
   zsLib::Milliseconds converted = zsLib::Milliseconds(SafeInt<zsLib::Milliseconds::rep>(msSince1970));
   return t + converted;
 }
