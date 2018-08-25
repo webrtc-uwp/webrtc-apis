@@ -11,8 +11,6 @@
 #include "rtc_base/logging.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
-#include <ppltasks.h>
-
 #include <strsafe.h>
 
 #include <mferror.h>
@@ -26,102 +24,105 @@ using zsLib::Seconds;
 using zsLib::Milliseconds;
 using zsLib::AutoRecursiveLock;
 
-using Microsoft::WRL::ComPtr;
-using Windows::Foundation::IPropertyValue;
-using Windows::Foundation::PropertyType;
-using Windows::Media::IMediaExtension;
-using Windows::Media::MediaProperties::IMediaEncodingProperties;
+using winrt::Windows::Foundation::IPropertyValue;
+using winrt::Windows::Foundation::PropertyType;
+using winrt::Windows::Media::IMediaExtension;
+using winrt::Windows::Media::MediaProperties::IMediaEncodingProperties;
 
 namespace {
 
   //-----------------------------------------------------------------------------
   inline void ThrowIfError(HRESULT hr) {
     if (FAILED(hr)) {
-      throw ref new Platform::Exception(hr);
+      winrt::throw_hresult(hr);
     }
   }
 
   //-----------------------------------------------------------------------------
   inline void Throw(HRESULT hr) {
     assert(FAILED(hr));
-    throw ref new Platform::Exception(hr);
+    winrt::throw_hresult(hr);
   }
 
   //-----------------------------------------------------------------------------
-  static void AddAttribute(_In_ GUID guidKey, _In_ IPropertyValue ^value,
+  static void AddAttribute(_In_ GUID guidKey, _In_ IPropertyValue const& value,
     _In_ IMFAttributes *pAttr) {
-    PropertyType type = value->Type;
+    PropertyType type = value.Type();
     switch (type) {
     case PropertyType::UInt8Array:
-    {
-      Platform::Array<BYTE>^ arr;
-      value->GetUInt8Array(&arr);
+      {
+        winrt::com_array<BYTE> arr;
+        value.GetUInt8Array(arr);
 
-      ThrowIfError(pAttr->SetBlob(guidKey, arr->Data, arr->Length));
-    }
-    break;
+        ThrowIfError(pAttr->SetBlob(guidKey, arr.data(), arr.size()));
+      }
+      break;
 
     case PropertyType::Double:
-    {
-      ThrowIfError(pAttr->SetDouble(guidKey, value->GetDouble()));
-    }
-    break;
+      {
+        ThrowIfError(pAttr->SetDouble(guidKey, value.GetDouble()));
+      }
+      break;
 
     case PropertyType::Guid:
-    {
-      ThrowIfError(pAttr->SetGUID(guidKey, value->GetGuid()));
-    }
-    break;
+      {
+        ThrowIfError(pAttr->SetGUID(guidKey, value.GetGuid()));
+      }
+      break;
 
     case PropertyType::String:
-    {
-      ThrowIfError(pAttr->SetString(guidKey, value->GetString()->Data()));
-    }
-    break;
+      {
+        ThrowIfError(pAttr->SetString(guidKey, value.GetString().c_str()));
+      }
+      break;
 
     case PropertyType::UInt32:
-    {
-      ThrowIfError(pAttr->SetUINT32(guidKey, value->GetUInt32()));
-    }
-    break;
+      {
+        ThrowIfError(pAttr->SetUINT32(guidKey, value.GetUInt32()));
+      }
+      break;
 
     case PropertyType::UInt64:
-    {
-      ThrowIfError(pAttr->SetUINT64(guidKey, value->GetUInt64()));
-    }
-    break;
+      {
+        ThrowIfError(pAttr->SetUINT64(guidKey, value.GetUInt64()));
+      }
+      break;
     }
   }
 
   //-----------------------------------------------------------------------------
   void ConvertPropertiesToMediaType(
-    _In_ IMediaEncodingProperties ^mep,
+    _In_ IMediaEncodingProperties const& mep,
     _Outptr_ IMFMediaType **ppMT) {
     if (mep == nullptr || ppMT == nullptr) {
-      throw ref new Platform::InvalidArgumentException();
+      winrt::throw_hresult(E_INVALIDARG);
     }
-    ComPtr<IMFMediaType> spMT;
+    winrt::com_ptr<IMFMediaType> spMT;
+    IPropertyValue propertyValue;
     *ppMT = nullptr;
-    ThrowIfError(MFCreateMediaType(&spMT));
+    ThrowIfError(MFCreateMediaType(spMT.put()));
 
-    auto it = mep->Properties->First();
+    auto it = mep.Properties().First();
 
-    while (it->HasCurrent) {
-      auto currentValue = it->Current;
-      AddAttribute(currentValue->Key,
-        safe_cast<IPropertyValue^>(currentValue->Value),
-        spMT.Get());
-      it->MoveNext();
+    while (it.HasCurrent()) {
+      auto currentValue = it.Current();
+      propertyValue = nullptr;
+      currentValue.Value().as(propertyValue);
+      AddAttribute(currentValue.Key(),
+        propertyValue,
+        spMT.get());
+      it.MoveNext();
     }
 
-    GUID guiMajorType = safe_cast<IPropertyValue^>(
-      mep->Properties->Lookup(MF_MT_MAJOR_TYPE))->GetGuid();
+    propertyValue = nullptr;
+    mep.Properties().Lookup(MF_MT_MAJOR_TYPE).as(propertyValue);
+    GUID guidMajorType = propertyValue.GetGuid();
 
-    if (guiMajorType != MFMediaType_Video) {
+    if (guidMajorType != MFMediaType_Video) {
       Throw(E_UNEXPECTED);
     }
 
-    *ppMT = spMT.Detach();
+    *ppMT = spMT.detach();
   }
 
   //-----------------------------------------------------------------------------
@@ -168,12 +169,10 @@ namespace webrtc
       riid == IID_IMFMediaEventGenerator) {
       (*ppv) = static_cast<IMFStreamSink*>(this);
       AddRef();
-    }
-    else if (riid == IID_IMFMediaTypeHandler) {
+    } else if (riid == IID_IMFMediaTypeHandler) {
       (*ppv) = static_cast<IMFMediaTypeHandler*>(this);
       AddRef();
-    }
-    else {
+    } else {
       hr = E_NOINTERFACE;
     }
 
@@ -187,7 +186,7 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   IFACEMETHODIMP_(ULONG) VideoCaptureStreamSink::Release() {
-    int64 cRef = InterlockedDecrement(&_cRef);
+    ULONG cRef = InterlockedDecrement(&_cRef);
     if (cRef == 0) {
       delete this;
     }
@@ -252,7 +251,7 @@ namespace webrtc
 
     HRESULT hr = S_OK;
 
-    ComPtr<IMFMediaEventQueue> spQueue;
+    winrt::com_ptr<IMFMediaEventQueue> spQueue;
 
     {
       rtc::CritScope lock(&_critSec);
@@ -322,10 +321,9 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      _spSink.Get()->QueryInterface(IID_IMFMediaSink,
+      _spSink.get()->QueryInterface(IID_IMFMediaSink,
         reinterpret_cast<void**>(ppMediaSink));
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture stream sink error: " << hr;
     }
 
@@ -348,8 +346,7 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       *pdwIdentifier = _dwIdentifier;
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture stream sink error: " << hr;
     }
 
@@ -403,7 +400,9 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       if (SUCCEEDED(hr)) {
-        _sampleQueue.push(pSample);
+        winrt::com_ptr<IMFSample> cpSample;
+        cpSample.attach(pSample);
+        _sampleQueue.push(cpSample);
       }
 
       // Unless we are paused, start an async operation to
@@ -431,7 +430,7 @@ namespace webrtc
     rtc::CritScope lock(&_critSec);
 
     HRESULT hr = S_OK;
-    ComPtr<IMarker> spMarker;
+    winrt::com_ptr<IMarker> spMarker;
 
     if (_isShutdown) {
       hr = MF_E_SHUTDOWN;
@@ -442,11 +441,11 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      hr = Marker::Create(eMarkerType, pvarMarkerValue, pvarContextValue, &spMarker);
+      hr = Marker::Create(eMarkerType, pvarMarkerValue, pvarContextValue, spMarker.put());
     }
 
     if (SUCCEEDED(hr)) {
-      _sampleQueue.push(spMarker.Get());
+      _sampleQueue.push(spMarker);
     }
 
     // Unless we are paused, start an async operation to
@@ -476,9 +475,8 @@ namespace webrtc
       ThrowIfError(hr);
 
       DropSamplesFromQueue();
-    }
-    catch (Platform::Exception ^exc) {
-      hr = exc->HResult;
+    } catch (winrt::hresult_error const& exc) {
+      hr = exc.code();
     }
 
     if (!SUCCEEDED(hr)) {
@@ -554,8 +552,7 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       *pdwTypeCount = 1;
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture stream sink error: " << hr;
     }
 
@@ -581,9 +578,8 @@ namespace webrtc
 
     if (dwIndex > 0) {
       hr = MF_E_NO_MORE_TYPES;
-    }
-    else {
-      *ppType = _spCurrentType.Get();
+    } else {
+      *ppType = _spCurrentType.get();
       if (*ppType != nullptr) {
         (*ppType)->AddRef();
       }
@@ -624,21 +620,20 @@ namespace webrtc
       GUID guiMajorType;
       pMediaType->GetMajorType(&guiMajorType);
 
-      ThrowIfError(MFCreateMediaType(_spCurrentType.ReleaseAndGetAddressOf()));
-      ThrowIfError(pMediaType->CopyAllItems(_spCurrentType.Get()));
+      _spCurrentType = nullptr;
+      ThrowIfError(MFCreateMediaType(_spCurrentType.put()));
+      ThrowIfError(pMediaType->CopyAllItems(_spCurrentType.get()));
       ThrowIfError(_spCurrentType->GetGUID(MF_MT_SUBTYPE, &_guiCurrentSubtype));
       if (_state < State_Ready) {
         _state = State_Ready;
+      } else if (_state > State_Ready) {
+        winrt::com_ptr<IMFMediaType> spType;
+        ThrowIfError(MFCreateMediaType(spType.put()));
+        ThrowIfError(pMediaType->CopyAllItems(spType.get()));
+        ProcessFormatChange(spType.get());
       }
-      else if (_state > State_Ready) {
-        ComPtr<IMFMediaType> spType;
-        ThrowIfError(MFCreateMediaType(&spType));
-        ThrowIfError(pMediaType->CopyAllItems(spType.Get()));
-        ProcessFormatChange(spType.Get());
-      }
-    }
-    catch (Platform::Exception ^exc) {
-      hr = exc->HResult;
+    } catch (winrt::hresult_error const& exc) {
+      hr = exc.code();
     }
 
     if (!SUCCEEDED(hr)) {
@@ -670,10 +665,9 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      *ppMediaType = _spCurrentType.Get();
+      *ppMediaType = _spCurrentType.get();
       (*ppMediaType)->AddRef();
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture stream sink error: " << hr;
     }
 
@@ -702,13 +696,13 @@ namespace webrtc
   // private methods
   HRESULT VideoCaptureStreamSink::Initialize(
     VideoCaptureMediaSink *pParent,
-    ISinkCallback ^callback) {
+    std::shared_ptr<ISinkCallback> callback) {
     assert(pParent != nullptr);
 
     HRESULT hr = S_OK;
 
     // Create the event queue helper.
-    hr = MFCreateEventQueue(&_spEventQueue);
+    hr = MFCreateEventQueue(_spEventQueue.put());
 
     // Allocate a new work queue for async operations.
     if (SUCCEEDED(hr)) {
@@ -717,11 +711,10 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      _spSink = pParent;
+      _spSink.attach(pParent);
       _pParent = pParent;
       _callback = callback;
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture stream sink error: " << hr;
     }
 
@@ -742,8 +735,7 @@ namespace webrtc
       if (start != PRESENTATION_CURRENT_POSITION) {
         _startTime = start;        // Cache the start time.
         _fGetStartTimeFromSample = false;
-      }
-      else {
+      } else {
         _fGetStartTimeFromSample = true;
       }
       _state = State_Started;
@@ -846,11 +838,9 @@ namespace webrtc
 
     if (ValidStateMatrix[_state][op]) {
       return S_OK;
-    }
-    else if (_state == State_TypeNotSet) {
+    } else if (_state == State_TypeNotSet) {
       return MF_E_NOT_INITIALIZED;
-    }
-    else {
+    } else {
       return MF_E_INVALIDREQUEST;
     }
   }
@@ -871,10 +861,10 @@ namespace webrtc
         _sampleQueue.pop();
       }
 
-      _spSink.Reset();
-      _spEventQueue.Reset();
-      _spByteStream.Reset();
-      _spCurrentType.Reset();
+      _spSink.detach();
+      _spEventQueue.detach();
+      _spByteStream.detach();
+      _spCurrentType.detach();
 
       _isShutdown = true;
     }
@@ -886,14 +876,14 @@ namespace webrtc
   // Puts an async operation on the work queue.
   HRESULT VideoCaptureStreamSink::QueueAsyncOperation(StreamOperation op) {
     HRESULT hr = S_OK;
-    ComPtr<AsyncOperation> spOp;
-    spOp.Attach(new AsyncOperation(op));  // Created with ref count = 1
+    winrt::com_ptr<AsyncOperation> spOp;
+    spOp.attach(new AsyncOperation(op));  // Created with ref count = 1
     if (!spOp) {
       hr = E_OUTOFMEMORY;
     }
 
     if (SUCCEEDED(hr)) {
-      hr = MFPutWorkItem2(_workQueueId, 0, &_workQueueCB, spOp.Get());
+      hr = MFPutWorkItem2(_workQueueId, 0, &_workQueueCB, spOp.get());
     }
 
     if (!SUCCEEDED(hr)) {
@@ -907,12 +897,12 @@ namespace webrtc
   HRESULT VideoCaptureStreamSink::OnDispatchWorkItem(
     IMFAsyncResult *pAsyncResult) {
     try {
-      ComPtr<IUnknown> spState;
+      winrt::com_ptr<IUnknown> spState;
 
-      ThrowIfError(pAsyncResult->GetState(&spState));
+      ThrowIfError(pAsyncResult->GetState(spState.put()));
 
       // The state object is a AsyncOperation object.
-      AsyncOperation *pOp = static_cast<AsyncOperation *>(spState.Get());
+      AsyncOperation *pOp = static_cast<AsyncOperation *>(spState.get());
       StreamOperation op = pOp->_op;
 
       switch (op) {
@@ -949,9 +939,8 @@ namespace webrtc
         DispatchProcessSample(pOp);
         break;
       }
-    }
-    catch (Platform::Exception ^exc) {
-      HandleError(exc->HResult);
+    } catch (winrt::hresult_error const& exc) {
+      HandleError(exc.code());
     }
     return S_OK;
   }
@@ -987,7 +976,7 @@ namespace webrtc
   bool VideoCaptureStreamSink::ProcessSamplesFromQueue(bool fFlush) {
     bool fNeedMoreSamples = false;
 
-    ComPtr<IUnknown> spunkSample;
+    winrt::com_ptr<IUnknown> spunkSample;
 
     bool fSendSamples = true;
 
@@ -997,34 +986,34 @@ namespace webrtc
       if (_sampleQueue.size() == 0) {
         fNeedMoreSamples = true;
         fSendSamples = false;
-      }
-      else {
+      } else {
         spunkSample = _sampleQueue.front();
         _sampleQueue.pop();
       }
     }
 
     while (fSendSamples) {
-      ComPtr<IMFSample> spSample;
+      winrt::com_ptr<IMFSample> spSample;
       bool fProcessingSample = false;
       assert(spunkSample);
 
-      if (SUCCEEDED(spunkSample.As(&spSample))) {
+      spunkSample.as(spSample);
+      if (spSample) {
         assert(spSample);
-        ComPtr<IMFMediaBuffer> spMediaBuffer;
-        HRESULT hr = spSample->GetBufferByIndex(0, &spMediaBuffer);
+        winrt::com_ptr<IMFMediaBuffer> spMediaBuffer;
+        HRESULT hr = spSample->GetBufferByIndex(0, spMediaBuffer.put());
         if (FAILED(hr)) {
           break;
         }
 
-        _callback->OnSample(ref new MediaSampleEventArgs(spSample));
+        _callback->OnSample(std::make_shared<MediaSampleEventArgs>(spSample));
         if (!fFlush) {
           fProcessingSample = true;
         }
-      }
-      else {
-        ComPtr<IMarker> spMarker;
-        if (SUCCEEDED(spunkSample.As(&spMarker))) {
+      } else {
+        winrt::com_ptr<IMarker> spMarker;
+        spunkSample.as(spMarker);
+        if (spMarker) {
           MFSTREAMSINK_MARKER_TYPE markerType;
           PROPVARIANT var;
           PropVariantInit(&var);
@@ -1051,8 +1040,7 @@ namespace webrtc
         if (_sampleQueue.size() == 0) {
           fNeedMoreSamples = true;
           fSendSamples = false;
-        }
-        else {
+        } else {
           spunkSample = _sampleQueue.front();
           _sampleQueue.pop();
         }
@@ -1069,7 +1057,9 @@ namespace webrtc
     assert(pMediaType != nullptr);
 
     // Add the media type to the sample queue.
-    _sampleQueue.push(pMediaType);
+    winrt::com_ptr<IMFMediaType> cpMediaType;
+    cpMediaType.attach(pMediaType);
+    _sampleQueue.push(cpMediaType);
 
     // Unless we are paused, start an async operation to dispatch the next sample.
     // Queue the operation.
@@ -1111,8 +1101,7 @@ namespace webrtc
     }
     if (iid == IID_IUnknown) {
       *ppv = static_cast<IUnknown*>(this);
-    }
-    else {
+    } else {
       *ppv = nullptr;
       return E_NOINTERFACE;
     }
@@ -1150,9 +1139,9 @@ namespace webrtc
     }
 
     HRESULT hr = S_OK;
-    ComPtr<Marker> spMarker;
+    winrt::com_ptr<Marker> spMarker;
 
-    spMarker.Attach(new (std::nothrow) Marker(eMarkerType));
+    spMarker.attach(new (std::nothrow) Marker(eMarkerType));
 
     if (spMarker == nullptr) {
       hr = E_OUTOFMEMORY;
@@ -1171,7 +1160,7 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      *ppMarker = spMarker.Detach();
+      *ppMarker = spMarker.detach();
     }
 
     return hr;
@@ -1207,8 +1196,7 @@ namespace webrtc
     if (riid == IID_IUnknown || riid == __uuidof(IMarker)) {
       (*ppv) = static_cast<IMarker*>(this);
       AddRef();
-    }
-    else {
+    } else {
       hr = E_NOINTERFACE;
     }
 
@@ -1254,6 +1242,32 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
+  void VideoCaptureMediaSink::init(const CreationProperties &props) noexcept
+  {
+    id_ = String(props.id_);
+
+    if (props.delegate_) {
+      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
+    }
+
+    try {
+      _callback = props.callback_;
+      const unsigned int streamId = GetStreamId();
+      RemoveStreamSink(streamId);
+      if (props.encodingProperties_ != nullptr) {
+        winrt::com_ptr<IMFStreamSink> spStreamSink;
+        winrt::com_ptr<IMFMediaType> spMediaType;
+        ConvertPropertiesToMediaType(props.encodingProperties_, spMediaType.put());
+        ThrowIfError(AddStreamSink(streamId, spMediaType.get(),
+          spStreamSink.put()));
+      }
+    } catch (winrt::hresult_error const& exc) {
+      _callback = nullptr;
+      winrt::throw_hresult(exc.code());
+    }
+  }
+
+  //-----------------------------------------------------------------------------
   VideoCaptureMediaSink::VideoCaptureMediaSink() :
     subscriptions_(decltype(subscriptions_)::create()),
     _cRef(1),
@@ -1266,53 +1280,15 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   VideoCaptureMediaSink::~VideoCaptureMediaSink()
   {
-    thisWeak_.reset();
     assert(_isShutdown);
   }
 
   //-----------------------------------------------------------------------------
-  HRESULT VideoCaptureMediaSink::RuntimeClassInitialize(
-    ISinkCallback ^callback,
-    IMediaEncodingProperties ^encodingProperties) {
-    try {
-      _callback = callback;
-      const unsigned int streamId = GetStreamId();
-      RemoveStreamSink(streamId);
-      if (encodingProperties != nullptr) {
-        ComPtr<IMFStreamSink> spStreamSink;
-        ComPtr<IMFMediaType> spMediaType;
-        ConvertPropertiesToMediaType(encodingProperties, &spMediaType);
-        ThrowIfError(AddStreamSink(streamId, spMediaType.Get(),
-          spStreamSink.GetAddressOf()));
-      }
-    }
-    catch (Platform::Exception ^exc) {
-      _callback = nullptr;
-      return exc->HResult;
-    }
-
-    return S_OK;
-  }
-
-  //-----------------------------------------------------------------------------
-  VideoCaptureMediaSinkPtr VideoCaptureMediaSink::create(const CreationProperties &info) noexcept
+  IMediaExtension VideoCaptureMediaSink::create(const CreationProperties &info) noexcept
   {
-    auto result = std::make_shared<VideoCaptureMediaSink>();
-    result->thisWeak_ = result;
-    result->init(info);
+    IMediaExtension result = winrt::make<VideoCaptureMediaSink>();
+    result.as<VideoCaptureMediaSink>()->init(info);
     return result;
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCaptureMediaSink::init(const CreationProperties &props) noexcept
-  {
-    id_ = String(props.id_);
-
-    if (props.delegate_) {
-      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
-    }
-
-    auto thisWeak = thisWeak_;
   }
 
   //-----------------------------------------------------------------------------
@@ -1326,7 +1302,6 @@ namespace webrtc
     auto delegate = subscriptions_.delegate(subscription, true);
 
     if (delegate) {
-      auto pThis = thisWeak_.lock();
     }
 
     return subscription;
@@ -1344,16 +1319,14 @@ namespace webrtc
     HRESULT hr;
     if (_isShutdown) {
       hr = MF_E_SHUTDOWN;
-    }
-    else {
+    } else {
       hr = S_OK;
     }
 
     if (SUCCEEDED(hr)) {
       // Rateless sink.
       *pdwCharacteristics = MEDIASINK_RATELESS;
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
 
@@ -1366,7 +1339,7 @@ namespace webrtc
     IMFMediaType *pMediaType,
     IMFStreamSink **ppStreamSink) {
     VideoCaptureStreamSink *pStream = nullptr;
-    ComPtr<IMFStreamSink> spMFStream;
+    winrt::com_ptr<IMFStreamSink> spMFStream;
     rtc::CritScope lock(&_critSec);
     HRESULT hr = S_OK;
     if (_isShutdown) {
@@ -1378,13 +1351,12 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      hr = GetStreamSinkById(dwStreamSinkIdentifier, &spMFStream);
+      hr = GetStreamSinkById(dwStreamSinkIdentifier, spMFStream.put());
     }
 
     if (SUCCEEDED(hr)) {
       hr = MF_E_STREAMSINK_EXISTS;
-    }
-    else {
+    } else {
       hr = S_OK;
     }
 
@@ -1393,7 +1365,7 @@ namespace webrtc
       if (pStream == nullptr) {
         hr = E_OUTOFMEMORY;
       }
-      spMFStream.Attach(pStream);
+      spMFStream.attach(pStream);
     }
 
     // Initialize the stream.
@@ -1407,9 +1379,8 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       _spStreamSink = spMFStream;
-      *ppStreamSink = spMFStream.Detach();
-    }
-    else {
+      *ppStreamSink = spMFStream.detach();
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
 
@@ -1430,8 +1401,8 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr) && _spStreamSink) {
-      ComPtr<IMFStreamSink> spStream = _spStreamSink;
-      static_cast<VideoCaptureStreamSink *>(spStream.Get())->Shutdown();
+      winrt::com_ptr<IMFStreamSink> spStream = _spStreamSink;
+      static_cast<VideoCaptureStreamSink *>(spStream.get())->Shutdown();
     }
 
     if (!SUCCEEDED(hr)) {
@@ -1457,8 +1428,7 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       *pcStreamSinkCount = 1;
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
 
@@ -1486,10 +1456,9 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       assert(_spStreamSink);
-      ComPtr<IMFStreamSink> spResult = _spStreamSink;
-      *ppStreamSink = spResult.Detach();
-    }
-    else {
+      winrt::com_ptr<IMFStreamSink> spResult = _spStreamSink;
+      *ppStreamSink = spResult.detach();
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
 
@@ -1516,8 +1485,8 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       assert(_spStreamSink);
-      ComPtr<IMFStreamSink> spResult = _spStreamSink;
-      *ppStreamSink = spResult.Detach();
+      winrt::com_ptr<IMFStreamSink> spResult = _spStreamSink;
+      *ppStreamSink = spResult.detach();
     }
 
     return hr;
@@ -1551,9 +1520,9 @@ namespace webrtc
     if (SUCCEEDED(hr)) {
       // Release the pointer to the old clock.
       // Store the pointer to the new clock.
-      _spClock = pPresentationClock;
-    }
-    else {
+      _spClock = nullptr;
+      _spClock.attach(pPresentationClock);
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
 
@@ -1577,10 +1546,9 @@ namespace webrtc
     if (SUCCEEDED(hr)) {
       if (_spClock == NULL) {
         hr = MF_E_NO_CLOCK;  // There is no presentation clock.
-      }
-      else {
+      } else {
         // Return the pointer to the caller.
-        *ppPresentationClock = _spClock.Get();
+        *ppPresentationClock = _spClock.get();
         (*ppPresentationClock)->AddRef();
       }
     }
@@ -1594,7 +1562,7 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   IFACEMETHODIMP VideoCaptureMediaSink::Shutdown() {
-    ISinkCallback ^callback;
+    std::shared_ptr<ISinkCallback> callback;
     {
       rtc::CritScope lock(&_critSec);
       HRESULT hr = S_OK;
@@ -1603,9 +1571,9 @@ namespace webrtc
       }
 
       if (SUCCEEDED(hr)) {
-        ComPtr<IMFStreamSink> spMFStream = _spStreamSink;
-        _spClock.Reset();
-        static_cast<VideoCaptureStreamSink *>(spMFStream.Get())->Shutdown();
+        winrt::com_ptr<IMFStreamSink> spMFStream = _spStreamSink;
+        _spClock = nullptr;
+        static_cast<VideoCaptureStreamSink *>(spMFStream.get())->Shutdown();
         _isShutdown = true;
         callback = _callback;
       }
@@ -1621,7 +1589,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   // IMFClockStateSink
   IFACEMETHODIMP VideoCaptureMediaSink::OnClockStart(
-    MFTIME hnsSystemTime,
+    MFTIME /*hnsSystemTime*/,
     LONGLONG llClockStartOffset) {
     rtc::CritScope lock(&_critSec);
 
@@ -1632,10 +1600,9 @@ namespace webrtc
 
     if (SUCCEEDED(hr)) {
       _llStartTime = llClockStartOffset;
-      static_cast<VideoCaptureStreamSink *>(_spStreamSink.Get())->Start(
+      static_cast<VideoCaptureStreamSink *>(_spStreamSink.get())->Start(
         _llStartTime);
-    }
-    else {
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
 
@@ -1644,7 +1611,7 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   IFACEMETHODIMP VideoCaptureMediaSink::OnClockStop(
-    MFTIME hnsSystemTime) {
+    MFTIME /*hnsSystemTime*/) {
     rtc::CritScope lock(&_critSec);
 
     HRESULT hr = S_OK;
@@ -1653,9 +1620,8 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      static_cast<VideoCaptureStreamSink *>(_spStreamSink.Get())->Stop();
-    }
-    else {
+      static_cast<VideoCaptureStreamSink *>(_spStreamSink.get())->Stop();
+    } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
 
@@ -1664,31 +1630,32 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   IFACEMETHODIMP VideoCaptureMediaSink::OnClockPause(
-    MFTIME hnsSystemTime) {
+    MFTIME /*hnsSystemTime*/) {
     return MF_E_INVALID_STATE_TRANSITION;
   }
 
   //-----------------------------------------------------------------------------
   IFACEMETHODIMP VideoCaptureMediaSink::OnClockRestart(
-    MFTIME hnsSystemTime) {
+    MFTIME /*hnsSystemTime*/) {
     return MF_E_INVALID_STATE_TRANSITION;
   }
 
   //-----------------------------------------------------------------------------
   IFACEMETHODIMP VideoCaptureMediaSink::OnClockSetRate(
-    /* [in] */ MFTIME hnsSystemTime,
-    /* [in] */ float flRate) {
+    /* [in] */ MFTIME /*hnsSystemTime*/,
+    /* [in] */ float /*flRate*/) {
     return S_OK;
   }
 
   //-----------------------------------------------------------------------------
-  IVideoCaptureMediaSinkPtr IVideoCaptureMediaSink::create(const CreationProperties &info) noexcept
+  IMediaExtension IVideoCaptureMediaSink::create(const CreationProperties &info) noexcept
   {
     return VideoCaptureMediaSink::create(info);
   }
 
   //-----------------------------------------------------------------------------
-  VideoCaptureMediaSinkProxy::VideoCaptureMediaSinkProxy() {
+  VideoCaptureMediaSinkProxy::VideoCaptureMediaSinkProxy(std::shared_ptr<VideoCaptureMediaSinkProxyListener> listener) :
+    listener_(listener) {
   }
 
   //-----------------------------------------------------------------------------
@@ -1700,26 +1667,28 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  IMediaExtension^ VideoCaptureMediaSinkProxy::GetMFExtension() {
+  IMediaExtension VideoCaptureMediaSinkProxy::GetMFExtension() {
     rtc::CritScope lock(&_critSec);
 
     if (_mediaSink == nullptr) {
       Throw(MF_E_NOT_INITIALIZED);
     }
 
-    ComPtr<IInspectable> inspectable;
-    ThrowIfError(_mediaSink.As(&inspectable));
+    IMediaExtension mediaExtension;
+    _mediaSink.as(mediaExtension);
+    if (!mediaExtension) {
+      winrt::throw_hresult(E_NOINTERFACE);
+    }
 
-    return safe_cast<IMediaExtension^>(reinterpret_cast<Object^>(
-      inspectable.Get()));
+    return mediaExtension;
   }
 
 
   //-----------------------------------------------------------------------------
-  Windows::Foundation::IAsyncOperation<IMediaExtension^>^
+  concurrency::task<IMediaExtension>
     VideoCaptureMediaSinkProxy::InitializeAsync(
-      IMediaEncodingProperties ^encodingProperties) {
-    return Concurrency::create_async([this, encodingProperties]() {
+      IMediaEncodingProperties const& encodingProperties) {
+    return concurrency::create_task([this, encodingProperties]() {
       rtc::CritScope lock(&_critSec);
       CheckShutdown();
 
@@ -1727,23 +1696,25 @@ namespace webrtc
         Throw(MF_E_ALREADY_INITIALIZED);
       }
 
-      // Prepare the MF extension
-      ThrowIfError(Microsoft::WRL::MakeAndInitialize<VideoCaptureMediaSink>(
-        &_mediaSink,
-        ref new VideoCaptureSinkCallback(this),
-        encodingProperties));
+      IVideoCaptureMediaSink::CreationProperties info;
+      info.encodingProperties_ = encodingProperties;
+      info.callback_ =
+        std::make_shared<ISinkCallback>(VideoCaptureSinkCallback(std::shared_ptr<VideoCaptureMediaSinkProxy>(this)));
+      IMediaExtension mediaExtension = IVideoCaptureMediaSink::create(info);
+      if (!mediaExtension) {
+        winrt::throw_hresult(E_NOINTERFACE);
+      }
 
-      ComPtr<IInspectable> inspectable;
-      ThrowIfError(_mediaSink.As(&inspectable));
+      mediaExtension.as(_mediaSink);
 
-      return safe_cast<IMediaExtension^>(reinterpret_cast<Object^>(
-        inspectable.Get()));
+      return mediaExtension;
     });
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCaptureMediaSinkProxy::OnSample(MediaSampleEventArgs^ args) {
-    MediaSampleEvent(this, args);
+  void VideoCaptureMediaSinkProxy::OnSample(std::shared_ptr<MediaSampleEventArgs> args) {
+    if (listener_ != nullptr)
+      listener_->OnMediaSampleEvent(args);
   }
 
   //-----------------------------------------------------------------------------

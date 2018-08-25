@@ -10,10 +10,6 @@
 #include "rtc_base/criticalsection.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
-#include <wrl/implements.h>
-
-#include <windows.media.h>
-
 #include <assert.h>
 #include <queue>
 
@@ -22,28 +18,31 @@
 #include <zsLib/ProxySubscriptions.h>
 
 #include <atomic>
-#include <wrl.h>
 #include <mfidl.h>
+
+#include <ppltasks.h>
+
 
 namespace webrtc
 {
   class VideoCaptureMediaSink;
 
-  private ref class MediaSampleEventArgs sealed {
-  internal:
-    MediaSampleEventArgs(Microsoft::WRL::ComPtr<IMFSample> spMediaSample) :
+  class MediaSampleEventArgs {
+  public:
+    MediaSampleEventArgs(winrt::com_ptr<IMFSample> spMediaSample) :
       _spMediaSample(spMediaSample) { }
 
-    Microsoft::WRL::ComPtr<IMFSample> GetMediaSample() {
+    winrt::com_ptr<IMFSample> GetMediaSample() {
       return _spMediaSample;
     }
 
   private:
-    Microsoft::WRL::ComPtr<IMFSample> _spMediaSample;
+    winrt::com_ptr<IMFSample> _spMediaSample;
   };
 
-  interface class ISinkCallback {
-    void OnSample(MediaSampleEventArgs^ args);
+  class ISinkCallback {
+  public:
+    void OnSample(std::shared_ptr<MediaSampleEventArgs> args);
     void OnShutdown();
   };
 
@@ -103,11 +102,9 @@ namespace webrtc
         }
         if (iid == __uuidof(IUnknown)) {
           *ppv = static_cast<IUnknown*>(static_cast<IMFAsyncCallback*>(this));
-        }
-        else if (iid == __uuidof(IMFAsyncCallback)) {
+        } else if (iid == __uuidof(IMFAsyncCallback)) {
           *ppv = static_cast<IMFAsyncCallback*>(this);
-        }
-        else {
+        } else {
           *ppv = NULL;
           return E_NOINTERFACE;
         }
@@ -226,7 +223,7 @@ namespace webrtc
     virtual ~VideoCaptureStreamSink();
 
     HRESULT Initialize(VideoCaptureMediaSink *pParent,
-      ISinkCallback ^callback);
+      std::shared_ptr<ISinkCallback> callback);
 
     HRESULT Start(MFTIME start);
     HRESULT Restart();
@@ -262,34 +259,27 @@ namespace webrtc
     DWORD _workQueueId;
     MFTIME _startTime;
 
-    Microsoft::WRL::ComPtr<IMFMediaSink> _spSink;
+    winrt::com_ptr<IMFMediaSink> _spSink;
     VideoCaptureMediaSink* _pParent;
 
-    Microsoft::WRL::ComPtr<IMFMediaEventQueue> _spEventQueue;
-    Microsoft::WRL::ComPtr<IMFByteStream> _spByteStream;
-    Microsoft::WRL::ComPtr<IMFMediaType> _spCurrentType;
+    winrt::com_ptr<IMFMediaEventQueue> _spEventQueue;
+    winrt::com_ptr<IMFByteStream> _spByteStream;
+    winrt::com_ptr<IMFMediaType> _spCurrentType;
 
-    std::queue<Microsoft::WRL::ComPtr<IUnknown> > _sampleQueue;
+    std::queue<winrt::com_ptr<IUnknown> > _sampleQueue;
 
-    ISinkCallback^ _callback;
+    std::shared_ptr<ISinkCallback> _callback;
     AsyncCallback<VideoCaptureStreamSink> _workQueueCB;
   };
 
+
   class VideoCaptureMediaSink : public IVideoCaptureMediaSink,
-      public Microsoft::WRL::RuntimeClass<
-          Microsoft::WRL::RuntimeClassFlags<
-              Microsoft::WRL::RuntimeClassType::WinRtClassicComMix >,
-          ABI::Windows::Media::IMediaExtension,
-          IMFMediaSink,
-          IMFClockStateSink>
+    public winrt::implements<VideoCaptureMediaSink, 
+      winrt::Windows::Media::IMediaExtension,
+      IMFMediaSink, IMFClockStateSink>
   {
   private:
-    typedef Microsoft::WRL::ComPtr<IMFSample> IMFSampleComPtr;
     struct make_private {};
-
-    typedef uint32_t DimensionType;
-    typedef int RotationType;
-    typedef LONGLONG RenderTime;  // The presentation time, in 100-nanosecond units.
 
   private:
     void init(const CreationProperties &props) noexcept;
@@ -298,21 +288,14 @@ namespace webrtc
     VideoCaptureMediaSink();
     ~VideoCaptureMediaSink();
 
-    HRESULT RuntimeClassInitialize(
-      ISinkCallback ^callback,
-      Windows::Media::MediaProperties::IMediaEncodingProperties^
-      encodingProperties);
-
-    static VideoCaptureMediaSinkPtr create(const CreationProperties &info) noexcept;
+    static winrt::Windows::Media::IMediaExtension create(const CreationProperties &info) noexcept;
 
     IVideoCaptureMediaSinkSubscriptionPtr subscribe(IVideoCaptureMediaSinkDelegatePtr delegate) override;
 
     std::string id() const noexcept override { return id_; }
 
     // IMediaExtension
-    IFACEMETHOD(SetProperties) (
-      ABI::Windows::Foundation::Collections::IPropertySet *pConfiguration) {
-      return S_OK;
+    void SetProperties(winrt::Windows::Foundation::Collections::IPropertySet configuration) {
     }
 
     // IMFMediaSink methods
@@ -345,7 +328,6 @@ namespace webrtc
     IFACEMETHOD(OnClockSetRate) (MFTIME hnsSystemTime, float flRate);
 
   private:
-    VideoCaptureMediaSinkWeakPtr thisWeak_;
     mutable zsLib::RecursiveLock lock_;
 
     IVideoCaptureMediaSinkDelegateSubscriptions subscriptions_;
@@ -359,47 +341,48 @@ namespace webrtc
     bool _isConnected;
     LONGLONG _llStartTime;
 
-    ISinkCallback^ _callback;
+    std::shared_ptr<ISinkCallback> _callback;
 
-    Microsoft::WRL::ComPtr<IMFStreamSink> _spStreamSink;
-    Microsoft::WRL::ComPtr<IMFPresentationClock> _spClock;
+    winrt::com_ptr<IMFStreamSink> _spStreamSink;
+    winrt::com_ptr<IMFPresentationClock> _spClock;
   };
 
-  private ref class VideoCaptureMediaSinkProxy sealed {
+  class VideoCaptureMediaSinkProxyListener {
   public:
-    VideoCaptureMediaSinkProxy();
+    virtual void OnMediaSampleEvent(std::shared_ptr<MediaSampleEventArgs> args) = 0;
+  };
+
+  class VideoCaptureMediaSinkProxy {
+  public:
+    VideoCaptureMediaSinkProxy(std::shared_ptr<VideoCaptureMediaSinkProxyListener> listener);
     virtual ~VideoCaptureMediaSinkProxy();
 
-    Windows::Media::IMediaExtension^ GetMFExtension();
+    winrt::Windows::Media::IMediaExtension GetMFExtension();
 
-    Windows::Foundation::IAsyncOperation<Windows::Media::IMediaExtension^>^
-      InitializeAsync(Windows::Media::MediaProperties::IMediaEncodingProperties^
-        encodingProperties);
-
-    event Windows::Foundation::EventHandler<MediaSampleEventArgs^>^
-      MediaSampleEvent;
+    concurrency::task<winrt::Windows::Media::IMediaExtension>
+      InitializeAsync(winrt::Windows::Media::MediaProperties::IMediaEncodingProperties
+        const& encodingProperties);
 
   private:
-    ref class VideoCaptureSinkCallback sealed : ISinkCallback {
+    class VideoCaptureSinkCallback : public ISinkCallback {
     public:
-      virtual void OnSample(MediaSampleEventArgs^ args) {
-        _parent->OnSample(args);
+      virtual void OnSample(std::shared_ptr<MediaSampleEventArgs> args) {
+        _parent.lock()->OnSample(args);
       }
 
       virtual void OnShutdown() {
-        _parent->OnShutdown();
+        _parent.lock()->OnShutdown();
       }
 
-    internal:
-      VideoCaptureSinkCallback(VideoCaptureMediaSinkProxy^ parent)
+      VideoCaptureSinkCallback(std::shared_ptr<VideoCaptureMediaSinkProxy> parent)
         : _parent(parent) {
       }
 
     private:
-      VideoCaptureMediaSinkProxy^ _parent;
+      std::weak_ptr<VideoCaptureMediaSinkProxy> _parent;
     };
 
-    void OnSample(MediaSampleEventArgs^ args);
+    void OnSample(std::shared_ptr<MediaSampleEventArgs> args);
 
     void OnShutdown();
 
@@ -407,7 +390,8 @@ namespace webrtc
 
   private:
     rtc::CriticalSection _critSec;
-    Microsoft::WRL::ComPtr<IMFMediaSink> _mediaSink;
+    std::shared_ptr<VideoCaptureMediaSinkProxyListener> listener_;
+    winrt::com_ptr<IMFMediaSink> _mediaSink;
     bool _shutdown;
   };
 }

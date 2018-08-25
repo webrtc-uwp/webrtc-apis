@@ -7,6 +7,9 @@
 #if __has_include(<winrt/windows.media.core.h>)
 #include <winrt/windows.media.core.h>
 #endif //__has_include(<winrt/windows.media.core.h>)
+#if __has_include(<winrt/windows.media.h>)
+#include <winrt/windows.media.h>
+#endif //__has_include(<winrt/windows.media.h>)
 #endif //__has_include
 
 #ifdef CPPWINRT_VERSION
@@ -19,7 +22,6 @@
 #include <zsLib/ProxySubscriptions.h>
 
 #include <atomic>
-#include <wrl.h>
 #include <mfidl.h>
 
 
@@ -30,17 +32,20 @@ namespace webrtc
   ZS_DECLARE_CLASS_PTR(VideoCaptureMediaSink);
   ZS_DECLARE_INTERACTION_PROXY_SUBSCRIPTION(IVideoCaptureMediaSinkSubscription, IVideoCaptureMediaSinkDelegate);
 
+  class ISinkCallback;
 
   interaction IVideoCaptureMediaSink
   {
     struct CreationProperties
     {
       IVideoCaptureMediaSinkDelegatePtr delegate_;
+      std::shared_ptr<ISinkCallback> callback_;
+      winrt::Windows::Media::MediaProperties::IMediaEncodingProperties encodingProperties_;
 
       const char *id_{};
     };
 
-    static IVideoCaptureMediaSinkPtr create(const CreationProperties &info) noexcept;
+    static winrt::Windows::Media::IMediaExtension create(const CreationProperties &info) noexcept;
 
     virtual IVideoCaptureMediaSinkSubscriptionPtr subscribe(IVideoCaptureMediaSinkDelegatePtr delegate) = 0;
 

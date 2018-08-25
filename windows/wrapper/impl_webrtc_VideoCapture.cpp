@@ -13,19 +13,18 @@
 #include <zsLib/String.h>
 #include <zsLib/IMessageQueueThread.h>
 
-#include "impl_webrtc_VideoCaptureMediaSink.h"
-
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "media/base/videocommon.h"
 #include "rtc_base/logging.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
-#include "system_wrappers/include/event_wrapper.h"
 #include "rtc_base/Win32.h"
 #include "libyuv/planar_functions.h"
+#include "common_video/libyuv/include/webrtc_libyuv.h"
 #include "common_video/video_common_winuwp.h"
 #include "api/video/i420_buffer.h"
 
-#include <winrt/Windows.Media.MediaProperties.h>
+#include <winrt/windows.media.capture.h>
+#include <winrt/windows.devices.enumeration.h>
 
 using zsLib::String;
 using zsLib::Time;
@@ -33,57 +32,54 @@ using zsLib::Seconds;
 using zsLib::Milliseconds;
 using zsLib::AutoRecursiveLock;
 
-using Microsoft::WRL::ComPtr;
-using Windows::Devices::Enumeration::DeviceClass;
-using Windows::Devices::Enumeration::DeviceInformation;
-using Windows::Devices::Enumeration::DeviceInformationCollection;
-using Windows::Devices::Enumeration::Panel;
-using Windows::Graphics::Display::DisplayInformation;
-using Windows::Graphics::Display::DisplayOrientations;
-
-using Windows::Media::Capture::MediaCapture;
-using Windows::Media::Capture::MediaCaptureFailedEventArgs;
-using Windows::Media::Capture::MediaCaptureFailedEventHandler;
-using Windows::Media::Capture::MediaCaptureInitializationSettings;
-using Windows::Media::Capture::MediaStreamType;
-using Windows::Media::IMediaExtension;
-using Windows::Media::MediaProperties::IVideoEncodingProperties;
-using Windows::Media::MediaProperties::MediaEncodingProfile;
-using Windows::Media::MediaProperties::MediaEncodingSubtypes;
-using Windows::Media::MediaProperties::VideoEncodingProperties;
-using Windows::UI::Core::DispatchedHandler;
-using Windows::UI::Core::CoreDispatcherPriority;
-using Windows::Foundation::IAsyncAction;
-using Windows::Foundation::TypedEventHandler;
-
-using Windows::System::Threading::TimerElapsedHandler;
-using Windows::System::Threading::ThreadPoolTimer;
+using winrt::Windows::Devices::Enumeration::DeviceClass;
+using winrt::Windows::Devices::Enumeration::DeviceInformation;
+using winrt::Windows::Devices::Enumeration::DeviceInformationCollection;
+using winrt::Windows::Devices::Enumeration::Panel;
+using winrt::Windows::Graphics::Display::DisplayOrientations;
+using winrt::Windows::Graphics::Display::DisplayInformation;
+using winrt::Windows::Media::Capture::MediaCapture;
+using winrt::Windows::Media::Capture::MediaCaptureFailedEventArgs;
+using winrt::Windows::Media::Capture::MediaCaptureFailedEventHandler;
+using winrt::Windows::Media::Capture::MediaCaptureInitializationSettings;
+using winrt::Windows::Media::Capture::MediaStreamType;
+using winrt::Windows::Media::IMediaExtension;
+using winrt::Windows::Media::MediaProperties::IVideoEncodingProperties;
+using winrt::Windows::Media::MediaProperties::MediaEncodingProfile;
+using winrt::Windows::Media::MediaProperties::MediaEncodingSubtypes;
+using winrt::Windows::Media::MediaProperties::VideoEncodingProperties;
+using winrt::Windows::UI::Core::DispatchedHandler;
+using winrt::Windows::UI::Core::CoreDispatcherPriority;
+using winrt::Windows::Foundation::IAsyncAction;
+using winrt::Windows::Foundation::TypedEventHandler;
+using winrt::Windows::System::Threading::ThreadPoolTimer;
+using winrt::Windows::System::Threading::TimerElapsedHandler;
+using winrt::Windows::Foundation::Collections::IVectorView;
 
 namespace webrtc
 {
 
   //-----------------------------------------------------------------------------
   void RunOnCoreDispatcher(std::function<void()> fn, bool async) {
-    Windows::UI::Core::CoreDispatcher^ _windowDispatcher =
+    winrt::Windows::UI::Core::CoreDispatcher windowDispatcher =
       VideoCommonWinUWP::GetCoreDispatcher();
-    if (_windowDispatcher != nullptr) {
-      auto handler = ref new Windows::UI::Core::DispatchedHandler([fn]() {
+    if (windowDispatcher != nullptr) {
+      auto handler = winrt::Windows::UI::Core::DispatchedHandler([fn]() {
         fn();
       });
-      auto action = _windowDispatcher->RunAsync(
+      auto action = windowDispatcher.RunAsync(
         CoreDispatcherPriority::Normal, handler);
       if (async) {
-        Concurrency::create_task(action);
+        Concurrency::create_task([action]() { action.get(); });
+      } else {
+        Concurrency::create_task([action]() { action.get(); }).wait();
       }
-      else {
-        Concurrency::create_task(action).wait();
-      }
-    }
-    else {
+    } else {
       fn();
     }
   }
 
+  //-----------------------------------------------------------------------------
   AppStateDispatcher* AppStateDispatcher::instance_ = NULL;
 
   //-----------------------------------------------------------------------------
@@ -102,7 +98,7 @@ namespace webrtc
   void AppStateDispatcher::DisplayOrientationChanged(
     DisplayOrientations display_orientation) {
     display_orientation_ = display_orientation;
-    for (auto obs_it = observers.begin(); obs_it != observers.end(); ++obs_it) {
+    for (auto obs_it = observers_.begin(); obs_it != observers_.end(); ++obs_it) {
       (*obs_it)->DisplayOrientationChanged(display_orientation);
     }
   }
@@ -114,45 +110,47 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   void AppStateDispatcher::AddObserver(AppStateObserver* observer) {
-    observers.push_back(observer);
+    observers_.push_back(observer);
   }
 
   //-----------------------------------------------------------------------------
   void AppStateDispatcher::RemoveObserver(AppStateObserver* observer) {
-    for (auto obs_it = observers.begin(); obs_it != observers.end(); ++obs_it) {
+    for (auto obs_it = observers_.begin(); obs_it != observers_.end(); ++obs_it) {
       if (*obs_it == observer) {
-        observers.erase(obs_it);
+        observers_.erase(obs_it);
         break;
       }
     }
   }
 
   //-----------------------------------------------------------------------------
-  ref class DisplayOrientation sealed {
+  class DisplayOrientation {
   public:
     virtual ~DisplayOrientation();
 
-  internal:
+  public:
     DisplayOrientation(DisplayOrientationListener* listener);
     void OnOrientationChanged(
-      Windows::Graphics::Display::DisplayInformation^ sender,
-      Platform::Object^ args);
+      winrt::Windows::Graphics::Display::DisplayInformation const& sender,
+      winrt::Windows::Foundation::IInspectable const& args);
 
-    property DisplayOrientations orientation;
+    winrt::Windows::Graphics::Display::DisplayOrientations Orientation() { return orientation_; }
   private:
     DisplayOrientationListener * listener_;
-    DisplayInformation^ display_info;
-    Windows::Foundation::EventRegistrationToken
+    winrt::Windows::Graphics::Display::DisplayInformation display_info_{ nullptr };
+    winrt::Windows::Graphics::Display::DisplayOrientations orientation_
+    { winrt::Windows::Graphics::Display::DisplayOrientations::None };
+    winrt::event_token
       orientation_changed_registration_token_;
   };
 
   //-----------------------------------------------------------------------------
   DisplayOrientation::~DisplayOrientation() {
-    auto tmpDisplayInfo = display_info;
+    auto tmpDisplayInfo = display_info_;
     auto tmpToken = orientation_changed_registration_token_;
     if (tmpDisplayInfo != nullptr) {
       RunOnCoreDispatcher([tmpDisplayInfo, tmpToken]() {
-        tmpDisplayInfo->OrientationChanged::remove(tmpToken);
+        tmpDisplayInfo.OrientationChanged(tmpToken);
       }, true);  // Run async because it can deadlock with core thread.
     }
   }
@@ -166,38 +164,37 @@ namespace webrtc
       // a background task then the orientation needs to come from the
       // foreground as a notification.
       try {
-        display_info = DisplayInformation::GetForCurrentView();
-        orientation = display_info->CurrentOrientation;
+        display_info_ = DisplayInformation::GetForCurrentView();
+        orientation_ = display_info_.CurrentOrientation();
         orientation_changed_registration_token_ =
-          display_info->OrientationChanged::add(
-            ref new TypedEventHandler<DisplayInformation^,
-            Platform::Object^>(this, &DisplayOrientation::OnOrientationChanged));
-      }
-      catch (...) {
-        display_info = nullptr;
-        orientation = Windows::Graphics::Display::DisplayOrientations::Portrait;
+          display_info_.OrientationChanged(
+            TypedEventHandler<DisplayInformation,
+            winrt::Windows::Foundation::IInspectable>(this, &DisplayOrientation::OnOrientationChanged));
+      } catch (...) {
+        display_info_ = nullptr;
+        orientation_ = winrt::Windows::Graphics::Display::DisplayOrientations::Portrait;
         RTC_LOG(LS_ERROR) << "DisplayOrientation could not be initialized.";
       }
     });
   }
 
   //-----------------------------------------------------------------------------
-  void DisplayOrientation::OnOrientationChanged(DisplayInformation^ sender,
-    Platform::Object^ args) {
-    orientation = sender->CurrentOrientation;
+  void DisplayOrientation::OnOrientationChanged(DisplayInformation const& sender,
+    winrt::Windows::Foundation::IInspectable const& /*args*/) {
+    orientation_ = sender.CurrentOrientation();
     if (listener_)
-      listener_->OnDisplayOrientationChanged(sender->CurrentOrientation);
+      listener_->OnDisplayOrientationChanged(sender.CurrentOrientation());
   }
 
   //-----------------------------------------------------------------------------
-  ref class CaptureDevice sealed {
+  class CaptureDevice : public VideoCaptureMediaSinkProxyListener {
   public:
     virtual ~CaptureDevice();
 
-  internal:
+  public:
     CaptureDevice(CaptureDeviceListener* capture_device_listener);
 
-    void Initialize(Platform::String^ device_id);
+    void Initialize(winrt::hstring const& device_id);
 
     void CleanupSink();
 
@@ -205,8 +202,8 @@ namespace webrtc
 
     void Cleanup();
 
-    void StartCapture(MediaEncodingProfile^ media_encoding_profile,
-      IVideoEncodingProperties^ video_encoding_properties);
+    void StartCapture(winrt::Windows::Media::MediaProperties::MediaEncodingProfile const& media_encoding_profile,
+      winrt::Windows::Media::MediaProperties::IVideoEncodingProperties const& video_encoding_properties);
 
     void StopCapture();
 
@@ -214,36 +211,34 @@ namespace webrtc
 
     VideoCaptureCapability GetFrameInfo() { return frame_info_; }
 
-    void OnCaptureFailed(MediaCapture^ sender,
-      MediaCaptureFailedEventArgs^ error_event_args);
+    void OnCaptureFailed(winrt::Windows::Media::Capture::MediaCapture const&  sender,
+      winrt::Windows::Media::Capture::MediaCaptureFailedEventArgs const& error_event_args);
 
-    void OnMediaSample(Object^ sender, MediaSampleEventArgs^ args);
+    void OnMediaSampleEvent(std::shared_ptr<MediaSampleEventArgs> args) override;
 
-    property Platform::Agile<Windows::Media::Capture::MediaCapture> MediaCapture {
-      Platform::Agile<Windows::Media::Capture::MediaCapture> get();
-    }
+    winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> MediaCapture();
 
-    Platform::Agile<Windows::Media::Capture::MediaCapture>
-      GetMediaCapture(Platform::String^ device_id);
+    winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture>
+      GetMediaCapture(winrt::hstring const& device_id);
 
-    void RemoveMediaCapture(Platform::String^ device_id);
+    void RemoveMediaCapture(winrt::hstring const& device_id);
 
   private:
     void RemovePaddingPixels(uint8_t* video_frame, size_t& video_frame_length);
 
   private:
-    Platform::Agile<Windows::Media::Capture::MediaCapture> media_capture_;
-    Platform::String^ device_id_;
-    VideoCaptureMediaSinkProxy^ media_sink_;
-    Windows::Foundation::EventRegistrationToken
+    winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> media_capture_;
+    winrt::hstring device_id_;
+    std::shared_ptr<VideoCaptureMediaSinkProxy> media_sink_;
+    winrt::event_token
       media_capture_failed_event_registration_token_;
-    Windows::Foundation::EventRegistrationToken
+    winrt::event_token
       media_sink_video_sample_event_registration_token_;
 
     CaptureDeviceListener* capture_device_listener_;
 
-    std::map<Platform::String^,
-      Platform::Agile<Windows::Media::Capture::MediaCapture> >
+    std::map<winrt::hstring,
+      winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> >
       media_capture_map_;
 
     bool capture_started_;
@@ -255,8 +250,6 @@ namespace webrtc
   CaptureDevice::CaptureDevice(
     CaptureDeviceListener* capture_device_listener)
     : media_capture_(nullptr),
-    device_id_(nullptr),
-    media_sink_(nullptr),
     capture_device_listener_(capture_device_listener),
     capture_started_(false) {
     _stopped.reset(webrtc::EventWrapper::Create());
@@ -268,165 +261,150 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void CaptureDevice::Initialize(Platform::String^ device_id) {
+  void CaptureDevice::Initialize(winrt::hstring const& device_id) {
     RTC_LOG(LS_INFO) << "CaptureDevice::Initialize";
     device_id_ = device_id;
   }
 
   //-----------------------------------------------------------------------------
   void CaptureDevice::CleanupSink() {
-    if (media_sink_) {
-      media_sink_->MediaSampleEvent -=
-        media_sink_video_sample_event_registration_token_;
-      delete media_sink_;
-      media_sink_ = nullptr;
+    if (media_sink_ != nullptr) {
+      media_sink_.reset();
       capture_started_ = false;
     }
   }
 
   //-----------------------------------------------------------------------------
   void CaptureDevice::CleanupMediaCapture() {
-    Windows::Media::Capture::MediaCapture^ media_capture = media_capture_.Get();
+    winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
     if (media_capture != nullptr) {
-      media_capture->Failed -= media_capture_failed_event_registration_token_;
+      media_capture.Failed(media_capture_failed_event_registration_token_);
       RemoveMediaCapture(device_id_);
       media_capture_ = nullptr;
     }
   }
 
   //-----------------------------------------------------------------------------
-  Platform::Agile<Windows::Media::Capture::MediaCapture>
-    CaptureDevice::MediaCapture::get() {
+  winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> CaptureDevice::MediaCapture() {
     return media_capture_;
   }
 
   //-----------------------------------------------------------------------------
   void CaptureDevice::Cleanup() {
-    Windows::Media::Capture::MediaCapture^ media_capture = media_capture_.Get();
+    winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
     if (media_capture == nullptr) {
       return;
     }
     if (capture_started_) {
       if (_stopped->Wait(5000) == kEventTimeout) {
-        Concurrency::create_task(
-          media_capture->StopRecordAsync()).
-          then([this](Concurrency::task<void> async_info) {
+        Concurrency::create_task([this, media_capture]() {
+          media_capture.StopRecordAsync().get();
+        }).then([this](Concurrency::task<void> async_info) {
           try {
             async_info.get();
             CleanupSink();
             CleanupMediaCapture();
-            device_id_ = nullptr;
+            device_id_.clear();
             _stopped->Set();
-          }
-          catch (Platform::Exception^ e) {
+          } catch (winrt::hresult_error const& /*e*/) {
             CleanupSink();
             CleanupMediaCapture();
-            device_id_ = nullptr;
+            device_id_.clear();
             _stopped->Set();
             throw;
           }
         }).wait();
       }
-    }
-    else {
+    } else {
       CleanupSink();
       CleanupMediaCapture();
-      device_id_ = nullptr;
+      device_id_.clear();
     }
   }
 
   //-----------------------------------------------------------------------------
   void CaptureDevice::StartCapture(
-    MediaEncodingProfile^ media_encoding_profile,
-    IVideoEncodingProperties^ video_encoding_properties) {
+    MediaEncodingProfile const& media_encoding_profile,
+    IVideoEncodingProperties const& video_encoding_properties) {
     if (capture_started_) {
-      throw ref new Platform::Exception(
-        __HRESULT_FROM_WIN32(ERROR_INVALID_STATE));
+      winrt::throw_hresult(ERROR_INVALID_STATE);
     }
 
     if (_stopped->Wait(5000) == kEventTimeout) {
-      throw ref new Platform::Exception(
-        __HRESULT_FROM_WIN32(ERROR_INVALID_STATE));
+      winrt::throw_hresult(ERROR_INVALID_STATE);
     }
 
     CleanupSink();
     CleanupMediaCapture();
 
-    if (device_id_ == nullptr) {
+    if (device_id_.empty()) {
       RTC_LOG(LS_WARNING) << "Capture device is not initialized.";
       return;
     }
 
-    frame_info_.width = media_encoding_profile->Video->Width;
-    frame_info_.height = media_encoding_profile->Video->Height;
+    frame_info_.width = media_encoding_profile.Video().Width();
+    frame_info_.height = media_encoding_profile.Video().Height();
     frame_info_.maxFPS =
       static_cast<int>(
         static_cast<float>(
-          media_encoding_profile->Video->FrameRate->Numerator) /
+          media_encoding_profile.Video().FrameRate().Numerator()) /
         static_cast<float>(
-          media_encoding_profile->Video->FrameRate->Denominator));
-    if (_wcsicmp(media_encoding_profile->Video->Subtype->Data(),
-      MediaEncodingSubtypes::Yv12->Data()) == 0) {
+          media_encoding_profile.Video().FrameRate().Denominator()));
+    if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
+      MediaEncodingSubtypes::Yv12().c_str()) == 0) {
       frame_info_.videoType = VideoType::kYV12;
-    }
-    else if (_wcsicmp(media_encoding_profile->Video->Subtype->Data(),
-      MediaEncodingSubtypes::Yuy2->Data()) == 0) {
+    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
+      MediaEncodingSubtypes::Yuy2().c_str()) == 0) {
       frame_info_.videoType = VideoType::kYUY2;
-    }
-    else if (_wcsicmp(media_encoding_profile->Video->Subtype->Data(),
-      MediaEncodingSubtypes::Iyuv->Data()) == 0) {
+    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
+      MediaEncodingSubtypes::Iyuv().c_str()) == 0) {
       frame_info_.videoType = VideoType::kIYUV;
-    }
-    else if (_wcsicmp(media_encoding_profile->Video->Subtype->Data(),
-      MediaEncodingSubtypes::Rgb24->Data()) == 0) {
+    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
+      MediaEncodingSubtypes::Rgb24().c_str()) == 0) {
       frame_info_.videoType = VideoType::kRGB24;
-    }
-    else if (_wcsicmp(media_encoding_profile->Video->Subtype->Data(),
-      MediaEncodingSubtypes::Rgb32->Data()) == 0) {
+    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
+      MediaEncodingSubtypes::Rgb32().c_str()) == 0) {
       frame_info_.videoType = VideoType::kARGB;
-    }
-    else if (_wcsicmp(media_encoding_profile->Video->Subtype->Data(),
-      MediaEncodingSubtypes::Mjpg->Data()) == 0) {
+    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
+      MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
       frame_info_.videoType = VideoType::kMJPEG;
-    }
-    else if (_wcsicmp(media_encoding_profile->Video->Subtype->Data(),
-      MediaEncodingSubtypes::Nv12->Data()) == 0) {
+    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
+      MediaEncodingSubtypes::Nv12().c_str()) == 0) {
       frame_info_.videoType = VideoType::kNV12;
-    }
-    else {
+    } else {
       frame_info_.videoType = VideoType::kUnknown;
     }
 
     media_capture_ = GetMediaCapture(device_id_);
     media_capture_failed_event_registration_token_ =
-      media_capture_->Failed +=
-      ref new MediaCaptureFailedEventHandler(this,
-        &CaptureDevice::OnCaptureFailed);
+      media_capture_.get().Failed(
+        MediaCaptureFailedEventHandler(this,
+        &CaptureDevice::OnCaptureFailed));
 
 #ifdef WIN10
     // Tell the video device controller to optimize for Low Latency then Power consumption
-    media_capture_->VideoDeviceController->DesiredOptimization =
-      Windows::Media::Devices::MediaCaptureOptimization::LatencyThenPower;
+    media_capture_.get().VideoDeviceController().DesiredOptimization(
+      winrt::Windows::Media::Devices::MediaCaptureOptimization::LatencyThenPower);
 #endif
 
-    media_sink_ = ref new VideoCaptureMediaSinkProxy();
-    media_sink_video_sample_event_registration_token_ =
-      media_sink_->MediaSampleEvent +=
-      ref new Windows::Foundation::EventHandler<MediaSampleEventArgs^>
-      (this, &CaptureDevice::OnMediaSample);
+    media_sink_ = std::make_shared<VideoCaptureMediaSinkProxy>(std::shared_ptr<CaptureDevice>(this));
 
-    auto initOp = media_sink_->InitializeAsync(media_encoding_profile->Video);
-    auto initTask = Concurrency::create_task(initOp)
-      .then([this, media_encoding_profile,
-        video_encoding_properties](IMediaExtension^ media_extension) {
+    auto initOp = media_sink_->InitializeAsync(media_encoding_profile.Video());
+    auto initTask = Concurrency::create_task([this, initOp]() {
+      return initOp.get();
+      }).then([this, media_encoding_profile,
+        video_encoding_properties](IMediaExtension const& media_extension) {
       auto setPropOp =
-        media_capture_->VideoDeviceController->SetMediaStreamPropertiesAsync(
+        media_capture_.get().VideoDeviceController().SetMediaStreamPropertiesAsync(
           MediaStreamType::VideoRecord, video_encoding_properties);
-      return Concurrency::create_task(setPropOp)
-        .then([this, media_encoding_profile, media_extension]() {
-        auto startRecordOp = media_capture_->StartRecordToCustomSinkAsync(
+      return Concurrency::create_task([this, setPropOp]() {
+        return setPropOp.get();
+        }).then([this, media_encoding_profile, media_extension]() {
+        auto startRecordOp = media_capture_.get().StartRecordToCustomSinkAsync(
           media_encoding_profile, media_extension);
-        return Concurrency::create_task(startRecordOp);
+        return Concurrency::create_task([this, startRecordOp]() {
+          return startRecordOp.get();
+          });
       });
     });
 
@@ -434,10 +412,9 @@ namespace webrtc
       try {
         async_info.get();
         capture_started_ = true;
-      }
-      catch (Platform::Exception^ e) {
+      } catch (winrt::hresult_error const& e) {
         RTC_LOG(LS_ERROR) << "StartRecordToCustomSinkAsync exception: "
-          << rtc::ToUtf8(e->Message->Data());
+          << rtc::ToUtf8(e.message().c_str());
         CleanupSink();
         CleanupMediaCapture();
       }
@@ -452,43 +429,44 @@ namespace webrtc
       RTC_LOG(LS_INFO) << "CaptureDevice::StopCapture: called when never started";
       return;
     }
-    Concurrency::create_task(
-      media_capture_.Get()->StopRecordAsync()).
-      then([this](Concurrency::task<void> async_info) {
+
+    Concurrency::create_task([this]() {
+      return media_capture_.get().StopRecordAsync().get();
+      }).then([this](Concurrency::task<void> async_info) {
       try {
         async_info.get();
         CleanupSink();
         CleanupMediaCapture();
         _stopped->Set();
-      }
-      catch (Platform::Exception^ e) {
+      } catch (winrt::hresult_error const& e) {
         CleanupSink();
         CleanupMediaCapture();
         _stopped->Set();
         RTC_LOG(LS_ERROR) <<
           "CaptureDevice::StopCapture: Stop failed, reason: '" <<
-          rtc::ToUtf8(e->Message->Data()) << "'";
+          rtc::ToUtf8(e.message().c_str()) << "'";
       }
     });
   }
 
   //-----------------------------------------------------------------------------
   void CaptureDevice::OnCaptureFailed(
-    Windows::Media::Capture::MediaCapture^ sender,
-    MediaCaptureFailedEventArgs^ error_event_args) {
+    winrt::Windows::Media::Capture::MediaCapture const& /*sender*/,
+    MediaCaptureFailedEventArgs const& error_event_args) {
     if (capture_device_listener_) {
       capture_device_listener_->OnCaptureDeviceFailed(
-        error_event_args->Code,
-        error_event_args->Message);
+        error_event_args.Code(),
+        error_event_args.Message());
     }
   }
 
   //-----------------------------------------------------------------------------
-  void CaptureDevice::OnMediaSample(Object^ sender, MediaSampleEventArgs^ args) {
+  void CaptureDevice::OnMediaSampleEvent(std::shared_ptr<MediaSampleEventArgs> args)
+  {
     if (capture_device_listener_) {
-      Microsoft::WRL::ComPtr<IMFSample> spMediaSample = args->GetMediaSample();
-      ComPtr<IMFMediaBuffer> spMediaBuffer;
-      HRESULT hr = spMediaSample->GetBufferByIndex(0, &spMediaBuffer);
+      winrt::com_ptr<IMFSample> spMediaSample = args->GetMediaSample();
+      winrt::com_ptr<IMFMediaBuffer> spMediaBuffer;
+      HRESULT hr = spMediaSample->GetBufferByIndex(0, spMediaBuffer.put());
       LONGLONG hnsSampleTime = 0;
       BYTE* pbBuffer = NULL;
       DWORD cbMaxLength = 0;
@@ -528,15 +506,14 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  Platform::Agile<MediaCapture>
-    CaptureDevice::GetMediaCapture(Platform::String^ device_id) {
+  winrt::agile_ref<MediaCapture>
+    CaptureDevice::GetMediaCapture(winrt::hstring const& device_id) {
 
     // We cache MediaCapture objects
     auto iter = media_capture_map_.find(device_id);
     if (iter != media_capture_map_.end()) {
       return iter->second;
-    }
-    else {
+    } else {
 #if (defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP || \
                                 defined(WINDOWS_PHONE_APP)))
       // WINDOWS_PHONE_APP is defined at gyp level to overcome the missing
@@ -552,14 +529,14 @@ namespace webrtc
       // 10.0.10586.36
       media_capture_map_.clear();
 #endif
-      Platform::Agile<Windows::Media::Capture::MediaCapture>
-        media_capture_agile(ref new Windows::Media::Capture::MediaCapture());
+      winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture>
+        media_capture_agile = winrt::Windows::Media::Capture::MediaCapture();
 
       Concurrency::task<void> initialize_async_task;
-      auto handler = ref new DispatchedHandler(
+      auto handler = DispatchedHandler(
         [this, &initialize_async_task, media_capture_agile, device_id]() {
-        auto settings = ref new MediaCaptureInitializationSettings();
-        settings->VideoDeviceId = device_id;
+        auto settings = MediaCaptureInitializationSettings();
+        settings.VideoDeviceId(device_id);
 
         // If Communications media category is configured, the
         // GetAvailableMediaStreamProperties will report only H264 frame format
@@ -567,30 +544,29 @@ namespace webrtc
         // not support receiving H264 frames from capturer, the Communications
         // category is not configured.
 
-        // settings->MediaCategory =
-        //  Windows::Media::Capture::MediaCategory::Communications;
-        auto initOp = media_capture_agile->InitializeAsync(settings);
-        initialize_async_task = Concurrency::create_task(initOp).
-          then([this, media_capture_agile](Concurrency::task<void> initTask) {
+        // settings.MediaCategory(
+        //  winrt::Windows::Media::Capture::MediaCategory::Communications);
+        auto initOp = media_capture_agile.get().InitializeAsync(settings);
+        initialize_async_task = Concurrency::create_task([this, initOp]() {
+            return initOp.get();
+          }).then([this, media_capture_agile](Concurrency::task<void> initTask) {
           try {
             initTask.get();
-          }
-          catch (Platform::Exception^ e) {
+          } catch (winrt::hresult_error const& e) {
             RTC_LOG(LS_ERROR)
               << "Failed to initialize media capture device. "
-              << rtc::ToUtf8(e->Message->Data());
+              << rtc::ToUtf8(e.message().c_str());
           }
         });
       });
 
-      Windows::UI::Core::CoreDispatcher^ windowDispatcher = VideoCommonWinUWP::GetCoreDispatcher();
+      winrt::Windows::UI::Core::CoreDispatcher windowDispatcher = VideoCommonWinUWP::GetCoreDispatcher();
       if (windowDispatcher != nullptr) {
-        auto dispatcher_action = windowDispatcher->RunAsync(
+        auto dispatcher_action = windowDispatcher.RunAsync(
           CoreDispatcherPriority::Normal, handler);
-        Concurrency::create_task(dispatcher_action).wait();
-      }
-      else {
-        handler->Invoke();
+        Concurrency::create_task([this, dispatcher_action]() { return dispatcher_action.get(); }).wait();
+      } else {
+        handler();
       }
 
       initialize_async_task.wait();
@@ -602,7 +578,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void CaptureDevice::RemoveMediaCapture(Platform::String^ device_id) {
+  void CaptureDevice::RemoveMediaCapture(winrt::hstring const& device_id) {
 
     auto iter = media_capture_map_.find(device_id);
     if (iter != media_capture_map_.end()) {
@@ -646,8 +622,7 @@ namespace webrtc
       libyuv::CopyPlane(src_video_u, (frame_info_.width + padded_col_num) / 2,
         dst_video_u, frame_info_.width / 2,
         frame_info_.width / 2, frame_info_.height / 2);
-    }
-    else if (frame_info_.videoType == VideoType::kYUY2 &&
+    } else if (frame_info_.videoType == VideoType::kYUY2 &&
       (int32_t)video_frame_length >
       frame_info_.width * frame_info_.height * 2) {
       uint8_t* src_video = video_frame;
@@ -656,8 +631,7 @@ namespace webrtc
       libyuv::CopyPlane(src_video, 2 * (frame_info_.width + padded_col_num),
         dst_video, 2 * frame_info_.width,
         2 * frame_info_.width, frame_info_.height);
-    }
-    else if (frame_info_.videoType == VideoType::kIYUV &&
+    } else if (frame_info_.videoType == VideoType::kIYUV &&
       (int32_t)video_frame_length >
       frame_info_.width * frame_info_.height * 3 / 2) {
       uint8_t* src_video_y = video_frame;
@@ -682,8 +656,7 @@ namespace webrtc
       libyuv::CopyPlane(src_video_v, (frame_info_.width + padded_col_num) / 2,
         dst_video_v, frame_info_.width / 2,
         frame_info_.width / 2, frame_info_.height / 2);
-    }
-    else if (frame_info_.videoType == VideoType::kRGB24 &&
+    } else if (frame_info_.videoType == VideoType::kRGB24 &&
       (int32_t)video_frame_length >
       frame_info_.width * frame_info_.height * 3) {
       uint8_t* src_video = video_frame;
@@ -692,8 +665,7 @@ namespace webrtc
       libyuv::CopyPlane(src_video, 3 * (frame_info_.width + padded_col_num),
         dst_video, 3 * frame_info_.width,
         3 * frame_info_.width, frame_info_.height);
-    }
-    else if (frame_info_.videoType == VideoType::kARGB &&
+    } else if (frame_info_.videoType == VideoType::kARGB &&
       (int32_t)video_frame_length >
       frame_info_.width * frame_info_.height * 4) {
       uint8_t* src_video = video_frame;
@@ -702,8 +674,7 @@ namespace webrtc
       libyuv::CopyPlane(src_video, 4 * (frame_info_.width + padded_col_num),
         dst_video, 4 * frame_info_.width,
         4 * frame_info_.width, frame_info_.height);
-    }
-    else if (frame_info_.videoType == VideoType::kNV12 &&
+    } else if (frame_info_.videoType == VideoType::kNV12 &&
       (int32_t)video_frame_length >
       frame_info_.width * frame_info_.height * 3 / 2) {
       uint8_t* src_video_y = video_frame;
@@ -724,11 +695,10 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  ref class BlackFramesGenerator sealed {
+  class BlackFramesGenerator {
   public:
     virtual ~BlackFramesGenerator();
 
-  internal:
     BlackFramesGenerator(CaptureDeviceListener* capture_device_listener);
 
     void StartCapture(const VideoCaptureCapability& frame_info);
@@ -745,14 +715,13 @@ namespace webrtc
     CaptureDeviceListener * capture_device_listener_;
     bool capture_started_;
     VideoCaptureCapability frame_info_;
-    ThreadPoolTimer^ timer_;
+    ThreadPoolTimer timer_ { nullptr };
   };
 
   //-----------------------------------------------------------------------------
   BlackFramesGenerator::BlackFramesGenerator(
     CaptureDeviceListener* capture_device_listener) :
-    capture_started_(false), capture_device_listener_(capture_device_listener),
-    timer_(nullptr) {
+    capture_started_(false), capture_device_listener_(capture_device_listener) {
   }
 
   //-----------------------------------------------------------------------------
@@ -768,17 +737,16 @@ namespace webrtc
 
     if (capture_started_) {
       RTC_LOG(LS_INFO) << "Black frame generator already started";
-      throw ref new Platform::Exception(
-        __HRESULT_FROM_WIN32(ERROR_INVALID_STATE));
+      winrt::throw_hresult(ERROR_INVALID_STATE);
     }
     RTC_LOG(LS_INFO) << "Starting black frame generator";
 
     size_t black_frame_size = frame_info_.width * frame_info_.height * 3;
     std::shared_ptr<std::vector<uint8_t>> black_frame(
       new std::vector<uint8_t>(black_frame_size, 0));
-    auto handler = ref new TimerElapsedHandler(
+    auto handler = TimerElapsedHandler(
       [this, black_frame_size, black_frame]
-    (ThreadPoolTimer^ timer) -> void {
+    (ThreadPoolTimer const& /*timer*/) -> void {
       if (this->capture_device_listener_ != nullptr) {
         this->capture_device_listener_->OnIncomingFrame(
           black_frame->data(),
@@ -786,9 +754,9 @@ namespace webrtc
           this->frame_info_);
       }
     });
-    auto timespan = Windows::Foundation::TimeSpan();
-    timespan.Duration = (1000 * 1000 * 10 /*1s in hns*/) /
-      frame_info_.maxFPS;
+    int64_t timespan_value = (int64_t)((1000 * 1000 * 10 /*1s in hns*/) /
+      frame_info_.maxFPS);
+    auto timespan = winrt::Windows::Foundation::TimeSpan(timespan_value);
     timer_ = ThreadPoolTimer::CreatePeriodicTimer(handler, timespan);
     capture_started_ = true;
   }
@@ -796,12 +764,11 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void BlackFramesGenerator::StopCapture() {
     if (!capture_started_) {
-      throw ref new Platform::Exception(
-        __HRESULT_FROM_WIN32(ERROR_INVALID_STATE));
+      winrt::throw_hresult(ERROR_INVALID_STATE);
     }
 
     RTC_LOG(LS_INFO) << "Stopping black frame generator";
-    timer_->Cancel();
+    timer_.Cancel();
     timer_ = nullptr;
     capture_started_ = false;
   }
@@ -828,11 +795,10 @@ namespace webrtc
     if (VideoCommonWinUWP::GetCoreDispatcher() == nullptr) {
       RTC_LOG(LS_INFO) << "Using AppStateDispatcher as orientation source";
       AppStateDispatcher::Instance()->AddObserver(this);
-    }
-    else {
+    } else {
       // DisplayOrientation needs access to UI thread.
       RTC_LOG(LS_INFO) << "Using local detection for orientation source";
-      display_orientation_ = ref new DisplayOrientation(this);
+      display_orientation_ = std::make_shared<DisplayOrientation>(this);
     }
   }
 
@@ -886,54 +852,52 @@ namespace webrtc
 
     RTC_LOG(LS_INFO) << "Init called for device " << props.id_;
 
-    device_id_ = nullptr;
+    device_id_.clear();
 
     deviceUniqueId_ = new (std::nothrow) char[device_unique_id_length + 1];
     memcpy(deviceUniqueId_, props.id_, device_unique_id_length + 1);
 
-    Concurrency::create_task(
-      DeviceInformation::FindAllAsync(DeviceClass::VideoCapture)).
-      then([this, device_unique_id_utf8, device_unique_id_length](
-        Concurrency::task<DeviceInformationCollection^> find_task) {
-      try {
-        DeviceInformationCollection^ dev_info_collection = find_task.get();
-        if (dev_info_collection == nullptr || dev_info_collection->Size == 0) {
+    Concurrency::create_task([this]() {
+      return DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get().as<IVectorView<DeviceInformation> >();
+      }).then([this, device_unique_id_utf8, device_unique_id_length](
+        IVectorView<DeviceInformation> const& collection) {
+        try {
+        DeviceInformationCollection dev_info_collection = collection.as<DeviceInformationCollection>();
+        if (dev_info_collection == nullptr || dev_info_collection.Size() == 0) {
           RTC_LOG_F(LS_ERROR) << "No video capture device found";
           return;
         }
         // Look for the device in the collection.
-        DeviceInformation^ chosen_dev_info = nullptr;
-        for (unsigned int i = 0; i < dev_info_collection->Size; i++) {
-          auto dev_info = dev_info_collection->GetAt(i);
-          if (rtc::ToUtf8(dev_info->Id->Data()) == device_unique_id_utf8) {
-            device_id_ = dev_info->Id;
-            if (dev_info->EnclosureLocation != nullptr) {
-              camera_location_ = dev_info->EnclosureLocation->Panel;
-            }
-            else {
+        DeviceInformation chosen_dev_info = nullptr;
+        for (unsigned int i = 0; i < dev_info_collection.Size(); i++) {
+          auto dev_info = dev_info_collection.GetAt(i);
+          if (rtc::ToUtf8(dev_info.Id().c_str()) == device_unique_id_utf8) {
+            device_id_ = dev_info.Id();
+            if (dev_info.EnclosureLocation() != nullptr) {
+              camera_location_ = dev_info.EnclosureLocation().Panel();
+            } else {
               camera_location_ = Panel::Unknown;
             }
             break;
           }
         }
-      }
-      catch (Platform::Exception^ e) {
+      } catch (winrt::hresult_error const& e) {
         RTC_LOG(LS_ERROR)
           << "Failed to retrieve device info collection. "
-          << rtc::ToUtf8(e->Message->Data());
+          << rtc::ToUtf8(e.message().c_str());
       }
     }).wait();
 
-    if (device_id_ == nullptr) {
+    if (device_id_.empty()) {
       RTC_LOG(LS_ERROR) << "No video capture device found";
       return;
     }
 
-    device_ = ref new CaptureDevice(this);
+    device_ = std::make_shared<CaptureDevice>(this);
 
     device_->Initialize(device_id_);
 
-    fake_device_ = ref new BlackFramesGenerator(this);
+    fake_device_ = std::make_shared<BlackFramesGenerator>(this);
   }
 
   //-----------------------------------------------------------------------------
@@ -948,7 +912,6 @@ namespace webrtc
 
     if (delegate) {
       auto pThis = thisWeak_.lock();
-
     }
 
     return subscription;
@@ -958,30 +921,30 @@ namespace webrtc
   int32_t VideoCapture::startCapture(
     const VideoCaptureCapability& capability) {
     rtc::CritScope cs(&apiCs_);
-    Platform::String^ subtype;
+    winrt::hstring subtype;
     switch (capability.videoType) {
     case VideoType::kYV12:
-      subtype = MediaEncodingSubtypes::Yv12;
+      subtype = MediaEncodingSubtypes::Yv12();
       break;
     case VideoType::kYUY2:
-      subtype = MediaEncodingSubtypes::Yuy2;
+      subtype = MediaEncodingSubtypes::Yuy2();
       break;
     case VideoType::kI420:
     case VideoType::kIYUV:
-      subtype = MediaEncodingSubtypes::Iyuv;
+      subtype = MediaEncodingSubtypes::Iyuv();
       break;
     case VideoType::kRGB24:
-      subtype = MediaEncodingSubtypes::Rgb24;
+      subtype = MediaEncodingSubtypes::Rgb24();
       break;
     case VideoType::kARGB:
-      subtype = MediaEncodingSubtypes::Argb32;
+      subtype = MediaEncodingSubtypes::Argb32();
       break;
     case VideoType::kMJPEG:
       // MJPEG format is decoded internally by MF engine to NV12
-      subtype = MediaEncodingSubtypes::Nv12;
+      subtype = MediaEncodingSubtypes::Nv12();
       break;
     case VideoType::kNV12:
-      subtype = MediaEncodingSubtypes::Nv12;
+      subtype = MediaEncodingSubtypes::Nv12();
       break;
     default:
       RTC_LOG(LS_ERROR) <<
@@ -989,13 +952,13 @@ namespace webrtc
       return -1;
     }
 
-    media_encoding_profile_ = ref new MediaEncodingProfile();
-    media_encoding_profile_->Audio = nullptr;
-    media_encoding_profile_->Container = nullptr;
-    media_encoding_profile_->Video = VideoEncodingProperties::CreateUncompressed(
-      subtype, capability.width, capability.height);
-    media_encoding_profile_->Video->FrameRate->Numerator = capability.maxFPS;
-    media_encoding_profile_->Video->FrameRate->Denominator = 1;
+    media_encoding_profile_ = MediaEncodingProfile();
+    media_encoding_profile_.Audio(nullptr);
+    media_encoding_profile_.Container(nullptr);
+    media_encoding_profile_.Video(VideoEncodingProperties::CreateUncompressed(
+      subtype, capability.width, capability.height));
+    media_encoding_profile_.Video().FrameRate().Numerator(capability.maxFPS);
+    media_encoding_profile_.Video().FrameRate().Denominator(1);
 
     video_encoding_properties_ = nullptr;
     int min_width_diff = INT_MAX;
@@ -1003,25 +966,25 @@ namespace webrtc
     int min_fps_diff = INT_MAX;
     auto mediaCapture = device_->GetMediaCapture(device_id_);
     auto streamProperties =
-      mediaCapture->VideoDeviceController->GetAvailableMediaStreamProperties(
+      mediaCapture.get().VideoDeviceController().GetAvailableMediaStreamProperties(
         MediaStreamType::VideoRecord);
-    for (unsigned int i = 0; i < streamProperties->Size; i++) {
-      IVideoEncodingProperties^ prop =
-        static_cast<IVideoEncodingProperties^>(streamProperties->GetAt(i));
+    for (unsigned int i = 0; i < streamProperties.Size(); i++) {
+      IVideoEncodingProperties prop;
+      streamProperties.GetAt(i).as(prop);
 
       if (capability.videoType != VideoType::kMJPEG &&
-        _wcsicmp(prop->Subtype->Data(), subtype->Data()) != 0 ||
+        _wcsicmp(prop.Subtype().c_str(), subtype.c_str()) != 0 ||
         capability.videoType == VideoType::kMJPEG &&
-        _wcsicmp(prop->Subtype->Data(),
-          MediaEncodingSubtypes::Mjpg->Data()) != 0) {
+        _wcsicmp(prop.Subtype().c_str(),
+          MediaEncodingSubtypes::Mjpg().c_str()) != 0) {
         continue;
       }
 
-      int width_diff = abs(static_cast<int>(prop->Width - capability.width));
-      int height_diff = abs(static_cast<int>(prop->Height - capability.height));
+      int width_diff = abs(static_cast<int>(prop.Width() - capability.width));
+      int height_diff = abs(static_cast<int>(prop.Height() - capability.height));
       int prop_fps = static_cast<int>(
-        (static_cast<float>(prop->FrameRate->Numerator) /
-          static_cast<float>(prop->FrameRate->Denominator)));
+        (static_cast<float>(prop.FrameRate().Numerator()) /
+          static_cast<float>(prop.FrameRate().Denominator())));
       int fps_diff = abs(static_cast<int>(prop_fps - capability.maxFPS));
 
       if (width_diff < min_width_diff) {
@@ -1029,14 +992,12 @@ namespace webrtc
         min_width_diff = width_diff;
         min_height_diff = height_diff;
         min_fps_diff = fps_diff;
-      }
-      else if (width_diff == min_width_diff) {
+      } else if (width_diff == min_width_diff) {
         if (height_diff < min_height_diff) {
           video_encoding_properties_ = prop;
           min_height_diff = height_diff;
           min_fps_diff = fps_diff;
-        }
-        else if (height_diff == min_height_diff) {
+        } else if (height_diff == min_height_diff) {
           if (fps_diff < min_fps_diff) {
             video_encoding_properties_ = prop;
             min_fps_diff = fps_diff;
@@ -1046,18 +1007,16 @@ namespace webrtc
     }
     try {
       if (display_orientation_) {
-        ApplyDisplayOrientation(display_orientation_->orientation);
-      }
-      else {
+        ApplyDisplayOrientation(display_orientation_->Orientation());
+      } else {
         ApplyDisplayOrientation(AppStateDispatcher::Instance()->GetOrientation());
       }
       device_->StartCapture(media_encoding_profile_,
         video_encoding_properties_);
       last_frame_info_ = capability;
-    }
-    catch (Platform::Exception^ e) {
+    } catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to start capture. "
-        << rtc::ToUtf8(e->Message->Data());
+        << rtc::ToUtf8(e.message().c_str());
       return -1;
     }
 
@@ -1075,10 +1034,9 @@ namespace webrtc
       if (fake_device_->CaptureStarted()) {
         fake_device_->StopCapture();
       }
-    }
-    catch (Platform::Exception^ e) {
+    } catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to stop capture. "
-        << rtc::ToUtf8(e->Message->Data());
+        << rtc::ToUtf8(e.message().c_str());
       return -1;
     }
     return 0;
@@ -1130,7 +1088,7 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   void VideoCapture::DisplayOrientationChanged(
-    Windows::Graphics::Display::DisplayOrientations display_orientation) {
+    winrt::Windows::Graphics::Display::DisplayOrientations display_orientation) {
     if (display_orientation_ != nullptr) {
       RTC_LOG(LS_WARNING) <<
         "Ignoring orientation change notification from AppStateDispatcher";
@@ -1227,18 +1185,17 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   void VideoCapture::OnCaptureDeviceFailed(HRESULT code,
-    Platform::String^ message) {
+    winrt::hstring const& message) {
     RTC_LOG(LS_ERROR) << "Capture device failed. HRESULT: " <<
-      code << " Message: " << rtc::ToUtf8(message->Data());
+      code << " Message: " << rtc::ToUtf8(message.c_str());
     rtc::CritScope cs(&apiCs_);
     if (device_ != nullptr && device_->CaptureStarted()) {
       try {
         device_->StopCapture();
-      }
-      catch (Platform::Exception^ ex) {
+      } catch (winrt::hresult_error const& ex) {
         RTC_LOG(LS_WARNING) <<
           "Capture device failed: failed to stop ex='"
-          << rtc::ToUtf8(ex->Message->Data()) << "'";
+          << rtc::ToUtf8(ex.message().c_str()) << "'";
       }
     }
   }
@@ -1246,26 +1203,26 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void VideoCapture::ApplyDisplayOrientation(
     DisplayOrientations orientation) {
-    if (camera_location_ == Windows::Devices::Enumeration::Panel::Unknown)
+    if (camera_location_ == winrt::Windows::Devices::Enumeration::Panel::Unknown)
       return;
     rtc::CritScope cs(&apiCs_);
     switch (orientation) {
-    case Windows::Graphics::Display::DisplayOrientations::Portrait:
-      if (camera_location_ == Windows::Devices::Enumeration::Panel::Front)
+    case winrt::Windows::Graphics::Display::DisplayOrientations::Portrait:
+      if (camera_location_ == winrt::Windows::Devices::Enumeration::Panel::Front)
         rotateFrame_ = VideoRotation::kVideoRotation_270;
       else
         rotateFrame_ = VideoRotation::kVideoRotation_90;
       break;
-    case Windows::Graphics::Display::DisplayOrientations::PortraitFlipped:
-      if (camera_location_ == Windows::Devices::Enumeration::Panel::Front)
+    case winrt::Windows::Graphics::Display::DisplayOrientations::PortraitFlipped:
+      if (camera_location_ == winrt::Windows::Devices::Enumeration::Panel::Front)
         rotateFrame_ = VideoRotation::kVideoRotation_90;
       else
         rotateFrame_ = VideoRotation::kVideoRotation_270;
       break;
-    case Windows::Graphics::Display::DisplayOrientations::Landscape:
+    case winrt::Windows::Graphics::Display::DisplayOrientations::Landscape:
       rotateFrame_ = VideoRotation::kVideoRotation_0;
       break;
-    case Windows::Graphics::Display::DisplayOrientations::LandscapeFlipped:
+    case winrt::Windows::Graphics::Display::DisplayOrientations::LandscapeFlipped:
       rotateFrame_ = VideoRotation::kVideoRotation_180;
       break;
     default:

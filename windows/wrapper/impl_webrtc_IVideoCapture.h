@@ -7,6 +7,18 @@
 #if __has_include(<winrt/windows.media.core.h>)
 #include <winrt/windows.media.core.h>
 #endif //__has_include(<winrt/windows.media.core.h>)
+#if __has_include(<winrt/windows.system.threading.h>)
+#include <winrt/windows.system.threading.h>
+#endif //__has_include(<winrt/windows.system.threading.h>)
+#if __has_include(<winrt/windows.media.mediaproperties.h>)
+#include <winrt/windows.media.mediaproperties.h>
+#endif //__has_include(<winrt/windows.media.mediaproperties.h>)
+#if __has_include(<winrt/windows.ui.core.h>)
+#include <winrt/windows.ui.core.h>
+#endif //__has_include(<winrt/windows.ui.core.h>)
+#if __has_include(<winrt/windows.graphics.display.h>)
+#include <winrt/windows.graphics.display.h>
+#endif //__has_include(<winrt/windows.graphics.display.h>)
 #endif //__has_include
 
 #ifdef CPPWINRT_VERSION
@@ -20,7 +32,6 @@
 #include <zsLib/ProxySubscriptions.h>
 
 #include <atomic>
-#include <wrl.h>
 #include <mfidl.h>
 
 
