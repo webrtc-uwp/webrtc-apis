@@ -37,25 +37,25 @@
 
 namespace webrtc
 {
-  ZS_DECLARE_INTERACTION_PTR(IVideoCapture);
-  ZS_DECLARE_INTERACTION_PROXY(IVideoCaptureDelegate);
-  ZS_DECLARE_CLASS_PTR(VideoCapture);
-  ZS_DECLARE_INTERACTION_PROXY_SUBSCRIPTION(IVideoCaptureSubscription, IVideoCaptureDelegate);
+  ZS_DECLARE_INTERACTION_PTR(IVideoCapturer);
+  ZS_DECLARE_INTERACTION_PROXY(IVideoCapturerDelegate);
+  ZS_DECLARE_CLASS_PTR(VideoCapturer);
+  ZS_DECLARE_INTERACTION_PROXY_SUBSCRIPTION(IVideoCapturerSubscription, IVideoCapturerDelegate);
 
 
-  interaction IVideoCapture
+  interaction IVideoCapturer
   {
     struct CreationProperties
     {
-      IVideoCaptureDelegatePtr delegate_;
+      IVideoCapturerDelegatePtr delegate_;
 
       const char *id_ {};
       VideoCaptureExternal *externalCapture_ {};
     };
 
-    static IVideoCapturePtr create(const CreationProperties &info) noexcept;
+    static IVideoCapturerPtr create(const CreationProperties &info) noexcept;
 
-    virtual IVideoCaptureSubscriptionPtr subscribe(IVideoCaptureDelegatePtr delegate) = 0;
+    virtual IVideoCapturerSubscriptionPtr subscribe(IVideoCapturerDelegatePtr delegate) = 0;
 
     virtual std::string id() const noexcept = 0;
 
@@ -69,11 +69,11 @@ namespace webrtc
     virtual bool isSuspended() = 0;
   };
   
-  interaction IVideoCaptureDelegate
+  interaction IVideoCapturerDelegate
   {
   };
 
-  interaction IVideoCaptureSubscription
+  interaction IVideoCapturerSubscription
   {
     virtual zsLib::PUID getID() const noexcept = 0;
     virtual void cancel() noexcept = 0;
@@ -82,12 +82,12 @@ namespace webrtc
 } // namespace webrtc
 
 
-ZS_DECLARE_PROXY_BEGIN(webrtc::IVideoCaptureDelegate)
-ZS_DECLARE_PROXY_TYPEDEF(webrtc::IVideoCapturePtr, IVideoCapturePtr)
+ZS_DECLARE_PROXY_BEGIN(webrtc::IVideoCapturerDelegate)
+ZS_DECLARE_PROXY_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
 ZS_DECLARE_PROXY_END()
 
-ZS_DECLARE_PROXY_SUBSCRIPTIONS_BEGIN(webrtc::IVideoCaptureDelegate, webrtc::IVideoCaptureSubscription)
-ZS_DECLARE_PROXY_SUBSCRIPTIONS_TYPEDEF(webrtc::IVideoCapturePtr, IVideoCapturePtr)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_BEGIN(webrtc::IVideoCapturerDelegate, webrtc::IVideoCapturerSubscription)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_END()
 
 #endif //CPPWINRT_VERSION

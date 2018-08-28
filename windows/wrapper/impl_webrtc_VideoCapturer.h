@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "impl_webrtc_IVideoCapture.h"
+#include "impl_webrtc_IVideoCapturer.h"
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
@@ -70,7 +70,7 @@ namespace webrtc
       winrt::hstring const& message) = 0;
   };
 
-  class VideoCapture : public IVideoCapture,
+  class VideoCapturer : public IVideoCapturer,
     public CaptureDeviceListener,
     public AppStateObserver,
     public DisplayOrientationListener
@@ -82,12 +82,12 @@ namespace webrtc
     void init(const CreationProperties &props) noexcept;
 
   public:
-    VideoCapture(const make_private &);
-    ~VideoCapture();
+    VideoCapturer(const make_private &);
+    ~VideoCapturer();
 
-    static VideoCapturePtr create(const CreationProperties &info) noexcept;
+    static VideoCapturerPtr create(const CreationProperties &info) noexcept;
 
-    IVideoCaptureSubscriptionPtr subscribe(IVideoCaptureDelegatePtr delegate) override;
+    IVideoCapturerSubscriptionPtr subscribe(IVideoCapturerDelegatePtr delegate) override;
 
     std::string id() const noexcept override { return id_; }
 
@@ -120,11 +120,11 @@ namespace webrtc
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
 
   private:
-    VideoCaptureWeakPtr thisWeak_;
+    VideoCapturerWeakPtr thisWeak_;
     mutable zsLib::RecursiveLock lock_;
 
-    IVideoCaptureDelegateSubscriptions subscriptions_;
-    IVideoCaptureSubscriptionPtr defaultSubscription_;
+    IVideoCapturerDelegateSubscriptions subscriptions_;
+    IVideoCapturerSubscriptionPtr defaultSubscription_;
 
     std::string id_;
     VideoCaptureExternal *externalCapture_ {nullptr};

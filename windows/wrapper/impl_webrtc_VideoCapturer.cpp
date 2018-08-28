@@ -1,5 +1,5 @@
 
-#include "impl_webrtc_VideoCapture.h"
+#include "impl_webrtc_VideoCapturer.h"
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
@@ -782,7 +782,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  VideoCapture::VideoCapture(const make_private &) :
+  VideoCapturer::VideoCapturer(const make_private &) :
     device_(nullptr),
     camera_location_(Panel::Unknown),
     display_orientation_(nullptr),
@@ -803,7 +803,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  VideoCapture::~VideoCapture()
+  VideoCapturer::~VideoCapturer()
   {
     thisWeak_.reset();
 
@@ -820,16 +820,16 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  VideoCapturePtr VideoCapture::create(const CreationProperties &info) noexcept
+  VideoCapturerPtr VideoCapturer::create(const CreationProperties &info) noexcept
   {
-    auto result = std::make_shared<VideoCapture>(make_private{});
+    auto result = std::make_shared<VideoCapturer>(make_private{});
     result->thisWeak_ = result;
     result->init(info);
     return result;
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapture::init(const CreationProperties &props) noexcept
+  void VideoCapturer::init(const CreationProperties &props) noexcept
   {
     id_ = String(props.id_);
     externalCapture_ = props.externalCapture_;
@@ -901,7 +901,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  IVideoCaptureSubscriptionPtr VideoCapture::subscribe(IVideoCaptureDelegatePtr originalDelegate)
+  IVideoCapturerSubscriptionPtr VideoCapturer::subscribe(IVideoCapturerDelegatePtr originalDelegate)
   {
     AutoRecursiveLock lock(lock_);
     if (!originalDelegate) return defaultSubscription_;
@@ -918,7 +918,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  int32_t VideoCapture::startCapture(
+  int32_t VideoCapturer::startCapture(
     const VideoCaptureCapability& capability) {
     rtc::CritScope cs(&apiCs_);
     winrt::hstring subtype;
@@ -1024,7 +1024,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  int32_t VideoCapture::stopCapture() {
+  int32_t VideoCapturer::stopCapture() {
     rtc::CritScope cs(&apiCs_);
 
     try {
@@ -1043,21 +1043,21 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  bool VideoCapture::captureStarted() {
+  bool VideoCapturer::captureStarted() {
     rtc::CritScope cs(&apiCs_);
 
     return device_->CaptureStarted() || fake_device_->CaptureStarted();
   }
 
   //-----------------------------------------------------------------------------
-  int32_t VideoCapture::captureSettings(VideoCaptureCapability& settings) {
+  int32_t VideoCapturer::captureSettings(VideoCaptureCapability& settings) {
     rtc::CritScope cs(&apiCs_);
     settings = device_->GetFrameInfo();
     return 0;
   }
 
   //-----------------------------------------------------------------------------
-  bool VideoCapture::suspendCapture() {
+  bool VideoCapturer::suspendCapture() {
     if (device_->CaptureStarted()) {
       RTC_LOG(LS_INFO) << "SuspendCapture";
       device_->StopCapture();
@@ -1069,7 +1069,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  bool VideoCapture::resumeCapture() {
+  bool VideoCapturer::resumeCapture() {
     if (fake_device_->CaptureStarted()) {
       RTC_LOG(LS_INFO) << "ResumeCapture";
       fake_device_->StopCapture();
@@ -1082,12 +1082,12 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  bool VideoCapture::isSuspended() {
+  bool VideoCapturer::isSuspended() {
     return fake_device_->CaptureStarted();
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapture::DisplayOrientationChanged(
+  void VideoCapturer::DisplayOrientationChanged(
     winrt::Windows::Graphics::Display::DisplayOrientations display_orientation) {
     if (display_orientation_ != nullptr) {
       RTC_LOG(LS_WARNING) <<
@@ -1098,13 +1098,13 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapture::OnDisplayOrientationChanged(
+  void VideoCapturer::OnDisplayOrientationChanged(
     DisplayOrientations orientation) {
     ApplyDisplayOrientation(orientation);
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapture::OnIncomingFrame(
+  void VideoCapturer::OnIncomingFrame(
     uint8_t* videoFrame,
     size_t videoFrameLength,
     const VideoCaptureCapability& frameInfo) {
@@ -1184,7 +1184,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapture::OnCaptureDeviceFailed(HRESULT code,
+  void VideoCapturer::OnCaptureDeviceFailed(HRESULT code,
     winrt::hstring const& message) {
     RTC_LOG(LS_ERROR) << "Capture device failed. HRESULT: " <<
       code << " Message: " << rtc::ToUtf8(message.c_str());
@@ -1201,7 +1201,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapture::ApplyDisplayOrientation(
+  void VideoCapturer::ApplyDisplayOrientation(
     DisplayOrientations orientation) {
     if (camera_location_ == winrt::Windows::Devices::Enumeration::Panel::Unknown)
       return;
@@ -1232,9 +1232,9 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  IVideoCapturePtr IVideoCapture::create(const CreationProperties &info) noexcept
+  IVideoCapturerPtr IVideoCapturer::create(const CreationProperties &info) noexcept
   {
-    return VideoCapture::create(info);
+    return VideoCapturer::create(info);
   }
 } // namespace webrtc
 
