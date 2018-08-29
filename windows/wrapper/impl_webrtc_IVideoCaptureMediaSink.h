@@ -10,6 +10,9 @@
 #if __has_include(<winrt/windows.media.h>)
 #include <winrt/windows.media.h>
 #endif //__has_include(<winrt/windows.media.h>)
+#if __has_include(<winrt/windows.media.mediaproperties.h>)
+#include <winrt/windows.media.mediaproperties.h>
+#endif //__has_include(<winrt/windows.media.mediaproperties.h>)
 #endif //__has_include
 
 #ifdef CPPWINRT_VERSION
@@ -54,6 +57,7 @@ namespace webrtc
   
   interaction IVideoCaptureMediaSinkDelegate
   {
+    virtual void onDummyEvent(IVideoCaptureMediaSinkPtr source) = 0;
   };
 
   interaction IVideoCaptureMediaSinkSubscription
@@ -67,10 +71,12 @@ namespace webrtc
 
 ZS_DECLARE_PROXY_BEGIN(webrtc::IVideoCaptureMediaSinkDelegate)
 ZS_DECLARE_PROXY_TYPEDEF(webrtc::IVideoCaptureMediaSinkPtr, IVideoCaptureMediaSinkPtr)
+ZS_DECLARE_PROXY_METHOD(onDummyEvent, IVideoCaptureMediaSinkPtr)
 ZS_DECLARE_PROXY_END()
 
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_BEGIN(webrtc::IVideoCaptureMediaSinkDelegate, webrtc::IVideoCaptureMediaSinkSubscription)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_TYPEDEF(webrtc::IVideoCaptureMediaSinkPtr, IVideoCaptureMediaSinkPtr)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onDummyEvent, IVideoCaptureMediaSinkPtr)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_END()
 
 #endif //CPPWINRT_VERSION

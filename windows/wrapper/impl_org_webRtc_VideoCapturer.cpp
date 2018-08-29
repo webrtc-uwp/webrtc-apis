@@ -20,6 +20,7 @@
 #include "impl_org_webRtc_WebrtcLib.h"
 #include "impl_org_webRtc_enums.h"
 #include "impl_org_webRtc_VideoCapturerInputSize.h"
+#include "impl_webrtc_VideoCapturer.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #ifdef WINUWP
@@ -105,11 +106,10 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   String id
   ) noexcept
 {
-  auto factory = UseWebrtcLib::videoDeviceCaptureFactory();
-  if (!factory) return WrapperTypePtr();
-
   ::cricket::Device device(name, id);
-  auto native = factory->Create(device);
+  webrtc::IVideoCapturer::CreationProperties props;
+  auto native = NativeTypeUniPtr(
+      dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).get()));
   if (!native) return WrapperTypePtr();
 
   auto result = make_shared<WrapperImplType>();

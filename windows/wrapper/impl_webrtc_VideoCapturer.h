@@ -8,7 +8,7 @@
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "rtc_base/criticalsection.h"
-#include "modules/video_capture/video_capture_defines.h"
+#include "media/base/videocapturer.h"
 #include "system_wrappers/include/event_wrapper.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
@@ -65,12 +65,13 @@ namespace webrtc
   public:
     virtual void OnIncomingFrame(uint8_t* video_frame,
       size_t video_frame_length,
-      const VideoCaptureCapability& frame_info) = 0;
+      const cricket::VideoFormat& frame_info) = 0;
     virtual void OnCaptureDeviceFailed(HRESULT code,
       winrt::hstring const& message) = 0;
   };
 
   class VideoCapturer : public IVideoCapturer,
+    public cricket::VideoCapturer,
     public CaptureDeviceListener,
     public AppStateObserver,
     public DisplayOrientationListener
@@ -91,14 +92,16 @@ namespace webrtc
 
     std::string id() const noexcept override { return id_; }
 
-    int32_t startCapture(const VideoCaptureCapability& capability) override;
-    int32_t stopCapture() override;
-    bool captureStarted() override;
-    int32_t captureSettings(VideoCaptureCapability& settings) override;
-
     bool suspendCapture() override;
     bool resumeCapture() override;
     bool isSuspended() override;
+
+    // Overrides from cricket::VideoCapturer
+    virtual cricket::CaptureState Start(const cricket::VideoFormat& capture_format) override;
+    virtual void Stop() override;
+    virtual bool IsRunning() override;
+    virtual bool IsScreencast() const override;
+    virtual bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) override;
 
     // Overrides from AppStateObserver
     void DisplayOrientationChanged(
@@ -109,12 +112,14 @@ namespace webrtc
       winrt::Windows::Graphics::Display::DisplayOrientations orientation) override;
 
   private:
+    // Overrides from CaptureDeviceListener
     virtual void OnIncomingFrame(uint8_t* video_frame,
       size_t video_frame_length,
-      const VideoCaptureCapability& frame_info) override;
+      const cricket::VideoFormat& frame_info) override;
 
     virtual void OnCaptureDeviceFailed(HRESULT code,
       winrt::hstring const& message) override;
+
 
     virtual void ApplyDisplayOrientation(
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
@@ -127,7 +132,6 @@ namespace webrtc
     IVideoCapturerSubscriptionPtr defaultSubscription_;
 
     std::string id_;
-    VideoCaptureExternal *externalCapture_ {nullptr};
 
     char* deviceUniqueId_ { nullptr };
     rtc::CriticalSection apiCs_;
@@ -140,7 +144,7 @@ namespace webrtc
     winrt::Windows::Devices::Enumeration::Panel camera_location_;
     std::shared_ptr<DisplayOrientation> display_orientation_;
     std::shared_ptr<BlackFramesGenerator> fake_device_;
-    VideoCaptureCapability last_frame_info_;
+    cricket::VideoFormat last_frame_info_;
     winrt::Windows::Media::MediaProperties::IVideoEncodingProperties
       video_encoding_properties_;
     winrt::Windows::Media::MediaProperties::MediaEncodingProfile

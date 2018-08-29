@@ -24,6 +24,8 @@
 #include "impl_org_webRtc_EventQueue.h"
 #include "impl_org_webRtc_helpers.h"
 #include "impl_webrtc_IMediaStreamSource.h"
+#include "impl_webrtc_IVideoCapturer.h"
+#include "impl_webrtc_IVideoCaptureMediaSink.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
@@ -68,7 +70,11 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLA
 #ifdef CPPWINRT_VERSION
 ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IMediaStreamSourceDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IMediaStreamSourceDelegate, webrtc::IMediaStreamSourceSubscription)
-#endif //CPPWINRT_VERSION
+ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IVideoCapturerDelegate)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IVideoCapturerDelegate, webrtc::IVideoCapturerSubscription)
+ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IVideoCaptureMediaSinkDelegate)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IVideoCaptureMediaSinkDelegate, webrtc::IVideoCaptureMediaSinkSubscription)
+#endif  // CPPWINRT_VERSION
 #endif //WINUWP
 
 // borrow definitions from class

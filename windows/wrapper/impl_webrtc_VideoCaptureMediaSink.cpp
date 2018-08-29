@@ -1699,7 +1699,7 @@ namespace webrtc
       IVideoCaptureMediaSink::CreationProperties info;
       info.encodingProperties_ = encodingProperties;
       info.callback_ =
-        std::make_shared<ISinkCallback>(VideoCaptureSinkCallback(std::shared_ptr<VideoCaptureMediaSinkProxy>(this)));
+        std::make_shared<VideoCaptureSinkCallback>(std::shared_ptr<VideoCaptureMediaSinkProxy>(this));
       IMediaExtension mediaExtension = IVideoCaptureMediaSink::create(info);
       if (!mediaExtension) {
         winrt::throw_hresult(E_NOINTERFACE);

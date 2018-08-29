@@ -42,8 +42,8 @@ namespace webrtc
 
   class ISinkCallback {
   public:
-    void OnSample(std::shared_ptr<MediaSampleEventArgs> args);
-    void OnShutdown();
+    virtual void OnSample(std::shared_ptr<MediaSampleEventArgs> args) = 0;
+    virtual void OnShutdown() = 0;
   };
 
   interface DECLSPEC_UUID("3AC82233-933C-43a9-AF3D-ADC94EABF406") DECLSPEC_NOVTABLE IMarker : public IUnknown
@@ -366,11 +366,11 @@ namespace webrtc
   private:
     class VideoCaptureSinkCallback : public ISinkCallback {
     public:
-      virtual void OnSample(std::shared_ptr<MediaSampleEventArgs> args) {
+      virtual void OnSample(std::shared_ptr<MediaSampleEventArgs> args) override {
         _parent.lock()->OnSample(args);
       }
 
-      virtual void OnShutdown() {
+      virtual void OnShutdown() override {
         _parent.lock()->OnShutdown();
       }
 

@@ -7,6 +7,9 @@
 #if __has_include(<winrt/windows.media.core.h>)
 #include <winrt/windows.media.core.h>
 #endif //__has_include(<winrt/windows.media.core.h>)
+#if __has_include(<winrt/windows.media.devices.h>)
+#include <winrt/windows.media.devices.h>
+#endif //__has_include(<winrt/windows.media.devices.h>)
 #if __has_include(<winrt/windows.system.threading.h>)
 #include <winrt/windows.system.threading.h>
 #endif //__has_include(<winrt/windows.system.threading.h>)
@@ -24,7 +27,6 @@
 #ifdef CPPWINRT_VERSION
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "modules/video_capture/video_capture_defines.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <zsLib/types.h>
@@ -50,7 +52,6 @@ namespace webrtc
       IVideoCapturerDelegatePtr delegate_;
 
       const char *id_ {};
-      VideoCaptureExternal *externalCapture_ {};
     };
 
     static IVideoCapturerPtr create(const CreationProperties &info) noexcept;
@@ -59,11 +60,6 @@ namespace webrtc
 
     virtual std::string id() const noexcept = 0;
 
-    virtual int32_t startCapture(const VideoCaptureCapability& capability) = 0;
-    virtual int32_t stopCapture() = 0;
-    virtual bool captureStarted() = 0;
-    virtual int32_t captureSettings(VideoCaptureCapability& settings) = 0;
-
     virtual bool suspendCapture() = 0;
     virtual bool resumeCapture() = 0;
     virtual bool isSuspended() = 0;
@@ -71,6 +67,9 @@ namespace webrtc
   
   interaction IVideoCapturerDelegate
   {
+    virtual void onDummyEvent(
+      IVideoCapturerPtr source
+    ) = 0;
   };
 
   interaction IVideoCapturerSubscription
@@ -84,10 +83,12 @@ namespace webrtc
 
 ZS_DECLARE_PROXY_BEGIN(webrtc::IVideoCapturerDelegate)
 ZS_DECLARE_PROXY_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
+ZS_DECLARE_PROXY_METHOD(onDummyEvent, IVideoCapturerPtr)
 ZS_DECLARE_PROXY_END()
 
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_BEGIN(webrtc::IVideoCapturerDelegate, webrtc::IVideoCapturerSubscription)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onDummyEvent, IVideoCapturerPtr)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_END()
 
 #endif //CPPWINRT_VERSION
