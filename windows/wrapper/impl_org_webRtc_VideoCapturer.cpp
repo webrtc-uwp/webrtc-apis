@@ -106,10 +106,10 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   String id
   ) noexcept
 {
-  ::cricket::Device device(name, id);
   webrtc::IVideoCapturer::CreationProperties props;
-  auto native = NativeTypeUniPtr(
-      dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).get()));
+  props.name_ = name.c_str();
+  props.id_ = id.c_str();
+  auto native = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
   if (!native) return WrapperTypePtr();
 
   auto result = make_shared<WrapperImplType>();

@@ -401,7 +401,7 @@ namespace webrtc
     if (SUCCEEDED(hr)) {
       if (SUCCEEDED(hr)) {
         winrt::com_ptr<IMFSample> cpSample;
-        cpSample.attach(pSample);
+        cpSample.copy_from(pSample);
         _sampleQueue.push(cpSample);
       }
 
@@ -702,6 +702,7 @@ namespace webrtc
     HRESULT hr = S_OK;
 
     // Create the event queue helper.
+    _spEventQueue = nullptr;
     hr = MFCreateEventQueue(_spEventQueue.put());
 
     // Allocate a new work queue for async operations.
@@ -711,7 +712,7 @@ namespace webrtc
     }
 
     if (SUCCEEDED(hr)) {
-      _spSink.attach(pParent);
+      _spSink.copy_from(pParent);
       _pParent = pParent;
       _callback = callback;
     } else {
@@ -861,10 +862,10 @@ namespace webrtc
         _sampleQueue.pop();
       }
 
-      _spSink.detach();
-      _spEventQueue.detach();
-      _spByteStream.detach();
-      _spCurrentType.detach();
+      _spSink = nullptr;
+      _spEventQueue = nullptr;
+      _spByteStream = nullptr;
+      _spCurrentType = nullptr;
 
       _isShutdown = true;
     }
@@ -997,8 +998,7 @@ namespace webrtc
       bool fProcessingSample = false;
       assert(spunkSample);
 
-      spunkSample.as(spSample);
-      if (spSample) {
+      if (spunkSample.try_as(spSample)) {
         assert(spSample);
         winrt::com_ptr<IMFMediaBuffer> spMediaBuffer;
         HRESULT hr = spSample->GetBufferByIndex(0, spMediaBuffer.put());
@@ -1012,8 +1012,7 @@ namespace webrtc
         }
       } else {
         winrt::com_ptr<IMarker> spMarker;
-        spunkSample.as(spMarker);
-        if (spMarker) {
+        if (spunkSample.try_as(spMarker)) {
           MFSTREAMSINK_MARKER_TYPE markerType;
           PROPVARIANT var;
           PropVariantInit(&var);
@@ -1058,7 +1057,7 @@ namespace webrtc
 
     // Add the media type to the sample queue.
     winrt::com_ptr<IMFMediaType> cpMediaType;
-    cpMediaType.attach(pMediaType);
+    cpMediaType.copy_from(pMediaType);
     _sampleQueue.push(cpMediaType);
 
     // Unless we are paused, start an async operation to dispatch the next sample.
@@ -1520,8 +1519,7 @@ namespace webrtc
     if (SUCCEEDED(hr)) {
       // Release the pointer to the old clock.
       // Store the pointer to the new clock.
-      _spClock = nullptr;
-      _spClock.attach(pPresentationClock);
+      _spClock.copy_from(pPresentationClock);
     } else {
       RTC_LOG_F(LS_ERROR) << "Capture media sink error: " << hr;
     }
@@ -1654,8 +1652,8 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  VideoCaptureMediaSinkProxy::VideoCaptureMediaSinkProxy(std::shared_ptr<VideoCaptureMediaSinkProxyListener> listener) :
-    listener_(listener) {
+  VideoCaptureMediaSinkProxy::VideoCaptureMediaSinkProxy(VideoCaptureMediaSinkProxyListener *listener) :
+    _listener(listener) {
   }
 
   //-----------------------------------------------------------------------------
@@ -1675,8 +1673,7 @@ namespace webrtc
     }
 
     IMediaExtension mediaExtension;
-    _mediaSink.as(mediaExtension);
-    if (!mediaExtension) {
+    if (!_mediaSink.try_as(mediaExtension)) {
       winrt::throw_hresult(E_NOINTERFACE);
     }
 
@@ -1690,7 +1687,9 @@ namespace webrtc
       IMediaEncodingProperties const& encodingProperties) {
     return concurrency::create_task([this, encodingProperties]() {
       rtc::CritScope lock(&_critSec);
-      CheckShutdown();
+      if (_shutdown) {
+        Throw(MF_E_SHUTDOWN);
+      }
 
       if (_mediaSink != nullptr) {
         Throw(MF_E_ALREADY_INITIALIZED);
@@ -1699,7 +1698,7 @@ namespace webrtc
       IVideoCaptureMediaSink::CreationProperties info;
       info.encodingProperties_ = encodingProperties;
       info.callback_ =
-        std::make_shared<VideoCaptureSinkCallback>(std::shared_ptr<VideoCaptureMediaSinkProxy>(this));
+        std::make_shared<VideoCaptureSinkCallback>(this);
       IMediaExtension mediaExtension = IVideoCaptureMediaSink::create(info);
       if (!mediaExtension) {
         winrt::throw_hresult(E_NOINTERFACE);
@@ -1713,8 +1712,8 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   void VideoCaptureMediaSinkProxy::OnSample(std::shared_ptr<MediaSampleEventArgs> args) {
-    if (listener_ != nullptr)
-      listener_->OnMediaSampleEvent(args);
+    if (_listener != nullptr)
+      _listener->OnMediaSampleEvent(args);
   }
 
   //-----------------------------------------------------------------------------
@@ -1725,13 +1724,6 @@ namespace webrtc
     }
     _shutdown = true;
     _mediaSink = nullptr;
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCaptureMediaSinkProxy::CheckShutdown() {
-    if (_shutdown) {
-      Throw(MF_E_SHUTDOWN);
-    }
   }
 }
 #endif //CPPWINRT_VERSION

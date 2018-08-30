@@ -218,12 +218,7 @@ namespace webrtc
 
     void OnMediaSampleEvent(std::shared_ptr<MediaSampleEventArgs> args) override;
 
-    winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> MediaCapture();
-
-    winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture>
-      GetMediaCapture(winrt::hstring const& device_id);
-
-    void RemoveMediaCapture(winrt::hstring const& device_id);
+    winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> GetMediaCapture();
 
   private:
     void RemovePaddingPixels(uint8_t* video_frame, size_t& video_frame_length);
@@ -238,10 +233,6 @@ namespace webrtc
       media_sink_video_sample_event_registration_token_;
 
     CaptureDeviceListener* capture_device_listener_;
-
-    std::map<winrt::hstring,
-      winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> >
-      media_capture_map_;
 
     bool capture_started_;
     VideoFormat frame_info_;
@@ -278,25 +269,19 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   void CaptureDevice::CleanupMediaCapture() {
-    winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
-    if (media_capture != nullptr) {
+    if (media_capture_) {
+      winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
       media_capture.Failed(media_capture_failed_event_registration_token_);
-      RemoveMediaCapture(device_id_);
       media_capture_ = nullptr;
     }
   }
 
   //-----------------------------------------------------------------------------
-  winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> CaptureDevice::MediaCapture() {
-    return media_capture_;
-  }
-
-  //-----------------------------------------------------------------------------
   void CaptureDevice::Cleanup() {
-    winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
-    if (media_capture == nullptr) {
+    if (!media_capture_) {
       return;
     }
+    winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
     if (capture_started_) {
       if (_stopped->Wait(5000) == kEventTimeout) {
         Concurrency::create_task([this, media_capture]() {
@@ -380,7 +365,7 @@ namespace webrtc
     }
     frame_info_.Construct(width, height, interval, fourcc);
 
-    media_capture_ = GetMediaCapture(device_id_);
+    media_capture_ = GetMediaCapture();
     media_capture_failed_event_registration_token_ =
       media_capture_.get().Failed(
         MediaCaptureFailedEventHandler(this,
@@ -392,23 +377,19 @@ namespace webrtc
       winrt::Windows::Media::Devices::MediaCaptureOptimization::LatencyThenPower);
 #endif
 
-    media_sink_ = std::make_shared<VideoCaptureMediaSinkProxy>(std::shared_ptr<CaptureDevice>(this));
+    media_sink_ = std::make_shared<VideoCaptureMediaSinkProxy>(this);
 
-    auto initOp = media_sink_->InitializeAsync(media_encoding_profile.Video());
-    auto initTask = Concurrency::create_task([this, initOp]() {
-      return initOp.get();
+    auto initTask = Concurrency::create_task([this, media_encoding_profile]() {
+      return media_sink_->InitializeAsync(media_encoding_profile.Video()).get();
       }).then([this, media_encoding_profile,
         video_encoding_properties](IMediaExtension const& media_extension) {
-      auto setPropOp =
-        media_capture_.get().VideoDeviceController().SetMediaStreamPropertiesAsync(
-          MediaStreamType::VideoRecord, video_encoding_properties);
-      return Concurrency::create_task([this, setPropOp]() {
-        return setPropOp.get();
+      return Concurrency::create_task([this, video_encoding_properties]() {
+        return media_capture_.get().VideoDeviceController().SetMediaStreamPropertiesAsync(
+          MediaStreamType::VideoRecord, video_encoding_properties).get();
         }).then([this, media_encoding_profile, media_extension]() {
-        auto startRecordOp = media_capture_.get().StartRecordToCustomSinkAsync(
-          media_encoding_profile, media_extension);
-        return Concurrency::create_task([this, startRecordOp]() {
-          return startRecordOp.get();
+        return Concurrency::create_task([this, media_encoding_profile, media_extension]() {
+          return media_capture_.get().StartRecordToCustomSinkAsync(
+            media_encoding_profile, media_extension).get();
           });
       });
     });
@@ -511,14 +492,9 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  winrt::agile_ref<MediaCapture>
-    CaptureDevice::GetMediaCapture(winrt::hstring const& device_id) {
+  winrt::agile_ref<MediaCapture> CaptureDevice::GetMediaCapture() {
 
-    // We cache MediaCapture objects
-    auto iter = media_capture_map_.find(device_id);
-    if (iter != media_capture_map_.end()) {
-      return iter->second;
-    } else {
+     if (!media_capture_) {
 #if (defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP || \
                                 defined(WINDOWS_PHONE_APP)))
       // WINDOWS_PHONE_APP is defined at gyp level to overcome the missing
@@ -532,16 +508,16 @@ namespace webrtc
       // in cache.
       // The behavior is present on Lumia620, OS version 8.10.14219.341 and
       // 10.0.10586.36
-      media_capture_map_.clear();
+      media_capture_ = nullptr;
 #endif
       winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture>
         media_capture_agile = winrt::Windows::Media::Capture::MediaCapture();
 
       Concurrency::task<void> initialize_async_task;
       auto handler = ref new Windows::UI::Core::DispatchedHandler(
-        [this, &initialize_async_task, media_capture_agile, device_id]() {
+        [this, &initialize_async_task, media_capture_agile]() {
         auto settings = MediaCaptureInitializationSettings();
-        settings.VideoDeviceId(device_id);
+        settings.VideoDeviceId(device_id_);
 
         // If Communications media category is configured, the
         // GetAvailableMediaStreamProperties will report only H264 frame format
@@ -551,9 +527,8 @@ namespace webrtc
 
         // settings.MediaCategory(
         //  winrt::Windows::Media::Capture::MediaCategory::Communications);
-        auto initOp = media_capture_agile.get().InitializeAsync(settings);
-        initialize_async_task = Concurrency::create_task([this, initOp]() {
-            return initOp.get();
+        initialize_async_task = Concurrency::create_task([this, media_capture_agile, settings]() {
+            return media_capture_agile.get().InitializeAsync(settings).get();
           }).then([this, media_capture_agile](Concurrency::task<void> initTask) {
           try {
             initTask.get();
@@ -577,18 +552,9 @@ namespace webrtc
       initialize_async_task.wait();
 
       // Cache the MediaCapture object so we don't recreate it later.
-      media_capture_map_[device_id] = media_capture_agile;
-      return media_capture_agile;
+      media_capture_ = media_capture_agile;
     }
-  }
-
-  //-----------------------------------------------------------------------------
-  void CaptureDevice::RemoveMediaCapture(winrt::hstring const& device_id) {
-
-    auto iter = media_capture_map_.find(device_id);
-    if (iter != media_capture_map_.end()) {
-      media_capture_map_.erase(iter);
-    }
+     return media_capture_;
   }
 
   //-----------------------------------------------------------------------------
@@ -810,8 +776,6 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   VideoCapturer::~VideoCapturer()
   {
-    thisWeak_.reset();
-
     if (deviceUniqueId_ != nullptr)
       delete[] deviceUniqueId_;
     if (device_ != nullptr)
@@ -825,10 +789,9 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  VideoCapturerPtr VideoCapturer::create(const CreationProperties &info) noexcept
+  VideoCapturerUniPtr VideoCapturer::create(const CreationProperties &info) noexcept
   {
-    auto result = std::make_shared<VideoCapturer>(make_private{});
-    result->thisWeak_ = result;
+    auto result = std::make_unique<VideoCapturer>(make_private{});
     result->init(info);
     return result;
   }
@@ -836,15 +799,13 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void VideoCapturer::init(const CreationProperties &props) noexcept
   {
-    id_ = String(props.id_);
+    SetId(String(props.id_));
 
     if (props.delegate_) {
       defaultSubscription_ = subscriptions_.subscribe(props.delegate_, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
     }
 
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties properties{ nullptr };
-
-    auto thisWeak = thisWeak_;
 
     rtc::CritScope cs(&apiCs_);
     const char* device_unique_id_utf8 = props.id_;
@@ -898,6 +859,51 @@ namespace webrtc
     device_->Initialize(device_id_);
 
     fake_device_ = std::make_shared<BlackFramesGenerator>(this);
+
+    std::vector<VideoFormat> formats;
+    auto mediaCapture = device_->GetMediaCapture();
+    auto streamProperties =
+      mediaCapture.get().VideoDeviceController().GetAvailableMediaStreamProperties(
+        MediaStreamType::VideoRecord);
+    for (unsigned int i = 0; i < streamProperties.Size(); i++) {
+      IVideoEncodingProperties prop;
+      streamProperties.GetAt(i).as(prop);
+
+      uint32_t fourcc;
+      if (_wcsicmp(prop.Subtype().c_str(),
+        MediaEncodingSubtypes::Yv12().c_str()) == 0) {
+        fourcc = FOURCC_YV12;
+      } else if (_wcsicmp(prop.Subtype().c_str(),
+        MediaEncodingSubtypes::Yuy2().c_str()) == 0) {
+        fourcc = FOURCC_YUY2;
+      } else if (_wcsicmp(prop.Subtype().c_str(),
+        MediaEncodingSubtypes::Iyuv().c_str()) == 0) {
+        fourcc = FOURCC_IYUV;
+      } else if (_wcsicmp(prop.Subtype().c_str(),
+        MediaEncodingSubtypes::Rgb24().c_str()) == 0) {
+        fourcc = FOURCC_24BG;
+      } else if (_wcsicmp(prop.Subtype().c_str(),
+        MediaEncodingSubtypes::Rgb32().c_str()) == 0) {
+        fourcc = FOURCC_ARGB;
+      } else if (_wcsicmp(prop.Subtype().c_str(),
+        MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
+        fourcc = FOURCC_MJPG;
+      } else if (_wcsicmp(prop.Subtype().c_str(),
+        MediaEncodingSubtypes::Nv12().c_str()) == 0) {
+        fourcc = FOURCC_NV12;
+      } else {
+        fourcc = 0;
+      }
+      
+      VideoFormat format;
+      format.fourcc = fourcc;
+      format.width = prop.Width();
+      format.height = prop.Height();
+      format.interval = VideoFormat::FpsToInterval(prop.FrameRate().Numerator()/ prop.FrameRate().Denominator());
+
+      formats.push_back(format);
+    }
+    SetSupportedFormats(formats);
   }
 
   //-----------------------------------------------------------------------------
@@ -909,10 +915,6 @@ namespace webrtc
     auto subscription = subscriptions_.subscribe(originalDelegate, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
 
     auto delegate = subscriptions_.delegate(subscription, true);
-
-    if (delegate) {
-      auto pThis = thisWeak_.lock();
-    }
 
     return subscription;
   }
@@ -994,7 +996,7 @@ namespace webrtc
     int min_width_diff = INT_MAX;
     int min_height_diff = INT_MAX;
     int min_fps_diff = INT_MAX;
-    auto mediaCapture = device_->GetMediaCapture(device_id_);
+    auto mediaCapture = device_->GetMediaCapture();
     auto streamProperties =
       mediaCapture.get().VideoDeviceController().GetAvailableMediaStreamProperties(
         MediaStreamType::VideoRecord);
@@ -1052,6 +1054,8 @@ namespace webrtc
 
     SetCaptureFormat(&capture_format);
 
+    SetCaptureState(CS_RUNNING);
+
     return CS_RUNNING;
   }
 
@@ -1071,7 +1075,7 @@ namespace webrtc
       return;
     }
     SetCaptureFormat(nullptr);
-    SignalStateChange(this, CS_STOPPED);
+    SetCaptureState(CS_STOPPED);
   }
 
   //-----------------------------------------------------------------------------
@@ -1086,8 +1090,17 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  bool VideoCapturer::GetPreferredFourccs(std::vector<uint32_t>* /*fourccs*/) {
-    return false;
+  bool VideoCapturer::GetPreferredFourccs(std::vector<uint32_t>* fourccs) {
+    if (!fourccs) {
+      return false;
+    }
+
+    fourccs->clear();
+    fourccs->push_back(FOURCC_I420);
+    fourccs->push_back(FOURCC_NV12);
+    fourccs->push_back(FOURCC_MJPG);
+
+    return true;
   }
 
   //-----------------------------------------------------------------------------
@@ -1228,7 +1241,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  IVideoCapturerPtr IVideoCapturer::create(const CreationProperties &info) noexcept
+  IVideoCapturerUniPtr IVideoCapturer::create(const CreationProperties &info) noexcept
   {
     return VideoCapturer::create(info);
   }

@@ -51,10 +51,11 @@ namespace webrtc
     {
       IVideoCapturerDelegatePtr delegate_;
 
+      const char *name_ {};
       const char *id_ {};
-    };
+  };
 
-    static IVideoCapturerPtr create(const CreationProperties &info) noexcept;
+    static IVideoCapturerUniPtr create(const CreationProperties &info) noexcept;
 
     virtual IVideoCapturerSubscriptionPtr subscribe(IVideoCapturerDelegatePtr delegate) = 0;
 

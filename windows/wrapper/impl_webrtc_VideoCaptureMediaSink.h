@@ -354,7 +354,7 @@ namespace webrtc
 
   class VideoCaptureMediaSinkProxy {
   public:
-    VideoCaptureMediaSinkProxy(std::shared_ptr<VideoCaptureMediaSinkProxyListener> listener);
+    VideoCaptureMediaSinkProxy(VideoCaptureMediaSinkProxyListener *listener);
     virtual ~VideoCaptureMediaSinkProxy();
 
     winrt::Windows::Media::IMediaExtension GetMFExtension();
@@ -367,32 +367,30 @@ namespace webrtc
     class VideoCaptureSinkCallback : public ISinkCallback {
     public:
       virtual void OnSample(std::shared_ptr<MediaSampleEventArgs> args) override {
-        _parent.lock()->OnSample(args);
+        _parent->OnSample(args);
       }
 
       virtual void OnShutdown() override {
-        _parent.lock()->OnShutdown();
+        _parent->OnShutdown();
       }
 
-      VideoCaptureSinkCallback(std::shared_ptr<VideoCaptureMediaSinkProxy> parent)
+      VideoCaptureSinkCallback(VideoCaptureMediaSinkProxy *parent)
         : _parent(parent) {
       }
 
     private:
-      std::weak_ptr<VideoCaptureMediaSinkProxy> _parent;
+      VideoCaptureMediaSinkProxy *_parent { nullptr };
     };
 
     void OnSample(std::shared_ptr<MediaSampleEventArgs> args);
 
     void OnShutdown();
 
-    void CheckShutdown();
-
   private:
     rtc::CriticalSection _critSec;
-    std::shared_ptr<VideoCaptureMediaSinkProxyListener> listener_;
+    VideoCaptureMediaSinkProxyListener *_listener { nullptr };
     winrt::com_ptr<IMFMediaSink> _mediaSink;
-    bool _shutdown;
+    bool _shutdown { false };
   };
 }
 

@@ -86,7 +86,7 @@ namespace webrtc
     VideoCapturer(const make_private &);
     ~VideoCapturer();
 
-    static VideoCapturerPtr create(const CreationProperties &info) noexcept;
+    static VideoCapturerUniPtr create(const CreationProperties &info) noexcept;
 
     IVideoCapturerSubscriptionPtr subscribe(IVideoCapturerDelegatePtr delegate) override;
 
@@ -125,7 +125,6 @@ namespace webrtc
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
 
   private:
-    VideoCapturerWeakPtr thisWeak_;
     mutable zsLib::RecursiveLock lock_;
 
     IVideoCapturerDelegateSubscriptions subscriptions_;
