@@ -60,10 +60,6 @@ namespace webrtc
     virtual IVideoCapturerSubscriptionPtr subscribe(IVideoCapturerDelegatePtr delegate) = 0;
 
     virtual std::string id() const noexcept = 0;
-
-    virtual bool suspendCapture() = 0;
-    virtual bool resumeCapture() = 0;
-    virtual bool isSuspended() = 0;
   };
   
   interaction IVideoCapturerDelegate

@@ -680,98 +680,10 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  class BlackFramesGenerator {
-  public:
-    virtual ~BlackFramesGenerator();
-
-    BlackFramesGenerator(CaptureDeviceListener* capture_device_listener);
-
-    void StartCapture(const VideoFormat& frame_info);
-
-    void StopCapture();
-
-    bool CaptureStarted() { return capture_started_; }
-
-    void Cleanup();
-
-    VideoFormat GetFrameInfo() { return frame_info_; }
-
-  private:
-    CaptureDeviceListener * capture_device_listener_;
-    bool capture_started_;
-    VideoFormat frame_info_;
-    ThreadPoolTimer timer_ { nullptr };
-  };
-
-  //-----------------------------------------------------------------------------
-  BlackFramesGenerator::BlackFramesGenerator(
-    CaptureDeviceListener* capture_device_listener) :
-    capture_started_(false), capture_device_listener_(capture_device_listener) {
-  }
-
-  //-----------------------------------------------------------------------------
-  BlackFramesGenerator::~BlackFramesGenerator() {
-    Cleanup();
-  }
-
-  //-----------------------------------------------------------------------------
-  void BlackFramesGenerator::StartCapture(
-    const VideoFormat& frame_info) {
-    frame_info_ = frame_info;
-    frame_info_.fourcc = FOURCC_24BG;
-
-    if (capture_started_) {
-      RTC_LOG(LS_INFO) << "Black frame generator already started";
-      winrt::throw_hresult(ERROR_INVALID_STATE);
-    }
-    RTC_LOG(LS_INFO) << "Starting black frame generator";
-
-    size_t black_frame_size = frame_info_.width * frame_info_.height * 3;
-    std::shared_ptr<std::vector<uint8_t>> black_frame(
-      new std::vector<uint8_t>(black_frame_size, 0));
-    auto handler = TimerElapsedHandler(
-      [this, black_frame_size, black_frame]
-    (ThreadPoolTimer const& /*timer*/) -> void {
-      if (this->capture_device_listener_ != nullptr) {
-        this->capture_device_listener_->OnIncomingFrame(
-          black_frame->data(),
-          black_frame_size,
-          this->frame_info_);
-      }
-    });
-    int64_t timespan_value = (int64_t)((1000 * 1000 * 10 /*1s in hns*/) /
-      VideoFormat::IntervalToFps(frame_info.interval));
-    auto timespan = winrt::Windows::Foundation::TimeSpan(timespan_value);
-    timer_ = ThreadPoolTimer::CreatePeriodicTimer(handler, timespan);
-    capture_started_ = true;
-  }
-
-  //-----------------------------------------------------------------------------
-  void BlackFramesGenerator::StopCapture() {
-    if (!capture_started_) {
-      winrt::throw_hresult(ERROR_INVALID_STATE);
-    }
-
-    RTC_LOG(LS_INFO) << "Stopping black frame generator";
-    timer_.Cancel();
-    timer_ = nullptr;
-    capture_started_ = false;
-  }
-
-  //-----------------------------------------------------------------------------
-  void BlackFramesGenerator::Cleanup() {
-    capture_device_listener_ = nullptr;
-    if (capture_started_) {
-      StopCapture();
-    }
-  }
-
-  //-----------------------------------------------------------------------------
   VideoCapturer::VideoCapturer(const make_private &) :
     device_(nullptr),
     camera_location_(Panel::Unknown),
     display_orientation_(nullptr),
-    fake_device_(nullptr),
     last_frame_info_(),
     video_encoding_properties_(nullptr),
     media_encoding_profile_(nullptr),
@@ -794,9 +706,6 @@ namespace webrtc
       delete[] deviceUniqueId_;
     if (device_ != nullptr)
       device_->Cleanup();
-    if (fake_device_ != nullptr) {
-      fake_device_->Cleanup();
-    }
     if (display_orientation_ == nullptr) {
       AppStateDispatcher::Instance()->RemoveObserver(this);
     }
@@ -872,8 +781,6 @@ namespace webrtc
 
     device_->Initialize(device_id_);
 
-    fake_device_ = std::make_shared<BlackFramesGenerator>(this);
-
     std::vector<VideoFormat> formats;
     auto mediaCapture = device_->GetMediaCapture();
     auto streamProperties =
@@ -931,36 +838,6 @@ namespace webrtc
     auto delegate = subscriptions_.delegate(subscription, true);
 
     return subscription;
-  }
-
-  //-----------------------------------------------------------------------------
-  bool VideoCapturer::suspendCapture() {
-    if (device_->CaptureStarted()) {
-      RTC_LOG(LS_INFO) << "SuspendCapture";
-      device_->StopCapture();
-      fake_device_->StartCapture(last_frame_info_);
-      return true;
-    }
-    RTC_LOG(LS_INFO) << "SuspendCapture capture is not started";
-    return false;
-  }
-
-  //-----------------------------------------------------------------------------
-  bool VideoCapturer::resumeCapture() {
-    if (fake_device_->CaptureStarted()) {
-      RTC_LOG(LS_INFO) << "ResumeCapture";
-      fake_device_->StopCapture();
-      device_->StartCapture(media_encoding_profile_,
-        video_encoding_properties_);
-      return true;
-    }
-    RTC_LOG(LS_INFO) << "ResumeCapture, capture is not started";
-    return false;
-  }
-
-  //-----------------------------------------------------------------------------
-  bool VideoCapturer::isSuspended() {
-    return fake_device_->CaptureStarted();
   }
 
   //-----------------------------------------------------------------------------
@@ -1080,9 +957,6 @@ namespace webrtc
       if (device_->CaptureStarted()) {
         device_->StopCapture();
       }
-      if (fake_device_->CaptureStarted()) {
-        fake_device_->StopCapture();
-      }
     } catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to stop capture. "
         << rtc::ToUtf8(e.message().c_str());
@@ -1095,7 +969,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   bool VideoCapturer::IsRunning() {
     rtc::CritScope cs(&apiCs_);
-    return device_->CaptureStarted() || fake_device_->CaptureStarted();
+    return device_->CaptureStarted();
   }
 
   //-----------------------------------------------------------------------------

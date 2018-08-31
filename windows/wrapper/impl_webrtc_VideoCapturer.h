@@ -92,10 +92,6 @@ namespace webrtc
 
     std::string id() const noexcept override { return id_; }
 
-    bool suspendCapture() override;
-    bool resumeCapture() override;
-    bool isSuspended() override;
-
     // Overrides from cricket::VideoCapturer
     virtual cricket::CaptureState Start(const cricket::VideoFormat& capture_format) override;
     virtual void Stop() override;
@@ -142,7 +138,6 @@ namespace webrtc
     std::shared_ptr<CaptureDevice> device_;
     winrt::Windows::Devices::Enumeration::Panel camera_location_;
     std::shared_ptr<DisplayOrientation> display_orientation_;
-    std::shared_ptr<BlackFramesGenerator> fake_device_;
     cricket::VideoFormat last_frame_info_;
     winrt::Windows::Media::MediaProperties::IVideoEncodingProperties
       video_encoding_properties_;
