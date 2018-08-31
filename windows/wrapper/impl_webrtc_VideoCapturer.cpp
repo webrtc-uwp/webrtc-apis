@@ -191,10 +191,14 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   class CaptureDevice : public ISinkCallback {
   public:
-    virtual ~CaptureDevice();
 
-  public:
+    static winrt::hstring GetVideoSubtype(uint32_t fourcc);
+
+    static uint32_t GetFourCC(winrt::hstring const& subtype);
+
     CaptureDevice(CaptureDeviceListener* capture_device_listener);
+
+    virtual ~CaptureDevice();
 
     void Initialize(winrt::hstring const& device_id);
 
@@ -240,6 +244,70 @@ namespace webrtc
     VideoFormat frame_info_;
     std::unique_ptr<webrtc::EventWrapper> _stopped;
   };
+
+  //-----------------------------------------------------------------------------
+  winrt::hstring CaptureDevice::GetVideoSubtype(uint32_t fourcc)
+  {
+    winrt::hstring subtype;
+    switch (fourcc) {
+    case FOURCC_YV12:
+      subtype = MediaEncodingSubtypes::Yv12();
+      break;
+    case FOURCC_YUY2:
+      subtype = MediaEncodingSubtypes::Yuy2();
+      break;
+    case FOURCC_I420:
+    case FOURCC_IYUV:
+      subtype = MediaEncodingSubtypes::Iyuv();
+      break;
+    case FOURCC_24BG:
+      subtype = MediaEncodingSubtypes::Rgb24();
+      break;
+    case FOURCC_ARGB:
+      subtype = MediaEncodingSubtypes::Argb32();
+      break;
+    case FOURCC_MJPG:
+      subtype = MediaEncodingSubtypes::Mjpg();
+      break;
+    case FOURCC_NV12:
+      subtype = MediaEncodingSubtypes::Nv12();
+      break;
+    default:
+      break;
+    }
+    return subtype;
+  }
+
+  //-----------------------------------------------------------------------------
+  uint32_t CaptureDevice::GetFourCC(winrt::hstring const& subtype)
+  {
+    uint32_t fourcc;
+    if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Yv12().c_str()) == 0) {
+      fourcc = FOURCC_YV12;
+    } else if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Yuy2().c_str()) == 0) {
+      fourcc = FOURCC_YUY2;
+    } else if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Iyuv().c_str()) == 0) {
+      fourcc = FOURCC_IYUV;
+    } else if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Rgb24().c_str()) == 0) {
+      fourcc = FOURCC_24BG;
+    } else if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Rgb32().c_str()) == 0) {
+      fourcc = FOURCC_ARGB;
+    } else if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
+      fourcc = FOURCC_MJPG;
+    } else if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Nv12().c_str()) == 0) {
+      fourcc = FOURCC_NV12;
+    } else {
+      fourcc = FOURCC_ANY;
+    }
+    return fourcc;
+  }
 
   //-----------------------------------------------------------------------------
   CaptureDevice::CaptureDevice(
@@ -341,31 +409,7 @@ namespace webrtc
         static_cast<float>(
           media_encoding_profile.Video().FrameRate().Denominator()));
     int64_t interval = VideoFormat::FpsToInterval(fps);
-    uint32_t fourcc;
-    if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
-      MediaEncodingSubtypes::Yv12().c_str()) == 0) {
-      fourcc = FOURCC_YV12;
-    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
-      MediaEncodingSubtypes::Yuy2().c_str()) == 0) {
-      fourcc = FOURCC_YUY2;
-    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
-      MediaEncodingSubtypes::Iyuv().c_str()) == 0) {
-      fourcc = FOURCC_IYUV;
-    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
-      MediaEncodingSubtypes::Rgb24().c_str()) == 0) {
-      fourcc = FOURCC_24BG;
-    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
-      MediaEncodingSubtypes::Rgb32().c_str()) == 0) {
-      fourcc = FOURCC_ARGB;
-    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
-      MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
-      fourcc = FOURCC_MJPG;
-    } else if (_wcsicmp(media_encoding_profile.Video().Subtype().c_str(),
-      MediaEncodingSubtypes::Nv12().c_str()) == 0) {
-      fourcc = FOURCC_NV12;
-    } else {
-      fourcc = 0;
-    }
+    uint32_t fourcc = GetFourCC(media_encoding_profile.Video().Subtype());
     frame_info_.Construct(width, height, interval, fourcc);
 
     media_capture_ = GetMediaCapture();
@@ -789,35 +833,9 @@ namespace webrtc
     for (unsigned int i = 0; i < streamProperties.Size(); i++) {
       IVideoEncodingProperties prop;
       streamProperties.GetAt(i).as(prop);
-
-      uint32_t fourcc;
-      if (_wcsicmp(prop.Subtype().c_str(),
-        MediaEncodingSubtypes::Yv12().c_str()) == 0) {
-        fourcc = FOURCC_YV12;
-      } else if (_wcsicmp(prop.Subtype().c_str(),
-        MediaEncodingSubtypes::Yuy2().c_str()) == 0) {
-        fourcc = FOURCC_YUY2;
-      } else if (_wcsicmp(prop.Subtype().c_str(),
-        MediaEncodingSubtypes::Iyuv().c_str()) == 0) {
-        fourcc = FOURCC_IYUV;
-      } else if (_wcsicmp(prop.Subtype().c_str(),
-        MediaEncodingSubtypes::Rgb24().c_str()) == 0) {
-        fourcc = FOURCC_24BG;
-      } else if (_wcsicmp(prop.Subtype().c_str(),
-        MediaEncodingSubtypes::Rgb32().c_str()) == 0) {
-        fourcc = FOURCC_ARGB;
-      } else if (_wcsicmp(prop.Subtype().c_str(),
-        MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
-        fourcc = FOURCC_MJPG;
-      } else if (_wcsicmp(prop.Subtype().c_str(),
-        MediaEncodingSubtypes::Nv12().c_str()) == 0) {
-        fourcc = FOURCC_NV12;
-      } else {
-        fourcc = 0;
-      }
       
       VideoFormat format;
-      format.fourcc = fourcc;
+      format.fourcc = CaptureDevice::GetFourCC(prop.Subtype());
       format.width = prop.Width();
       format.height = prop.Height();
       format.interval = VideoFormat::FpsToInterval(prop.FrameRate().Numerator()/ prop.FrameRate().Denominator());
@@ -844,35 +862,17 @@ namespace webrtc
   CaptureState VideoCapturer::Start(const VideoFormat& capture_format) {
 
     rtc::CritScope cs(&apiCs_);
-    winrt::hstring subtype;
-    switch (capture_format.fourcc) {
-    case FOURCC_YV12:
-      subtype = MediaEncodingSubtypes::Yv12();
-      break;
-    case FOURCC_YUY2:
-      subtype = MediaEncodingSubtypes::Yuy2();
-      break;
-    case FOURCC_I420:
-    case FOURCC_IYUV:
-      subtype = MediaEncodingSubtypes::Iyuv();
-      break;
-    case FOURCC_24BG:
-      subtype = MediaEncodingSubtypes::Rgb24();
-      break;
-    case FOURCC_ARGB:
-      subtype = MediaEncodingSubtypes::Argb32();
-      break;
-    case FOURCC_MJPG:
-      // MJPEG format is decoded internally by MF engine to NV12
-      subtype = MediaEncodingSubtypes::Nv12();
-      break;
-    case FOURCC_NV12:
-      subtype = MediaEncodingSubtypes::Nv12();
-      break;
-    default:
+
+    winrt::hstring subtype = CaptureDevice::GetVideoSubtype(capture_format.fourcc);
+    if (subtype.empty()) {
       RTC_LOG(LS_ERROR) <<
         "The specified raw video format is not supported on this plaform.";
       return CS_FAILED;
+    }
+    if (_wcsicmp(subtype.c_str(),
+      MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
+      // MJPEG format is decoded internally by MF engine to NV12
+      subtype = MediaEncodingSubtypes::Nv12();
     }
 
     media_encoding_profile_ = MediaEncodingProfile();
@@ -985,8 +985,14 @@ namespace webrtc
 
     fourccs->clear();
     fourccs->push_back(FOURCC_I420);
+    fourccs->push_back(FOURCC_YV12);
+    fourccs->push_back(FOURCC_YUY2);
+    fourccs->push_back(FOURCC_UYVY);
     fourccs->push_back(FOURCC_NV12);
+    fourccs->push_back(FOURCC_NV21);
     fourccs->push_back(FOURCC_MJPG);
+    fourccs->push_back(FOURCC_ARGB);
+    fourccs->push_back(FOURCC_24BG);
 
     return true;
   }
