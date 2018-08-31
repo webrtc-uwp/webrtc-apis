@@ -29,7 +29,6 @@ namespace webrtc
 {
   class DisplayOrientation;
   class CaptureDevice;
-  class BlackFramesGenerator;
 
   class AppStateObserver {
   public:

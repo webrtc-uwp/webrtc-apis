@@ -1074,7 +1074,7 @@ namespace webrtc
       frameInfo.fourcc);
     if (conversionResult < 0) {
       RTC_LOG(LS_ERROR) << "Failed to convert capture frame from type "
-        << static_cast<int>(frameInfo.fourcc) << "to I420.";
+        << static_cast<int>(frameInfo.fourcc) << " to I420.";
       return;
     }
 
