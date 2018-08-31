@@ -696,7 +696,7 @@ namespace webrtc
   // private methods
   HRESULT VideoCaptureStreamSink::Initialize(
     VideoCaptureMediaSink *pParent,
-    std::shared_ptr<ISinkCallback> callback) {
+    ISinkCallback *callback) {
     assert(pParent != nullptr);
 
     HRESULT hr = S_OK;
@@ -1560,7 +1560,7 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   IFACEMETHODIMP VideoCaptureMediaSink::Shutdown() {
-    std::shared_ptr<ISinkCallback> callback;
+    ISinkCallback *callback = nullptr;
     {
       rtc::CritScope lock(&_critSec);
       HRESULT hr = S_OK;
@@ -1649,81 +1649,6 @@ namespace webrtc
   IMediaExtension IVideoCaptureMediaSink::create(const CreationProperties &info) noexcept
   {
     return VideoCaptureMediaSink::create(info);
-  }
-
-  //-----------------------------------------------------------------------------
-  VideoCaptureMediaSinkProxy::VideoCaptureMediaSinkProxy(VideoCaptureMediaSinkProxyListener *listener) :
-    _listener(listener) {
-  }
-
-  //-----------------------------------------------------------------------------
-  VideoCaptureMediaSinkProxy::~VideoCaptureMediaSinkProxy() {
-    if (_mediaSink != nullptr) {
-      _mediaSink->Shutdown();
-      _mediaSink = nullptr;
-    }
-  }
-
-  //-----------------------------------------------------------------------------
-  IMediaExtension VideoCaptureMediaSinkProxy::GetMFExtension() {
-    rtc::CritScope lock(&_critSec);
-
-    if (_mediaSink == nullptr) {
-      Throw(MF_E_NOT_INITIALIZED);
-    }
-
-    IMediaExtension mediaExtension;
-    if (!_mediaSink.try_as(mediaExtension)) {
-      winrt::throw_hresult(E_NOINTERFACE);
-    }
-
-    return mediaExtension;
-  }
-
-
-  //-----------------------------------------------------------------------------
-  concurrency::task<IMediaExtension>
-    VideoCaptureMediaSinkProxy::InitializeAsync(
-      IMediaEncodingProperties const& encodingProperties) {
-    return concurrency::create_task([this, encodingProperties]() {
-      rtc::CritScope lock(&_critSec);
-      if (_shutdown) {
-        Throw(MF_E_SHUTDOWN);
-      }
-
-      if (_mediaSink != nullptr) {
-        Throw(MF_E_ALREADY_INITIALIZED);
-      }
-
-      IVideoCaptureMediaSink::CreationProperties info;
-      info.encodingProperties_ = encodingProperties;
-      info.callback_ =
-        std::make_shared<VideoCaptureSinkCallback>(this);
-      IMediaExtension mediaExtension = IVideoCaptureMediaSink::create(info);
-      if (!mediaExtension) {
-        winrt::throw_hresult(E_NOINTERFACE);
-      }
-
-      mediaExtension.as(_mediaSink);
-
-      return mediaExtension;
-    });
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCaptureMediaSinkProxy::OnSample(std::shared_ptr<MediaSampleEventArgs> args) {
-    if (_listener != nullptr)
-      _listener->OnMediaSampleEvent(args);
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCaptureMediaSinkProxy::OnShutdown() {
-    rtc::CritScope lock(&_critSec);
-    if (_shutdown) {
-      return;
-    }
-    _shutdown = true;
-    _mediaSink = nullptr;
   }
 }
 #endif //CPPWINRT_VERSION

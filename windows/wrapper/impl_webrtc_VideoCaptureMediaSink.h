@@ -223,7 +223,7 @@ namespace webrtc
     virtual ~VideoCaptureStreamSink();
 
     HRESULT Initialize(VideoCaptureMediaSink *pParent,
-      std::shared_ptr<ISinkCallback> callback);
+      ISinkCallback *callback);
 
     HRESULT Start(MFTIME start);
     HRESULT Restart();
@@ -260,7 +260,7 @@ namespace webrtc
     MFTIME _startTime;
 
     winrt::com_ptr<IMFMediaSink> _spSink;
-    VideoCaptureMediaSink* _pParent;
+    VideoCaptureMediaSink *_pParent;
 
     winrt::com_ptr<IMFMediaEventQueue> _spEventQueue;
     winrt::com_ptr<IMFByteStream> _spByteStream;
@@ -268,7 +268,7 @@ namespace webrtc
 
     std::queue<winrt::com_ptr<IUnknown> > _sampleQueue;
 
-    std::shared_ptr<ISinkCallback> _callback;
+    ISinkCallback *_callback;
     AsyncCallback<VideoCaptureStreamSink> _workQueueCB;
   };
 
@@ -341,56 +341,10 @@ namespace webrtc
     bool _isConnected;
     LONGLONG _llStartTime;
 
-    std::shared_ptr<ISinkCallback> _callback;
+    ISinkCallback *_callback;
 
     winrt::com_ptr<IMFStreamSink> _spStreamSink;
     winrt::com_ptr<IMFPresentationClock> _spClock;
-  };
-
-  class VideoCaptureMediaSinkProxyListener {
-  public:
-    virtual void OnMediaSampleEvent(std::shared_ptr<MediaSampleEventArgs> args) = 0;
-  };
-
-  class VideoCaptureMediaSinkProxy {
-  public:
-    VideoCaptureMediaSinkProxy(VideoCaptureMediaSinkProxyListener *listener);
-    virtual ~VideoCaptureMediaSinkProxy();
-
-    winrt::Windows::Media::IMediaExtension GetMFExtension();
-
-    concurrency::task<winrt::Windows::Media::IMediaExtension>
-      InitializeAsync(winrt::Windows::Media::MediaProperties::IMediaEncodingProperties
-        const& encodingProperties);
-
-  private:
-    class VideoCaptureSinkCallback : public ISinkCallback {
-    public:
-      virtual void OnSample(std::shared_ptr<MediaSampleEventArgs> args) override {
-        _parent->OnSample(args);
-      }
-
-      virtual void OnShutdown() override {
-        _parent->OnShutdown();
-      }
-
-      VideoCaptureSinkCallback(VideoCaptureMediaSinkProxy *parent)
-        : _parent(parent) {
-      }
-
-    private:
-      VideoCaptureMediaSinkProxy *_parent { nullptr };
-    };
-
-    void OnSample(std::shared_ptr<MediaSampleEventArgs> args);
-
-    void OnShutdown();
-
-  private:
-    rtc::CriticalSection _critSec;
-    VideoCaptureMediaSinkProxyListener *_listener { nullptr };
-    winrt::com_ptr<IMFMediaSink> _mediaSink;
-    bool _shutdown { false };
   };
 }
 

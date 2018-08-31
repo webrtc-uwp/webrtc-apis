@@ -189,7 +189,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  class CaptureDevice : public VideoCaptureMediaSinkProxyListener {
+  class CaptureDevice : public ISinkCallback {
   public:
     virtual ~CaptureDevice();
 
@@ -216,7 +216,9 @@ namespace webrtc
     void OnCaptureFailed(winrt::Windows::Media::Capture::MediaCapture const&  sender,
       winrt::Windows::Media::Capture::MediaCaptureFailedEventArgs const& error_event_args);
 
-    void OnMediaSampleEvent(std::shared_ptr<MediaSampleEventArgs> args) override;
+    void OnSample(std::shared_ptr<MediaSampleEventArgs> args) override;
+
+    void OnShutdown() override;
 
     winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> GetMediaCapture();
 
@@ -226,7 +228,7 @@ namespace webrtc
   private:
     winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> media_capture_;
     winrt::hstring device_id_;
-    std::shared_ptr<VideoCaptureMediaSinkProxy> media_sink_;
+    winrt::com_ptr<IMFMediaSink> media_sink_;
     winrt::event_token
       media_capture_failed_event_registration_token_;
     winrt::event_token
@@ -262,7 +264,8 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void CaptureDevice::CleanupSink() {
     if (media_sink_ != nullptr) {
-      media_sink_.reset();
+      media_sink_->Shutdown();
+      media_sink_ = nullptr;
       capture_started_ = false;
     }
   }
@@ -377,11 +380,17 @@ namespace webrtc
       winrt::Windows::Media::Devices::MediaCaptureOptimization::LatencyThenPower);
 #endif
 
-    media_sink_ = std::make_shared<VideoCaptureMediaSinkProxy>(this);
-
     auto initTask = Concurrency::create_task([this, media_encoding_profile]() {
-      return media_sink_->InitializeAsync(media_encoding_profile.Video()).get();
-      }).then([this, media_encoding_profile,
+      IVideoCaptureMediaSink::CreationProperties info;
+      info.encodingProperties_ = media_encoding_profile.Video();
+      info.callback_ = this;
+      IMediaExtension mediaExtension = IVideoCaptureMediaSink::create(info);
+      if (!mediaExtension) {
+        winrt::throw_hresult(E_NOINTERFACE);
+      }
+      mediaExtension.as(media_sink_);
+      return mediaExtension;
+    }).then([this, media_encoding_profile,
         video_encoding_properties](IMediaExtension const& media_extension) {
       return Concurrency::create_task([this, video_encoding_properties]() {
         return media_capture_.get().VideoDeviceController().SetMediaStreamPropertiesAsync(
@@ -447,7 +456,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void CaptureDevice::OnMediaSampleEvent(std::shared_ptr<MediaSampleEventArgs> args)
+  void CaptureDevice::OnSample(std::shared_ptr<MediaSampleEventArgs> args)
   {
     if (capture_device_listener_) {
       winrt::com_ptr<IMFSample> spMediaSample = args->GetMediaSample();
@@ -489,6 +498,11 @@ namespace webrtc
         RTC_LOG(LS_ERROR) << "Failed to send media sample. " << hr;
       }
     }
+  }
+
+  //-----------------------------------------------------------------------------
+  void CaptureDevice::OnShutdown()
+  {
   }
 
   //-----------------------------------------------------------------------------

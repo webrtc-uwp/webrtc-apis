@@ -42,7 +42,7 @@ namespace webrtc
     struct CreationProperties
     {
       IVideoCaptureMediaSinkDelegatePtr delegate_;
-      std::shared_ptr<ISinkCallback> callback_;
+      ISinkCallback *callback_;
       winrt::Windows::Media::MediaProperties::IMediaEncodingProperties encodingProperties_;
 
       const char *id_{};
