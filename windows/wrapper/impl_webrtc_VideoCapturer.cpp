@@ -8,10 +8,14 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
+#include <condition_variable>
 #include <Mferror.h>
 
 #include <zsLib/String.h>
 #include <zsLib/IMessageQueueThread.h>
+
+#include "impl_org_webRtc_WebrtcLib.h"
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "media/base/videocommon.h"
@@ -58,29 +62,10 @@ using winrt::Windows::Foundation::Collections::IVectorView;
 
 using namespace cricket;
 
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
+
 namespace webrtc
 {
-
-  //-----------------------------------------------------------------------------
-  void RunOnCoreDispatcher(std::function<void()> fn, bool async) {
-    Windows::UI::Core::CoreDispatcher^ windowDispatcher =
-      VideoCommonWinUWP::GetCoreDispatcher();
-    if (windowDispatcher != nullptr) {
-      auto handler = ref new Windows::UI::Core::DispatchedHandler([fn]() {
-        fn();
-      });
-      auto action = windowDispatcher->RunAsync(
-        Windows::UI::Core::CoreDispatcherPriority::Normal, handler);
-      if (async) {
-        Concurrency::create_task(action);
-      } else {
-        Concurrency::create_task(action).wait();
-      }
-    } else {
-      fn();
-    }
-  }
-
   //-----------------------------------------------------------------------------
   AppStateDispatcher* AppStateDispatcher::instance_ = NULL;
 
@@ -151,16 +136,22 @@ namespace webrtc
     auto tmpDisplayInfo = display_info_;
     auto tmpToken = orientation_changed_registration_token_;
     if (tmpDisplayInfo != nullptr) {
-      RunOnCoreDispatcher([tmpDisplayInfo, tmpToken]() {
+      auto queue = UseWebrtcLib::delegateQueue();
+      ZS_ASSERT(queue);
+      queue->postClosure([tmpDisplayInfo, tmpToken]() {
         tmpDisplayInfo.OrientationChanged(tmpToken);
-      }, true);  // Run async because it can deadlock with core thread.
+      });  // Run async because it can deadlock with core thread.
     }
   }
 
   //-----------------------------------------------------------------------------
   DisplayOrientation::DisplayOrientation(DisplayOrientationListener* listener)
     : listener_(listener) {
-    RunOnCoreDispatcher([this]() {
+    std::mutex mutex;
+    std::condition_variable condition_variable;
+    auto queue = UseWebrtcLib::delegateQueue();
+    ZS_ASSERT(queue);
+    queue->postClosure([this, &condition_variable]() {
       // GetForCurrentView() only works on a thread associated with
       // a CoreWindow.  If this doesn't work because we're running in
       // a background task then the orientation needs to come from the
@@ -177,7 +168,12 @@ namespace webrtc
         orientation_ = winrt::Windows::Graphics::Display::DisplayOrientations::Portrait;
         RTC_LOG(LS_ERROR) << "DisplayOrientation could not be initialized.";
       }
+      condition_variable.notify_one();
     });
+    {
+      std::unique_lock<std::mutex> lock(mutex);
+      condition_variable.wait(lock);
+    }
   }
 
   //-----------------------------------------------------------------------------
@@ -552,7 +548,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   winrt::agile_ref<MediaCapture> CaptureDevice::GetMediaCapture() {
 
-     if (!media_capture_) {
+    if (!media_capture_) {
 #if (defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP || \
                                 defined(WINDOWS_PHONE_APP)))
       // WINDOWS_PHONE_APP is defined at gyp level to overcome the missing
@@ -571,9 +567,13 @@ namespace webrtc
       winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture>
         media_capture_agile = winrt::Windows::Media::Capture::MediaCapture();
 
+      std::mutex mutex;
+      std::condition_variable condition_variable;
+      auto queue = UseWebrtcLib::delegateQueue();
+      ZS_ASSERT(queue);
+
       Concurrency::task<void> initialize_async_task;
-      auto handler = ref new Windows::UI::Core::DispatchedHandler(
-        [this, &initialize_async_task, media_capture_agile]() {
+      queue->postClosure([this, &initialize_async_task, media_capture_agile, &condition_variable]() {
         auto settings = MediaCaptureInitializationSettings();
         settings.VideoDeviceId(device_id_);
 
@@ -586,8 +586,8 @@ namespace webrtc
         // settings.MediaCategory(
         //  winrt::Windows::Media::Capture::MediaCategory::Communications);
         initialize_async_task = Concurrency::create_task([this, media_capture_agile, settings]() {
-            return media_capture_agile.get().InitializeAsync(settings).get();
-          }).then([this, media_capture_agile](Concurrency::task<void> initTask) {
+          return media_capture_agile.get().InitializeAsync(settings).get();
+        }).then([this, media_capture_agile](Concurrency::task<void> initTask) {
           try {
             initTask.get();
           } catch (winrt::hresult_error const& e) {
@@ -596,15 +596,12 @@ namespace webrtc
               << rtc::ToUtf8(e.message().c_str());
           }
         });
+        condition_variable.notify_one();
       });
 
-      Windows::UI::Core::CoreDispatcher^ windowDispatcher = VideoCommonWinUWP::GetCoreDispatcher();
-      if (windowDispatcher != nullptr) {
-        auto dispatcher_action = windowDispatcher->RunAsync(
-          Windows::UI::Core::CoreDispatcherPriority::Normal, handler);
-        Concurrency::create_task(dispatcher_action).wait();
-      } else {
-        handler();
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        condition_variable.wait(lock);
       }
 
       initialize_async_task.wait();
@@ -612,7 +609,7 @@ namespace webrtc
       // Cache the MediaCapture object so we don't recreate it later.
       media_capture_ = media_capture_agile;
     }
-     return media_capture_;
+    return media_capture_;
   }
 
   //-----------------------------------------------------------------------------
@@ -733,7 +730,7 @@ namespace webrtc
     media_encoding_profile_(nullptr),
     subscriptions_(decltype(subscriptions_)::create())
   {
-    if (VideoCommonWinUWP::GetCoreDispatcher() == nullptr) {
+    if (UseWebrtcLib::delegateQueue() == nullptr) {
       RTC_LOG(LS_INFO) << "Using AppStateDispatcher as orientation source";
       AppStateDispatcher::Instance()->AddObserver(this);
     } else {

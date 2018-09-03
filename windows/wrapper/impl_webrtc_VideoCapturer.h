@@ -143,10 +143,6 @@ namespace webrtc
     winrt::Windows::Media::MediaProperties::MediaEncodingProfile
       media_encoding_profile_;
   };
-
-  // Helper function to run code on the WinUWP CoreDispatcher
-  // and only return once the call completed.
-  void RunOnCoreDispatcher(std::function<void()> fn, bool async = false);
 }
 
 #endif //CPPWINRT_VERSION
