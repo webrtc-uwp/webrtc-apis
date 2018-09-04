@@ -67,50 +67,6 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 namespace webrtc
 {
   //-----------------------------------------------------------------------------
-  AppStateDispatcher* AppStateDispatcher::instance_ = NULL;
-
-  //-----------------------------------------------------------------------------
-  AppStateDispatcher* AppStateDispatcher::Instance() {
-    if (!instance_)
-      instance_ = new AppStateDispatcher;
-    return instance_;
-  }
-
-  //-----------------------------------------------------------------------------
-  AppStateDispatcher::AppStateDispatcher() :
-    display_orientation_(DisplayOrientations::Portrait) {
-  }
-
-  //-----------------------------------------------------------------------------
-  void AppStateDispatcher::DisplayOrientationChanged(
-    DisplayOrientations display_orientation) {
-    display_orientation_ = display_orientation;
-    for (auto obs_it = observers_.begin(); obs_it != observers_.end(); ++obs_it) {
-      (*obs_it)->DisplayOrientationChanged(display_orientation);
-    }
-  }
-
-  //-----------------------------------------------------------------------------
-  DisplayOrientations AppStateDispatcher::GetOrientation() const {
-    return display_orientation_;
-  }
-
-  //-----------------------------------------------------------------------------
-  void AppStateDispatcher::AddObserver(AppStateObserver* observer) {
-    observers_.push_back(observer);
-  }
-
-  //-----------------------------------------------------------------------------
-  void AppStateDispatcher::RemoveObserver(AppStateObserver* observer) {
-    for (auto obs_it = observers_.begin(); obs_it != observers_.end(); ++obs_it) {
-      if (*obs_it == observer) {
-        observers_.erase(obs_it);
-        break;
-      }
-    }
-  }
-
-  //-----------------------------------------------------------------------------
   class DisplayOrientation {
   public:
     virtual ~DisplayOrientation();
@@ -126,9 +82,8 @@ namespace webrtc
     DisplayOrientationListener * listener_;
     winrt::Windows::Graphics::Display::DisplayInformation display_info_{ nullptr };
     winrt::Windows::Graphics::Display::DisplayOrientations orientation_
-    { winrt::Windows::Graphics::Display::DisplayOrientations::None };
-    winrt::event_token
-      orientation_changed_registration_token_;
+      { winrt::Windows::Graphics::Display::DisplayOrientations::None };
+    winrt::event_token orientation_changed_registration_token_;
   };
 
   //-----------------------------------------------------------------------------
@@ -730,14 +685,8 @@ namespace webrtc
     media_encoding_profile_(nullptr),
     subscriptions_(decltype(subscriptions_)::create())
   {
-    if (UseWebrtcLib::delegateQueue() == nullptr) {
-      RTC_LOG(LS_INFO) << "Using AppStateDispatcher as orientation source";
-      AppStateDispatcher::Instance()->AddObserver(this);
-    } else {
-      // DisplayOrientation needs access to UI thread.
-      RTC_LOG(LS_INFO) << "Using local detection for orientation source";
-      display_orientation_ = std::make_shared<DisplayOrientation>(this);
-    }
+    RTC_LOG(LS_INFO) << "Using local detection for orientation source";
+    display_orientation_ = std::make_shared<DisplayOrientation>(this);
   }
 
   //-----------------------------------------------------------------------------
@@ -747,9 +696,6 @@ namespace webrtc
       delete[] deviceUniqueId_;
     if (device_ != nullptr)
       device_->Cleanup();
-    if (display_orientation_ == nullptr) {
-      AppStateDispatcher::Instance()->RemoveObserver(this);
-    }
   }
 
   //-----------------------------------------------------------------------------
@@ -926,11 +872,7 @@ namespace webrtc
       }
     }
     try {
-      if (display_orientation_) {
-        ApplyDisplayOrientation(display_orientation_->Orientation());
-      } else {
-        ApplyDisplayOrientation(AppStateDispatcher::Instance()->GetOrientation());
-      }
+      ApplyDisplayOrientation(display_orientation_->Orientation());
       device_->StartCapture(media_encoding_profile_,
         video_encoding_properties_);
       last_frame_info_ = capture_format;
@@ -992,17 +934,6 @@ namespace webrtc
     fourccs->push_back(FOURCC_24BG);
 
     return true;
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCapturer::DisplayOrientationChanged(
-    winrt::Windows::Graphics::Display::DisplayOrientations display_orientation) {
-    if (display_orientation_ != nullptr) {
-      RTC_LOG(LS_WARNING) <<
-        "Ignoring orientation change notification from AppStateDispatcher";
-      return;
-    }
-    ApplyDisplayOrientation(display_orientation);
   }
 
   //-----------------------------------------------------------------------------

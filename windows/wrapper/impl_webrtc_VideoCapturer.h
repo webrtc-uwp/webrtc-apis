@@ -30,30 +30,6 @@ namespace webrtc
   class DisplayOrientation;
   class CaptureDevice;
 
-  class AppStateObserver {
-  public:
-    virtual void DisplayOrientationChanged(
-      winrt::Windows::Graphics::Display::DisplayOrientations display_orientation) = 0;
-  };
-
-  class AppStateDispatcher : public AppStateObserver {
-  public:
-    static AppStateDispatcher* Instance();
-
-    void DisplayOrientationChanged(
-      winrt::Windows::Graphics::Display::DisplayOrientations display_orientation);
-    winrt::Windows::Graphics::Display::DisplayOrientations GetOrientation() const;
-    void AddObserver(AppStateObserver* observer);
-    void RemoveObserver(AppStateObserver* observer);
-
-  private:
-    AppStateDispatcher();
-
-    std::vector<AppStateObserver*> observers_;
-    static AppStateDispatcher* instance_;
-    winrt::Windows::Graphics::Display::DisplayOrientations display_orientation_;
-  };
-
   class DisplayOrientationListener {
   public:
     virtual void OnDisplayOrientationChanged(
@@ -72,7 +48,6 @@ namespace webrtc
   class VideoCapturer : public IVideoCapturer,
     public cricket::VideoCapturer,
     public CaptureDeviceListener,
-    public AppStateObserver,
     public DisplayOrientationListener
   {
   private:
@@ -97,10 +72,6 @@ namespace webrtc
     virtual bool IsRunning() override;
     virtual bool IsScreencast() const override;
     virtual bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) override;
-
-    // Overrides from AppStateObserver
-    void DisplayOrientationChanged(
-      winrt::Windows::Graphics::Display::DisplayOrientations display_orientation) override;
 
     // Overrides from DisplayOrientationListener
     void OnDisplayOrientationChanged(
