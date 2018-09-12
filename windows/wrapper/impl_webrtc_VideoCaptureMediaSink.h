@@ -286,7 +286,7 @@ namespace webrtc
 
   public:
     VideoCaptureMediaSink();
-    ~VideoCaptureMediaSink();
+    virtual ~VideoCaptureMediaSink();
 
     static winrt::Windows::Media::IMediaExtension create(const CreationProperties &info) noexcept;
 

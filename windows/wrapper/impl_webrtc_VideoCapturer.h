@@ -58,7 +58,7 @@ namespace webrtc
 
   public:
     VideoCapturer(const make_private &);
-    ~VideoCapturer();
+    virtual ~VideoCapturer();
 
     static VideoCapturerUniPtr create(const CreationProperties &info) noexcept;
 
