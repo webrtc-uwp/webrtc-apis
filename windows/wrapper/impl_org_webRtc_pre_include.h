@@ -5,6 +5,7 @@
 #pragma warning(disable: 4458)
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4242)
+#pragma warning(disable: 4996)
 #endif //_MSC_VER
 
 namespace cricket
