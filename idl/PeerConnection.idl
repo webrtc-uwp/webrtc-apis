@@ -167,17 +167,6 @@ namespace org
       [default]
       PromiseWithDescription createOffer(RTCOfferOptions options);
       /// <summary>
-      /// The createOffer method generates a blob of SDP that contains an RFC 3264
-      /// offer with the supported configurations for the session, including
-      /// descriptions of the local MediaStreamTracks attached to this
-      /// RTCPeerConnection, the codec/RTP/RTCP capabilities supported by this
-      /// implementation, and parameters of the ICE agent and the DTLS connection.
-      /// The options parameter may be supplied to provide additional control over
-      /// the offer generated.
-      /// </summary>
-      [altname(createOfferWithConstraints)]
-      PromiseWithDescription createOffer(MediaConstraints constraints);
-      /// <summary>
       /// The createAnswer method generates an [SDP] answer with the supported
       /// configuration for the session that is compatible with the parameters in
       /// the remote configuration. Like createOffer, the returned blob of SDP contains
@@ -188,17 +177,6 @@ namespace org
       /// </summary>
       [default]
       PromiseWithDescription createAnswer(RTCAnswerOptions options);
-      /// <summary>
-      /// The createAnswer method generates an [SDP] answer with the supported
-      /// configuration for the session that is compatible with the parameters in
-      /// the remote configuration. Like createOffer, the returned blob of SDP contains
-      /// descriptions of the local MediaStreamTracks attached to this RTCPeerConnection,
-      /// the codec/RTP/RTCP options negotiated for this session, and any candidates
-      /// that have been gathered by the ICE Agent. The options parameter may be
-      /// supplied to provide additional control over the generated answer.
-      /// </summary>
-      [altname(createAnswerWithConstraints)]
-      PromiseWithDescription createAnswer(MediaConstraints constraints);
 
       /// <summary>
       /// The setLocalDescription method instructs the RTCPeerConnection to

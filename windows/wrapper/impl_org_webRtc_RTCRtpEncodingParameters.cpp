@@ -82,8 +82,12 @@ static void apply(const NativeType &from, WrapperImplType &to) noexcept
     to.maxFramerate = decltype(to.maxFramerate)::value_type(from.max_framerate.value());
   }
 
-  to.scaleResolutionDownBy = from.scale_resolution_down_by;
-  to.scaleFramerateDownBy = from.scale_framerate_down_by;
+  if (from.max_framerate.has_value()) {
+    to.scaleResolutionDownBy = from.scale_resolution_down_by.value();
+  }
+  if (from.scale_framerate_down_by.has_value()) {
+    to.scaleFramerateDownBy = from.scale_framerate_down_by.value();
+  }
 
   to.dependencyEncodingIds = make_shared< list<String> >();
   if (from.dependency_rids.size() > 0) {
@@ -116,8 +120,12 @@ static void apply(const WrapperImplType &from, NativeType &to) noexcept
     to.max_framerate = int(from.maxFramerate.value());
   }
 
-  to.scale_resolution_down_by = from.scaleResolutionDownBy;
-  to.scale_framerate_down_by = from.scaleFramerateDownBy;
+  if (from.scaleResolutionDownBy.has_value()) {
+    to.scale_resolution_down_by = from.scaleResolutionDownBy.value();
+  }
+  if (from.scaleFramerateDownBy.has_value()) {
+    to.scale_framerate_down_by = from.scaleFramerateDownBy.value();
+  }
 
   if (from.dependencyEncodingIds) {
     for (auto iter = from.dependencyEncodingIds->begin(); iter != from.dependencyEncodingIds->end(); ++iter) {

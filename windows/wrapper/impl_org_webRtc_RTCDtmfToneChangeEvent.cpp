@@ -45,15 +45,23 @@ wrapper::impl::org::webRtc::RTCDtmfToneChangeEvent::~RTCDtmfToneChangeEvent() no
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCDtmfToneChangeEvent::get_tone() noexcept
 {
-  String result {};
-  return result;
+  return tone_;
 }
 
 //------------------------------------------------------------------------------
-WrapperImplTypePtr WrapperImplType::toWrapper(const String &tone) noexcept
+String wrapper::impl::org::webRtc::RTCDtmfToneChangeEvent::get_toneBuffer() noexcept
+{
+  return toneBuffer_;
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  const String &tone,
+  const String &toneBuffer) noexcept
 {
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
   result->tone_ = tone;
+  result->toneBuffer_ = toneBuffer;
   return result;
 }

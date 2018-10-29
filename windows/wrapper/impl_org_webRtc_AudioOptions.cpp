@@ -97,15 +97,6 @@ static void apply(const NativeType &from, WrapperImplType &to)
   if (from.experimental_ns.has_value()) {
     to.experimentalNs = from.experimental_ns.value();
   }
-  if (from.intelligibility_enhancer.has_value()) {
-    to.intelligibilityEnhancer = from.intelligibility_enhancer.value();
-  }
-  if (from.level_control.has_value()) {
-    to.levelControl = from.level_control.value();
-  }
-  if (from.level_control_initial_peak_level_dbfs.has_value()) {
-    to.levelControlInitialPeakLevelDbfs = from.level_control_initial_peak_level_dbfs.value();
-  }
   if (from.residual_echo_detector.has_value()) {
     to.residualEchoDetector = from.residual_echo_detector.value();
   }
@@ -175,15 +166,6 @@ static void apply(const WrapperImplType &from, NativeType &to)
   }
   if (from.experimentalNs.has_value()) {
     to.experimental_ns = from.experimentalNs.value();
-  }
-  if (from.intelligibilityEnhancer.has_value()) {
-    to.intelligibility_enhancer = from.intelligibilityEnhancer.value();
-  }
-  if (from.levelControl.has_value()) {
-    to.level_control = from.levelControl.value();
-  }
-  if (from.levelControlInitialPeakLevelDbfs.has_value()) {
-    to.level_control_initial_peak_level_dbfs = from.levelControlInitialPeakLevelDbfs.value();
   }
   if (from.residualEchoDetector.has_value()) {
     to.residual_echo_detector = from.residualEchoDetector.value();

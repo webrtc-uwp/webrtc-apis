@@ -7,6 +7,10 @@
 // be found in the AUTHORS file in the root of the source tree.
 
 #include "impl_org_webRtc_MediaSourceHelper_cx.h"
+
+#ifdef WINUWP
+#ifdef __cplusplus_winrt
+
 #include <mfapi.h>
 #include <ppltasks.h>
 #include <mfidl.h>
@@ -389,3 +393,6 @@ void MediaSourceHelper::UpdateFrameRate() {
 void FirstFrameRenderHelper::FireEvent(double timestamp) {
   FirstFrameRendered(timestamp);
 }
+
+#endif // __cplusplus_winrt
+#endif // WINUWP

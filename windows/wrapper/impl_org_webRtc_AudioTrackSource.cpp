@@ -99,17 +99,6 @@ wrapper::org::webRtc::AudioTrackSourcePtr wrapper::org::webRtc::AudioTrackSource
 
   return WrapperImplType::toWrapper(factory->CreateAudioSource(*converted));
 }
-//------------------------------------------------------------------------------
-wrapper::org::webRtc::AudioTrackSourcePtr wrapper::org::webRtc::AudioTrackSource::create(wrapper::org::webRtc::MediaConstraintsPtr constraints) noexcept
-{
-  auto factory = UseWebrtcLib::peerConnectionFactory();
-  ZS_ASSERT(factory);
-  if (!factory) return WrapperTypePtr();
-
-  auto converted = UseMediaConstraints::toNative(constraints);
-
-  return WrapperImplType::toWrapper(factory->CreateAudioSource(converted.get()));
-}
 
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::AudioTrackSource::wrapper_onObserverCountChanged(ZS_MAYBE_USED() size_t count) noexcept

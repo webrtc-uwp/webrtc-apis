@@ -24,7 +24,6 @@
 #include "rtc_base/Win32.h"
 #include "libyuv/planar_functions.h"
 #include "common_video/libyuv/include/webrtc_libyuv.h"
-#include "common_video/video_common_winuwp.h"
 #include "api/video/i420_buffer.h"
 
 #include <winrt/windows.media.capture.h>

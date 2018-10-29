@@ -32,11 +32,15 @@ namespace wrapper {
               IMessageQueuePtr queue
             ) noexcept : outer_(wrapper), queue_(queue) {}
 
-            void OnToneChange(const std::string& tone) override
+            void OnToneChange(const std::string& tone) override { ZS_MAYBE_USED(tone); }
+
+            void OnToneChange(
+              const std::string& tone,
+              const std::string& tone_buffer) override
             {
               auto outer = outer_.lock();
               if (!outer) return;
-              queue_->postClosure([outer, tone]() { outer->onWebrtcObserverToneChange(tone); });
+              queue_->postClosure([outer, capTone = tone, capToneBuffer = tone_buffer]() { outer->onWebrtcObserverToneChange(capTone, capToneBuffer); });
             }
 
           private:
@@ -74,7 +78,10 @@ namespace wrapper {
           void wrapper_onObserverCountChanged(size_t count) noexcept override;
 
 
-          void onWebrtcObserverToneChange(const String &tones) noexcept;
+          void onWebrtcObserverToneChange(
+            const String &tones,
+            const String &toneBuffer
+            ) noexcept;
 
           void setupObserver() noexcept;
           void teardownObserver() noexcept;

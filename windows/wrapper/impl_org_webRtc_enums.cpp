@@ -314,12 +314,11 @@ wrapper::org::webRtc::RTCSdpSemantics UseEnum::toWrapper(::webrtc::SdpSemantics 
 {
   switch (value)
   {
-    case ::webrtc::SdpSemantics::kDefault:        return wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_default;
     case ::webrtc::SdpSemantics::kPlanB:          return wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_planB;
     case ::webrtc::SdpSemantics::kUnifiedPlan:    return wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_unifiedPlan;
   }
   ZS_ASSERT_FAIL("unknown type");
-  return wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_default;
+  return wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_unifiedPlan;
 }
 
 //-----------------------------------------------------------------------------
@@ -327,12 +326,11 @@ wrapper::org::webRtc::RTCSdpSemantics UseEnum::toWrapper(::webrtc::SdpSemantics 
 {
   switch (value)
   {
-    case wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_default:      return ::webrtc::SdpSemantics::kDefault;
     case wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_planB:        return ::webrtc::SdpSemantics::kPlanB;
     case wrapper::org::webRtc::RTCSdpSemantics::RTCSdpSemantics_unifiedPlan:  return ::webrtc::SdpSemantics::kUnifiedPlan;
   }
   ZS_ASSERT_FAIL("unknown type");
-  return ::webrtc::SdpSemantics::kDefault;
+  return ::webrtc::SdpSemantics::kUnifiedPlan;
 }
 
 //-----------------------------------------------------------------------------

@@ -474,15 +474,18 @@ bool MediaStreamSource::makeI420Sample(SampleData &sample)
   }
 
   try {
-    // Convert to NV12
-    rtc::scoped_refptr<webrtc::PlanarYuvBuffer> frameBuffer = static_cast<webrtc::PlanarYuvBuffer*>(sample.frame_->video_frame_buffer().get());
 
-    uint8* uvDest = destRawData + (pitch * sample.frame_->height());
+#pragma ZS_BUILD_NOTE("FIX","(mosa) check if the frame is the correct type before just converting to this frame type")
+
+    // Convert to NV12
+    rtc::scoped_refptr<webrtc::PlanarYuv8Buffer> frameBuffer = static_cast<webrtc::PlanarYuv8Buffer*>(sample.frame_->video_frame_buffer().get());
+
+    uint8_t* uvDest = destRawData + (pitch * sample.frame_->height());
     libyuv::I420ToNV12(
       frameBuffer->DataY(), frameBuffer->StrideY(),
       frameBuffer->DataU(), frameBuffer->StrideU(),
       frameBuffer->DataV(), frameBuffer->StrideV(),
-      reinterpret_cast<uint8*>(destRawData),
+      reinterpret_cast<uint8_t*>(destRawData),
       pitch,
       uvDest,
       pitch,

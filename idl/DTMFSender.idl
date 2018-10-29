@@ -49,6 +49,9 @@ namespace org
       /// </summary>
       [getter]
       string tone;
+
+      [getter]
+      string toneBuffer;
     };
 
     /// <summary>

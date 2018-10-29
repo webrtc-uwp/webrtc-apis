@@ -255,7 +255,7 @@ shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCCertificatePtr > > wr
 
   auto observer = Observer::create(result, std::move(gen));
 
-  gen->GenerateCertificateAsync(*nativeValue, ::rtc::Optional<uint64_t>(), observer);
+  gen->GenerateCertificateAsync(*nativeValue, absl::optional<uint64_t>(), observer);
 
   return result;
 }
@@ -299,27 +299,6 @@ shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr
 }
 
 //------------------------------------------------------------------------------
-shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr > > wrapper::impl::org::webRtc::RTCPeerConnection::createOffer(wrapper::org::webRtc::MediaConstraintsPtr constraints) noexcept
-{
-  auto result = SessionDescriptionPromiseType::create(UseWebrtcLib::delegateQueue());
-
-  ZS_ASSERT(native_);
-  if (!native_) {
-    UseError::rejectPromise(result, ::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_STATE));
-    return result;
-  }
-
-  auto nativeConstraints = UseMediaConstraints::toNative(constraints);
-  if (!nativeConstraints) {
-    UseError::rejectPromise(result, ::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_PARAMETER));
-    return result;
-  }
-
-  native_->CreateOffer(SessionDescriptionObserver::create(result), nativeConstraints.get());
-  return result;
-}
-
-//------------------------------------------------------------------------------
 shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr > > wrapper::impl::org::webRtc::RTCPeerConnection::createAnswer(wrapper::org::webRtc::RTCAnswerOptionsPtr options) noexcept
 {
   auto result = SessionDescriptionPromiseType::create(UseWebrtcLib::delegateQueue());
@@ -337,27 +316,6 @@ shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr
   }
 
   native_->CreateAnswer(SessionDescriptionObserver::create(result), *nativeOptions);
-  return result;
-}
-
-//------------------------------------------------------------------------------
-shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr > > wrapper::impl::org::webRtc::RTCPeerConnection::createAnswer(wrapper::org::webRtc::MediaConstraintsPtr constraints) noexcept
-{
-  auto result = SessionDescriptionPromiseType::create(UseWebrtcLib::delegateQueue());
-
-  ZS_ASSERT(native_);
-  if (!native_) {
-    UseError::rejectPromise(result, ::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_STATE));
-    return result;
-  }
-
-  auto nativeConstraints = UseMediaConstraints::toNative(constraints);
-  if (!nativeConstraints) {
-    UseError::rejectPromise(result, ::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_PARAMETER));
-    return result;
-  }
-
-  native_->CreateAnswer(SessionDescriptionObserver::create(result), nativeConstraints.get());
   return result;
 }
 
@@ -520,8 +478,13 @@ wrapper::org::webRtc::RTCRtpSenderPtr wrapper::impl::org::webRtc::RTCPeerConnect
   auto nativeTrack = UseMediaStreamTrack::toNative(track);
   if (!nativeTrack) return wrapper::org::webRtc::RTCRtpSenderPtr();
 
-  std::vector<::webrtc::MediaStreamInterface*> ignored;
-  return UseRtpSender::toWrapper(native_->AddTrack(nativeTrack, ignored));
+  std::vector<std::string> ignored;
+
+  auto errorOrValue = native_->AddTrack(nativeTrack, ignored);
+  if (!errorOrValue.ok()) {
+    throw UseError::toWrapper(errorOrValue.error());
+  }
+  return UseRtpSender::toWrapper(errorOrValue.value());
 }
 
 //------------------------------------------------------------------------------

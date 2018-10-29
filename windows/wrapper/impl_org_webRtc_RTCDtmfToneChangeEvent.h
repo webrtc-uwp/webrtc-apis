@@ -16,6 +16,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCDtmfToneChangeEvent, WrapperImplType);
 
           String tone_;
+          String toneBuffer_;
           RTCDtmfToneChangeEventWeakPtr thisWeak_;
 
           RTCDtmfToneChangeEvent() noexcept;
@@ -24,8 +25,11 @@ namespace wrapper {
 
           // properties RTCDtmfToneChangeEvent
           String get_tone() noexcept override;
+          String get_toneBuffer() noexcept override;
 
-          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(const String &tone) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(
+            const String &tone,
+            const String &toneBuffer) noexcept;
         };
 
       } // webRtc

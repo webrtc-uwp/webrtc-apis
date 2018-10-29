@@ -16,9 +16,7 @@
 #include <mfidl.h>
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "api/videosourceinterface.h"
 #include "libyuv/convert.h"
-#include "common_video/video_common_winuwp.h"
 #include "rtc_base/logging.h"
 #include "media/base/videocommon.h"
 #include <wrapper/impl_org_webRtc_post_include.h>

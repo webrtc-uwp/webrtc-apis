@@ -112,23 +112,11 @@ namespace org
       bool experimentalNs;
 
       [optional]
-      bool intelligibilityEnhancer;
-
-      [optional]
-      bool levelControl;
-
-      [optional]
-      /// <summary>
-      /// Specifies an optional initialization value for the level controller.
-      /// </summary>
-      float levelControlInitialPeakLevelDbfs;
+      bool residualEchoDetector;
 
       /// <summary>
       /// Note that tx_agc_* only applies to non-experimental AGC.
       /// </summary>
-      [optional]
-      bool residualEchoDetector;
-
       [optional]
       uint16 txAgcTargetDbov;
 

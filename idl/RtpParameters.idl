@@ -184,8 +184,10 @@ namespace org
       /// or equal to 1.0. By default, the sender will not apply
       /// any scaling, (i.e., scaleResolutionDownBy will be 1.0).
       /// </summary>
-      double          scaleResolutionDownBy = 1.0;
-      double          scaleFramerateDownBy = 1.0;
+      [optional]
+      double          scaleResolutionDownBy;
+      [optional]
+      double          scaleFramerateDownBy;
 
       /// <summary>
       /// The encodingIds on which this layer depends. Within this specification

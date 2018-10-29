@@ -294,7 +294,7 @@ namespace org
       /// For users who wish to send multiple audio/video streams and/or wish to
       /// use the new RtpTransceiver API, specify kUnifiedPlan.
       /// </summary>
-      RTCSdpSemantics         sdpSemantics = default;
+      RTCSdpSemantics         sdpSemantics = unifiedPlan;
 
       /// <summary>
       /// Constructs an empty instance of an RTCConfiguration object.

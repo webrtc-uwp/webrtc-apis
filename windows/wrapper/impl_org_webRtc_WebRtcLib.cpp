@@ -33,7 +33,6 @@
 #include "api/peerconnectioninterface.h"
 #include "api/peerconnectionfactoryproxy.h"
 #include "api/test/fakeconstraints.h"
-#include "common_video/video_common_winuwp.h"
 #include "rtc_base/event_tracer.h"
 #include "rtc_base/ssladapter.h"
 #include "rtc_base/win32socketinit.h"
@@ -270,10 +269,6 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) no
 
   ::webrtc::VideoCommonWinUWP::SetCoreDispatcher(dispatcher);
 
-#else
-
-#error cppwinrt requires CX consume runtime support to be enabled (for now)
-
 #endif //(defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)) || defined(__cplusplus_winrt)
 
 #else //WINUWP
@@ -281,7 +276,7 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) no
 #endif //WINUWP
 
   rtc::EnsureWinsockInit();
-  rtc::InitializeSSL([](void *) { return false; }); // no custom verifier of SSL
+  rtc::InitializeSSL();
 
   networkThread = rtc::Thread::CreateWithSocketServer();
   networkThread->Start();
@@ -306,7 +301,7 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) no
     encoderFactory,
     decoderFactory
   );
-
+  
 #ifdef WINUWP
   videoDeviceCaptureFactory_ = make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
 #else

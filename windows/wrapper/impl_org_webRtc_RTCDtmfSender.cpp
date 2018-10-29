@@ -167,10 +167,13 @@ void wrapper::impl::org::webRtc::RTCDtmfSender::wrapper_onObserverCountChanged(Z
 }
 
 //------------------------------------------------------------------------------
-void WrapperImplType::onWebrtcObserverToneChange(const String &tones) noexcept
+void WrapperImplType::onWebrtcObserverToneChange(
+  const String &tones,
+  const String &toneBuffer
+  ) noexcept
 {
   String tone = tones.substr(0, 1);
-  auto event = UseToneChangeEvent::toWrapper(tone);
+  auto event = UseToneChangeEvent::toWrapper(tone, toneBuffer);
   if (!event) return;
   onToneChange(event);
 }

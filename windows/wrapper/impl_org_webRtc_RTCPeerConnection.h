@@ -143,9 +143,7 @@ namespace wrapper {
           // methods RTCPeerConnection
           void wrapper_init_org_webRtc_RTCPeerConnection(wrapper::org::webRtc::RTCConfigurationPtr config) noexcept override;
           shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr > > createOffer(wrapper::org::webRtc::RTCOfferOptionsPtr options) noexcept override;
-          shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr > > createOffer(wrapper::org::webRtc::MediaConstraintsPtr constraints) noexcept override;
           shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr > > createAnswer(wrapper::org::webRtc::RTCAnswerOptionsPtr options) noexcept override;
-          shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCSessionDescriptionPtr > > createAnswer(wrapper::org::webRtc::MediaConstraintsPtr constraints) noexcept override;
           PromisePtr setLocalDescription(wrapper::org::webRtc::RTCSessionDescriptionPtr description) noexcept override;
           PromisePtr setRemoteDescription(wrapper::org::webRtc::RTCSessionDescriptionPtr description) noexcept override;
           wrapper::org::webRtc::RTCConfigurationPtr getConfiguration() noexcept override;
