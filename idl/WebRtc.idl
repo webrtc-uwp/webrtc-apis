@@ -205,6 +205,14 @@ namespace org
       void setup(EventQueue queue);
 
       /// <summary>
+      /// Initialize the ORTC stack with a target event queue for delegate events
+      /// and set audio engine recording and playout to enabled or disabled state
+      /// (if omitted, the default value is true for both parameters).
+      /// </summary>
+      [static, altname(setupWithQueueAndAudioDevicePararms)]
+      void setup(EventQueue queue, bool recordingEnabled, bool playoutEnabled);
+
+      /// <summary>
       /// Gets or sets the NTP server time discovered in milliseconds since
       /// NTP epoch. This property must only be set at the actual moment when
       /// the server time was discovered to ensure the NTP clock is as closed
