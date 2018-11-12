@@ -108,7 +108,7 @@ namespace webrtc
     // a CoreWindow.  If this doesn't work because we're running in
     // a background task then the orientation needs to come from the
     // foreground as a notification.
-    if (queue->isRunningOnUIThread()) {
+    if (queue->isCurrent()) {
       try {
         display_info_ = DisplayInformation::GetForCurrentView();
         orientation_ = display_info_.CurrentOrientation();
@@ -540,7 +540,7 @@ namespace webrtc
       auto queue = UseWebrtcLib::delegateQueue();
       ZS_ASSERT(queue);
 
-      if (queue->isRunningOnUIThread()) {
+      if (queue->isCurrent()) {
         Concurrency::task<void> initialize_async_task;
         auto settings = MediaCaptureInitializationSettings();
         settings.VideoDeviceId(device_id_);
