@@ -26,6 +26,7 @@
 #include "impl_webrtc_IMediaStreamSource.h"
 #include "impl_webrtc_IVideoCapturer.h"
 #include "impl_webrtc_IVideoCaptureMediaSink.h"
+#include "impl_webrtc_IAudioDeviceWasapi.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
@@ -73,6 +74,8 @@ ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IVideoCapturerDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IVideoCapturerDelegate, webrtc::IVideoCapturerSubscription)
 ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IVideoCaptureMediaSinkDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IVideoCaptureMediaSinkDelegate, webrtc::IVideoCaptureMediaSinkSubscription)
+ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate, webrtc::IAudioDeviceWasapiSubscription)
 #endif  // CPPWINRT_VERSION
 #endif //WINUWP
 
@@ -291,11 +294,19 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) no
   auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
   auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
 
+  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
+  audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
+    RTC_FROM_HERE, []() {
+    webrtc::IAudioDeviceWasapi::CreationProperties props;
+    props.id_ = "";
+    return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
+  });
+
   peerConnectionFactory_ = ::webrtc::CreatePeerConnectionFactory(
     networkThread.get(),
     workerThread.get(),
     signalingThread.get(),
-    nullptr,
+    audioDeviceModule.release(),
     ::webrtc::CreateBuiltinAudioEncoderFactory(),
     ::webrtc::CreateBuiltinAudioDecoderFactory(),
     encoderFactory,
