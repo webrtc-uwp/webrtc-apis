@@ -40,6 +40,7 @@
 #include "third_party/winuwp_h264/winuwp_h264_factory.h"
 #include "media/engine/webrtcvideocapturerfactory.h"
 #include "pc/peerconnectionfactory.h"
+#include "modules/audio_device/include/audio_device.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/IMessageQueueThread.h>
@@ -140,6 +141,13 @@ void wrapper::org::webRtc::WebRtcLib::setup(wrapper::org::webRtc::EventQueuePtr 
 }
 
 //------------------------------------------------------------------------------
+void wrapper::org::webRtc::WebRtcLib::setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  singleton->actual_setup(queue, recordingEnabled, playoutEnabled);
+}
+
+//------------------------------------------------------------------------------
 void wrapper::org::webRtc::WebRtcLib::startMediaTracing() noexcept
 {
   auto singleton = WrapperImplType::singleton();
@@ -199,6 +207,12 @@ void WrapperImplType::actual_setup() noexcept
 
 //------------------------------------------------------------------------------
 void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept
+{
+  actual_setup(queue, true, true);
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept
 {
   // prevent multiple setups being called simulatuously
   if (setupCalledOnce_.test_and_set()) return;
