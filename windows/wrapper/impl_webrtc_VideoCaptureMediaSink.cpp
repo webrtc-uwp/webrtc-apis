@@ -1,4 +1,6 @@
 
+#include <unknwn.h>
+
 #include "impl_webrtc_VideoCaptureMediaSink.h"
 
 #ifdef WINUWP

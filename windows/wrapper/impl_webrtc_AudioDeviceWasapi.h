@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unknwn.h>
+
 #include "impl_webrtc_IAudioDeviceWasapi.h"
 
 #ifdef WINUWP
@@ -121,7 +123,7 @@ namespace webrtc {
     }
 
     // Constructor for MTA initialization.
-    explicit ScopedCOMInitializer(SelectMTA mta) {
+    explicit ScopedCOMInitializer(SelectMTA /* mta */) {
       Initialize(COINIT_MULTITHREADED);
     }
 
@@ -509,7 +511,7 @@ namespace webrtc {
 
       uint16_t                                _newMicLevel;
 
-      winrt::com_ptr<IInspectable>            _defaultDeviceWatcher;
+      std::unique_ptr<DefaultAudioDeviceWatcher> _defaultDeviceWatcher;
   };
 
 #endif    // #if (_MSC_VER >= 1400)

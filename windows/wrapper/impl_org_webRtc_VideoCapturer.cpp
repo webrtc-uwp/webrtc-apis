@@ -1,6 +1,8 @@
 
 #ifdef WINUWP
 
+#include <unknwn.h>
+
 #ifdef __cplusplus_winrt
 #include <windows.devices.enumeration.h>
 #endif //__cplusplus_winrt

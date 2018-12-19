@@ -4,6 +4,8 @@
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
+#include <winrt/Windows.Media.Devices.h>
+
 #pragma warning(disable: 4995)  // name was marked as #pragma deprecated
 
 #if (_MSC_VER >= 1310) && (_MSC_VER < 1400)
@@ -132,78 +134,59 @@ enum {
 
 namespace webrtc
 {
-  class DefaultAudioDeviceWatcher : public winrt::implements<DefaultAudioDeviceWatcher, IInspectable> {
+  class DefaultAudioDeviceWatcher {
   public:
-    DefaultAudioDeviceWatcher(AudioDeviceWasapi* observer);
+    DefaultAudioDeviceWatcher(AudioDeviceWasapi *observer);
     virtual ~DefaultAudioDeviceWatcher();
 
   private:
-    void DefaultAudioCaptureDeviceChanged(IInspectable const &sender,
-      DefaultAudioCaptureDeviceChangedEventArgs const &args);
-    void DefaultAudioRenderDeviceChanged(IInspectable const &sender,
-      DefaultAudioRenderDeviceChangedEventArgs const &args);
+    void DefaultAudioCaptureDeviceChanged(
+      DefaultAudioCaptureDeviceChangedEventArgs const &args) noexcept;
+    void DefaultAudioRenderDeviceChanged(
+      DefaultAudioRenderDeviceChangedEventArgs const &args) noexcept;
+
   private:
-    AudioDeviceWasapi* _observer;
-    winrt::event_token _defaultCaptureChangedToken;
-    winrt::event_token _defaultRenderChangedToken;
-
-    // Inherited via implements
-    virtual HRESULT __stdcall GetIids(ULONG * iidCount, IID ** iids) override {
-      *iidCount = 0;
-      *iids = NULL;
-      return S_OK;
-    }
-
-    virtual HRESULT __stdcall GetRuntimeClassName(HSTRING * className) override {
-      const wchar_t *name = L"webrtc.DefaultAudioDeviceWatcher";
-      return WindowsCreateString(name, wcslen(name), className);
-    }
-
-    virtual winrt::Windows::Foundation::TrustLevel GetTrustLevel() const noexcept {
-      return winrt::Windows::Foundation::TrustLevel::BaseTrust;
-    }
-
-    virtual HRESULT __stdcall GetTrustLevel(TrustLevel * trustLevel) override {
-      *trustLevel = BaseTrust;
-      return S_OK;
-    }
+    AudioDeviceWasapi* observer_;
+    winrt::event_token defaultCaptureChangedToken_;
+    winrt::event_token defaultRenderChangedToken_;
   };
 
   //-----------------------------------------------------------------------------
   DefaultAudioDeviceWatcher::DefaultAudioDeviceWatcher(
-    AudioDeviceWasapi* observer) : _observer(observer) {
-    _defaultCaptureChangedToken = MediaDevice::DefaultAudioCaptureDeviceChanged(
-      TypedEventHandler<winrt::Windows::Foundation::IInspectable, DefaultAudioCaptureDeviceChangedEventArgs>
-        (this, &DefaultAudioDeviceWatcher::DefaultAudioCaptureDeviceChanged));
-    _defaultRenderChangedToken = MediaDevice::DefaultAudioRenderDeviceChanged(
-      TypedEventHandler<winrt::Windows::Foundation::IInspectable, DefaultAudioRenderDeviceChangedEventArgs>
-        (this, &DefaultAudioDeviceWatcher::DefaultAudioRenderDeviceChanged));
+    AudioDeviceWasapi* observer) : observer_(observer) {
+    defaultCaptureChangedToken_ = MediaDevice::DefaultAudioCaptureDeviceChanged([this](winrt::Windows::Foundation::IInspectable const & /* sender */, winrt::Windows::Media::Devices::DefaultAudioCaptureDeviceChangedEventArgs const & args) {
+      this->DefaultAudioCaptureDeviceChanged(args);
+    });
+
+    defaultRenderChangedToken_ = MediaDevice::DefaultAudioRenderDeviceChanged([this](winrt::Windows::Foundation::IInspectable const & /* sender */, winrt::Windows::Media::Devices::DefaultAudioRenderDeviceChangedEventArgs const &args) {
+      this->DefaultAudioRenderDeviceChanged(args);
+    });
   }
 
   //-----------------------------------------------------------------------------
   DefaultAudioDeviceWatcher::~DefaultAudioDeviceWatcher() {
-    MediaDevice::DefaultAudioRenderDeviceChanged(
-      _defaultCaptureChangedToken);
-    MediaDevice::DefaultAudioRenderDeviceChanged(
-      _defaultRenderChangedToken);
+    MediaDevice::DefaultAudioRenderDeviceChanged(defaultCaptureChangedToken_);
+    MediaDevice::DefaultAudioRenderDeviceChanged(defaultRenderChangedToken_);
   }
 
   //-----------------------------------------------------------------------------
   void DefaultAudioDeviceWatcher::DefaultAudioCaptureDeviceChanged(
-    IInspectable const &sender,
-    DefaultAudioCaptureDeviceChangedEventArgs const &args) {
-    if (_observer != nullptr) {
-      _observer->DefaultAudioCaptureDeviceChanged(args);
-    }
+    DefaultAudioCaptureDeviceChangedEventArgs const &args
+  ) noexcept
+  {
+    if (nullptr == observer_)
+      return;
+    observer_->DefaultAudioCaptureDeviceChanged(args);
   }
 
   //-----------------------------------------------------------------------------
   void DefaultAudioDeviceWatcher::DefaultAudioRenderDeviceChanged(
-    IInspectable const &sender,
-    DefaultAudioRenderDeviceChangedEventArgs const &args) {
-    if (_observer != nullptr) {
-      _observer->DefaultAudioRenderDeviceChanged(args);
-    }
+    DefaultAudioRenderDeviceChangedEventArgs const &args
+  ) noexcept
+  {
+    if (nullptr == observer_)
+      return;
+    observer_->DefaultAudioRenderDeviceChanged(args);
   }
 
   AudioDeviceWasapi* AudioInterfaceActivator::m_AudioDevice = nullptr;
@@ -833,7 +816,7 @@ namespace webrtc
       _playChannelsPrioList[0] = 2;  // stereo is prio 1
       _playChannelsPrioList[1] = 1;  // mono is prio 2
 
-      _defaultDeviceWatcher = winrt::make_self<DefaultAudioDeviceWatcher>(this);
+      _defaultDeviceWatcher = std::make_unique<DefaultAudioDeviceWatcher>(this);
   }
 
   // ----------------------------------------------------------------------------
