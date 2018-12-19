@@ -165,7 +165,7 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   DefaultAudioDeviceWatcher::~DefaultAudioDeviceWatcher() {
-    MediaDevice::DefaultAudioRenderDeviceChanged(defaultCaptureChangedToken_);
+    MediaDevice::DefaultAudioCaptureDeviceChanged(defaultCaptureChangedToken_);
     MediaDevice::DefaultAudioRenderDeviceChanged(defaultRenderChangedToken_);
   }
 
