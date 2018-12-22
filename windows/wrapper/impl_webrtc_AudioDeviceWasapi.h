@@ -331,9 +331,9 @@ namespace webrtc {
       bool CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType) const;
       bool CheckBuiltInRenderCapability(winrt::Windows::Media::Effects::AudioEffectType) const;
 
-      void _SetThreadName(DWORD dwThreadID, LPCSTR szThreadName);
-      void _Lock() { _critSect.Enter(); }
-      void _UnLock() { _critSect.Leave(); }
+      void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName);
+      void Lock() { critSect_.Enter(); }
+      void UnLock() { critSect_.Leave(); }
 
    private:
       int32_t InitRecordingInternal();
@@ -352,27 +352,27 @@ namespace webrtc {
                           REFPROPERTYKEY key,
                           LONG value);
 
-      int32_t _EnumerateEndpointDevicesAll();
-      void _TraceCOMError(HRESULT hr) const;
-      void _Get44kHzDrift();
+      int32_t EnumerateEndpointDevicesAll();
+      void TraceCOMError(HRESULT hr) const;
+      void Get44kHzDrift();
 
-      int32_t _RefreshDeviceList(DeviceClass cls);
-      int16_t _DeviceListCount(DeviceClass cls);
+      int32_t RefreshDeviceList(DeviceClass cls);
+      int16_t DeviceListCount(DeviceClass cls);
 
-      winrt::hstring  _GetDefaultDeviceName(DeviceClass cls);
-      winrt::hstring  _GetListDeviceName(DeviceClass cls, int index);
-      winrt::hstring  _GetDeviceName(DeviceInformation const &device);
+      winrt::hstring  GetDefaultDeviceName(DeviceClass cls);
+      winrt::hstring  GetListDeviceName(DeviceClass cls, int index);
+      winrt::hstring  GetDeviceName(DeviceInformation const &device);
 
-      winrt::hstring  _GetListDeviceID(DeviceClass cls, int index);
-      winrt::hstring  _GetDefaultDeviceID(DeviceClass cls);
-      winrt::hstring  _GetDeviceID(DeviceInformation const &device);
+      winrt::hstring  GetListDeviceID(DeviceClass cls, int index);
+      winrt::hstring  GetDefaultDeviceID(DeviceClass cls);
+      winrt::hstring  GetDeviceID(DeviceInformation const &device);
 
-      DeviceInformation _GetDefaultDevice(DeviceClass cls, AudioDeviceRole role);
-      DeviceInformation _GetListDevice(DeviceClass cls, int index);
-      DeviceInformation _GetListDevice(DeviceClass cls, winrt::hstring const &deviceId);
+      DeviceInformation GetDefaultDevice(DeviceClass cls, AudioDeviceRole role);
+      DeviceInformation GetListDevice(DeviceClass cls, int index);
+      DeviceInformation GetListDevice(DeviceClass cls, winrt::hstring const &deviceId);
 
-      void _InitializeAudioDeviceIn(winrt::hstring const &deviceId);
-      void _InitializeAudioDeviceOut(winrt::hstring const &deviceId);
+      void InitializeAudioDeviceIn(winrt::hstring const &deviceId);
+      void InitializeAudioDeviceOut(winrt::hstring const &deviceId);
 
       // Surround system support
       bool ShouldUpmix();
@@ -400,118 +400,118 @@ namespace webrtc {
      std::string id_;
 
    private:
-      ScopedCOMInitializer                    _comInit;
-      AudioDeviceBuffer*                      _ptrAudioBuffer;
-      rtc::CriticalSection                    _critSect;
-      rtc::CriticalSection                    _volumeMutex;
-      rtc::CriticalSection                    _recordingControlMutex;
-      rtc::CriticalSection                    _playoutControlMutex;
-      int32_t                                 _id;
+      ScopedCOMInitializer                    comInit_;
+      AudioDeviceBuffer*                      ptrAudioBuffer_;
+      rtc::CriticalSection                    critSect_;
+      rtc::CriticalSection                    volumeMutex_;
+      rtc::CriticalSection                    recordingControlMutex_;
+      rtc::CriticalSection                    playoutControlMutex_;
 
    private:  // MMDevice
-      winrt::hstring      _deviceIdStringIn;
-      winrt::hstring      _deviceIdStringOut;
-      DeviceInformation   _captureDevice;
-      DeviceInformation   _renderDevice;
+      winrt::hstring      deviceIdStringIn_;
+      winrt::hstring      deviceIdStringOut_;
+      DeviceInformation   captureDevice_;
+      DeviceInformation   renderDevice_;
 
-      WAVEFORMATPCMEX*       _mixFormatSurroundOut;
-      bool                   _enableUpmix;
+      WAVEFORMATPCMEX*       mixFormatSurroundOut_;
+      bool                   enableUpmix_;
 
-      DeviceInformationCollection  _ptrCaptureCollection;
-      DeviceInformationCollection  _ptrRenderCollection;
-      DeviceInformationCollection  _ptrCollection;
+      DeviceInformationCollection  ptrCaptureCollection_;
+      DeviceInformationCollection  ptrRenderCollection_;
+      DeviceInformationCollection  ptrCollection_;
 
    private:  // WASAPI
-      IAudioClient*                           _ptrClientOut;
-      IAudioClient*                           _ptrClientIn;
-      IAudioRenderClient*                     _ptrRenderClient;
-      IAudioCaptureClient*                    _ptrCaptureClient;
-      ISimpleAudioVolume*                     _ptrCaptureVolume;
-      ISimpleAudioVolume*                     _ptrRenderSimpleVolume;
 
-      bool                                    _builtInAecEnabled;
-      bool                                    _builtInNSEnabled;
-      bool                                    _builtInAGCEnabled;
+      uint16_t                                recChannelsPrioList_[2];
+      uint16_t                                playChannelsPrioList_[2];
 
-      HANDLE                                  _hRenderSamplesReadyEvent;
-      HANDLE                                  _hPlayThread;
-      HANDLE                                  _hRenderStartedEvent;
-      HANDLE                                  _hShutdownRenderEvent;
-      HANDLE                                  _hRestartRenderEvent;
+      IAudioClient*                           ptrClientOut_;
+      IAudioClient*                           ptrClientIn_;
+      IAudioRenderClient*                     ptrRenderClient_;
+      IAudioCaptureClient*                    ptrCaptureClient_;
+      ISimpleAudioVolume*                     ptrCaptureVolume_;
+      ISimpleAudioVolume*                     ptrRenderSimpleVolume_;
 
-      HANDLE                                  _hCaptureSamplesReadyEvent;
-      HANDLE                                  _hRecThread;
-      HANDLE                                  _hCaptureStartedEvent;
-      HANDLE                                  _hShutdownCaptureEvent;
-      HANDLE                                  _hRestartCaptureEvent;
+      bool                                    builtInAecEnabled_;
+      bool                                    builtInNSEnabled_;
+      bool                                    builtInAGCEnabled_;
 
-      HANDLE                                  _hObserverThread;
-      HANDLE                                  _hObserverStartedEvent;
-      HANDLE                                  _hObserverShutdownEvent;
+      HANDLE                                  hRenderSamplesReadyEvent_;
+      HANDLE                                  hPlayThread_;
+      HANDLE                                  hRenderStartedEvent_;
+      HANDLE                                  hShutdownRenderEvent_;
+      HANDLE                                  hRestartRenderEvent_;
 
-      HANDLE                                  _hGetCaptureVolumeThread;
-      HANDLE                                  _hSetCaptureVolumeThread;
-      HANDLE                                  _hSetCaptureVolumeEvent;
+      HANDLE                                  hCaptureSamplesReadyEvent_;
+      HANDLE                                  hRecThread_;
+      HANDLE                                  hCaptureStartedEvent_;
+      HANDLE                                  hShutdownCaptureEvent_;
+      HANDLE                                  hRestartCaptureEvent_;
 
-      HANDLE                                  _hMmTask;
+      HANDLE                                  hObserverThread_;
+      HANDLE                                  hObserverStartedEvent_;
+      HANDLE                                  hObserverShutdownEvent_;
 
-      UINT                                    _playAudioFrameSize;
-      uint32_t                                _playSampleRate;
-      uint32_t                                _devicePlaySampleRate;
-      uint32_t                                _playBlockSize;
-      uint32_t                                _devicePlayBlockSize;
-      uint32_t                                _playChannels;
-      uint32_t                                _sndCardPlayDelay;
+      HANDLE                                  hGetCaptureVolumeThread_;
+      HANDLE                                  hSetCaptureVolumeThread_;
+      HANDLE                                  hSetCaptureVolumeEvent_;
 
-      float                                   _sampleDriftAt48kHz;
-      float                                   _driftAccumulator;
+      HANDLE                                  hMmTask_;
 
-      UINT64                                  _writtenSamples;
-      LONGLONG                                _playAcc;
+      UINT                                    playAudioFrameSize_;
+      uint32_t                                playSampleRate_;
+      uint32_t                                devicePlaySampleRate_;
+      uint32_t                                playBlockSize_;
+      uint32_t                                devicePlayBlockSize_;
+      uint32_t                                playChannels_;
+      uint32_t                                sndCardPlayDelay_;
 
-      UINT                                    _recAudioFrameSize;
-      uint32_t                                _recSampleRate;
-      uint32_t                                _recBlockSize;
-      uint32_t                                _recChannels;
-      UINT64                                  _readSamples;
-      uint32_t                                _sndCardRecDelay;
+      float                                   sampleDriftAt48kHz_;
+      float                                   driftAccumulator_;
 
-      uint16_t                                _recChannelsPrioList[2];
-      uint16_t                                _playChannelsPrioList[2];
+      UINT64                                  writtenSamples_;
+      LONGLONG                                playAcc_;
 
-      LARGE_INTEGER                           _perfCounterFreq;
-      double                                  _perfCounterFactor;
-      float                                   _avgCPULoad;
+      UINT                                    recAudioFrameSize_;
+      uint32_t                                recSampleRate_;
+      uint32_t                                recBlockSize_;
+      uint32_t                                recChannels_;
+      UINT64                                  readSamples_;
+      uint32_t                                sndCardRecDelay_;
+
+      LARGE_INTEGER                           perfCounterFreq_;
+      double                                  perfCounterFactor_;
+      float                                   avgCPULoad_;
 
    private:
-      bool                                    _initialized;
-      bool                                    _recording;
-      bool                                    _playing;
-      bool                                    _recIsInitialized;
-      bool                                    _playIsInitialized;
-      bool                                    _speakerIsInitialized;
-      bool                                    _microphoneIsInitialized;
+      bool                                    initialized_;
+      bool                                    recording_;
+      bool                                    playing_;
+      bool                                    recIsInitialized_;
+      bool                                    playIsInitialized_;
+      bool                                    speakerIsInitialized_;
+      bool                                    microphoneIsInitialized_;
 
-      bool                                    _usingInputDeviceIndex;
-      bool                                    _usingOutputDeviceIndex;
-      AudioDeviceRole                         _outputDeviceRole;
-      AudioDeviceRole                         _inputDeviceRole;
-      uint16_t                                _inputDeviceIndex;
-      uint16_t                                _outputDeviceIndex;
+      bool                                    usingInputDeviceIndex_;
+      bool                                    usingOutputDeviceIndex_;
+      AudioDeviceRole                         outputDeviceRole_;
+      AudioDeviceRole                         inputDeviceRole_;
+      uint16_t                                inputDeviceIndex_;
+      uint16_t                                outputDeviceIndex_;
 
-      uint16_t                                _playWarning;
-      uint16_t                                _playError;
-      bool                                    _playIsRecovering;
-      uint16_t                                _recWarning;
-      uint16_t                                _recError;
-      bool                                    _recIsRecovering;
+      uint16_t                                playWarning_;
+      uint16_t                                playError_;
+      bool                                    playIsRecovering_;
+      uint16_t                                recWarning_;
+      uint16_t                                recError_;
+      bool                                    recIsRecovering_;
 
-      uint16_t                                _playBufDelay;
-      uint16_t                                _playBufDelayFixed;
+      uint16_t                                playBufDelay_;
+      uint16_t                                playBufDelayFixed_;
 
-      uint16_t                                _newMicLevel;
+      uint16_t                                newMicLevel_;
 
-      std::unique_ptr<DefaultAudioDeviceWatcher> _defaultDeviceWatcher;
+      std::unique_ptr<DefaultAudioDeviceWatcher> defaultDeviceWatcher_;
   };
 
 #endif    // #if (_MSC_VER >= 1400)
