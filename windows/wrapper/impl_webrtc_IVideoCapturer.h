@@ -53,7 +53,7 @@ namespace webrtc
 
       const char *name_ {};
       const char *id_ {};
-  };
+    };
 
     static IVideoCapturerUniPtr create(const CreationProperties &info) noexcept;
 

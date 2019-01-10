@@ -54,6 +54,7 @@ namespace wrapper {
           // overrides of base class
           virtual void actual_setup() noexcept;
           virtual void actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept;
+          virtual void actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept;
           virtual void actual_startMediaTracing() noexcept;
           virtual void actual_stopMediaTracing() noexcept;
           virtual bool actual_isMediaTracing() noexcept;

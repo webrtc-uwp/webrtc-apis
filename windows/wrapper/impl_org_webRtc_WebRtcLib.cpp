@@ -26,6 +26,7 @@
 #include "impl_webrtc_IMediaStreamSource.h"
 #include "impl_webrtc_IVideoCapturer.h"
 #include "impl_webrtc_IVideoCaptureMediaSink.h"
+#include "impl_webrtc_IAudioDeviceWasapi.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
@@ -39,6 +40,7 @@
 #include "third_party/winuwp_h264/winuwp_h264_factory.h"
 #include "media/engine/webrtcvideocapturerfactory.h"
 #include "pc/peerconnectionfactory.h"
+#include "modules/audio_device/include/audio_device.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/IMessageQueueThread.h>
@@ -73,6 +75,8 @@ ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IVideoCapturerDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IVideoCapturerDelegate, webrtc::IVideoCapturerSubscription)
 ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IVideoCaptureMediaSinkDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IVideoCaptureMediaSinkDelegate, webrtc::IVideoCaptureMediaSinkSubscription)
+ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate, webrtc::IAudioDeviceWasapiSubscription)
 #endif  // CPPWINRT_VERSION
 #endif //WINUWP
 
@@ -137,6 +141,13 @@ void wrapper::org::webRtc::WebRtcLib::setup(wrapper::org::webRtc::EventQueuePtr 
 }
 
 //------------------------------------------------------------------------------
+void wrapper::org::webRtc::WebRtcLib::setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  singleton->actual_setup(queue, recordingEnabled, playoutEnabled);
+}
+
+//------------------------------------------------------------------------------
 void wrapper::org::webRtc::WebRtcLib::startMediaTracing() noexcept
 {
   auto singleton = WrapperImplType::singleton();
@@ -196,6 +207,12 @@ void WrapperImplType::actual_setup() noexcept
 
 //------------------------------------------------------------------------------
 void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept
+{
+  actual_setup(queue, true, true);
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept
 {
   // prevent multiple setups being called simulatuously
   if (setupCalledOnce_.test_and_set()) return;
@@ -291,11 +308,19 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) no
   auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
   auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
 
+  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
+  audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
+    RTC_FROM_HERE, []() {
+    webrtc::IAudioDeviceWasapi::CreationProperties props;
+    props.id_ = "";
+    return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
+  });
+
   peerConnectionFactory_ = ::webrtc::CreatePeerConnectionFactory(
     networkThread.get(),
     workerThread.get(),
     signalingThread.get(),
-    nullptr,
+    audioDeviceModule.release(),
     ::webrtc::CreateBuiltinAudioEncoderFactory(),
     ::webrtc::CreateBuiltinAudioDecoderFactory(),
     encoderFactory,
