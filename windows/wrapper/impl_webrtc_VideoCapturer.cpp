@@ -17,18 +17,22 @@
 
 #include "impl_org_webRtc_WebrtcLib.h"
 
+#include "impl_webrtc_MRCAudioEffectDefinition.h"
+#include "impl_webrtc_MRCVideoEffectDefinition.h"
+
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "media/base/videocommon.h"
 #include "rtc_base/logging.h"
-#include <wrapper/impl_org_webRtc_post_include.h>
 #include "rtc_base/Win32.h"
 #include "libyuv/planar_functions.h"
 #include "common_video/libyuv/include/webrtc_libyuv.h"
 #include "common_video/video_common_winuwp.h"
 #include "api/video/i420_buffer.h"
+#include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <winrt/windows.media.capture.h>
 #include <winrt/windows.devices.enumeration.h>
+#include <winrt/windows.system.profile.h>
 
 using zsLib::String;
 using zsLib::Time;
@@ -160,7 +164,8 @@ namespace webrtc
     void Cleanup();
 
     void StartCapture(winrt::Windows::Media::MediaProperties::MediaEncodingProfile const& media_encoding_profile,
-      winrt::Windows::Media::MediaProperties::IVideoEncodingProperties const& video_encoding_properties);
+      winrt::Windows::Media::MediaProperties::IVideoEncodingProperties const& video_encoding_properties,
+      bool mrc_enabled);
 
     void StopCapture();
 
@@ -177,6 +182,18 @@ namespace webrtc
 
     winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> GetMediaCapture();
 
+    void CleanupMixedRealityCapture();
+
+    bool HasVideoCaptureHolographicCapabilities() {
+      if (audio_effect_added_) {
+        return true;
+      }
+      if (video_effect_added_) {
+        return true;
+      }
+      return false;
+    }
+
   private:
     void RemovePaddingPixels(uint8_t* video_frame, size_t& video_frame_length);
 
@@ -191,6 +208,8 @@ namespace webrtc
 
     CaptureDeviceListener* capture_device_listener_;
 
+    bool audio_effect_added_;
+    bool video_effect_added_;
     bool capture_started_;
     VideoFormat frame_info_;
     std::unique_ptr<webrtc::EventWrapper> _stopped;
@@ -265,7 +284,9 @@ namespace webrtc
     CaptureDeviceListener* capture_device_listener)
     : media_capture_(nullptr),
     capture_device_listener_(capture_device_listener),
-    capture_started_(false) {
+    capture_started_(false),
+    audio_effect_added_(false),
+    video_effect_added_(false) {
     _stopped.reset(webrtc::EventWrapper::Create());
     _stopped->Set();
   }
@@ -292,6 +313,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void CaptureDevice::CleanupMediaCapture() {
     if (media_capture_) {
+      CleanupMixedRealityCapture();
       winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
       media_capture.Failed(media_capture_failed_event_registration_token_);
       media_capture_ = nullptr;
@@ -332,9 +354,26 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
+  void CaptureDevice::CleanupMixedRealityCapture() {
+    Concurrency::task<void> cleanEffectTask;
+    if (video_effect_added_) {
+      // Clear effects in videoRecord stream
+      cleanEffectTask = Concurrency::create_task([this]() {
+        return media_capture_.get().ClearEffectsAsync(winrt::Windows::Media::Capture::MediaStreamType::VideoRecord).get();
+      }).then([this]() {
+        OutputDebugString(L"VideoEffect removed\n");
+        video_effect_added_ = false;
+      });
+      cleanEffectTask.wait();
+    }
+    return;
+  }
+
+  //-----------------------------------------------------------------------------
   void CaptureDevice::StartCapture(
     MediaEncodingProfile const& media_encoding_profile,
-    IVideoEncodingProperties const& video_encoding_properties) {
+    IVideoEncodingProperties const& video_encoding_properties,
+    bool mrc_enabled) {
     if (capture_started_) {
       winrt::throw_hresult(ERROR_INVALID_STATE);
     }
@@ -386,7 +425,20 @@ namespace webrtc
       mediaExtension.as(media_sink_);
       return mediaExtension;
     }).then([this, media_encoding_profile,
-        video_encoding_properties](IMediaExtension const& media_extension) {
+        video_encoding_properties, mrc_enabled](IMediaExtension const& media_extension) {
+      winrt::hstring deviceFamily = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo().DeviceFamily();
+      if (std::wstring(deviceFamily.c_str()).compare((L"Windows.Holographic")) == 0 && mrc_enabled) {
+        MrcVideoEffectDefinition mrcVideoEffectDefinition;
+        mrcVideoEffectDefinition.StreamType(MediaStreamType::VideoRecord);
+        auto addEffectTask = Concurrency::create_task([this, &mrcVideoEffectDefinition]() {
+          return media_capture_.get().AddVideoEffectAsync(mrcVideoEffectDefinition, MediaStreamType::VideoRecord).get();
+        }).then([this](IMediaExtension const& videoExtension)
+        {
+          OutputDebugString(L"VideoEffect Added\n");
+          video_effect_added_ = true;
+        });
+        Concurrency::create_task(addEffectTask).wait();
+      }
       return Concurrency::create_task([this, video_encoding_properties]() {
         return media_capture_.get().VideoDeviceController().SetMediaStreamPropertiesAsync(
           MediaStreamType::VideoRecord, video_encoding_properties).get();
@@ -485,7 +537,7 @@ namespace webrtc
 
         capture_device_listener_->OnIncomingFrame(video_frame,
           video_frame_length,
-          frame_info_);
+          frame_info_, spMediaSample);
 
         hr = spMediaBuffer->Unlock();
       }
@@ -718,6 +770,7 @@ namespace webrtc
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties properties{ nullptr };
 
     rtc::CritScope cs(&apiCs_);
+    mrc_enabled_ = props.mrcEnabled_;
     const char* device_unique_id_utf8 = props.id_;
     const int32_t device_unique_id_length = (int32_t)strlen(props.id_);
 
@@ -798,6 +851,12 @@ namespace webrtc
 
     auto delegate = subscriptions_.delegate(subscription, true);
 
+    if (delegate) {
+      //if (firedVideoFrameReceived_) {
+      //  delegate->onVideoFrameReceived(VideoCapturerPtr(), receivedFrames_.GetAt(receivedFrames_.Size() - 1));
+      //}
+    }
+
     return subscription;
   }
 
@@ -874,7 +933,7 @@ namespace webrtc
     try {
       ApplyDisplayOrientation(display_orientation_->Orientation());
       device_->StartCapture(media_encoding_profile_,
-        video_encoding_properties_);
+        video_encoding_properties_, mrc_enabled_);
       last_frame_info_ = capture_format;
     } catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to start capture. "
@@ -946,7 +1005,8 @@ namespace webrtc
   void VideoCapturer::OnIncomingFrame(
     uint8_t* videoFrame,
     size_t videoFrameLength,
-    const VideoFormat& frameInfo) {
+    const VideoFormat& frameInfo,
+    winrt::com_ptr<IMFSample> spMediaSample) {
     if (device_->CaptureStarted()) {
       last_frame_info_ = frameInfo;
     }
@@ -1012,6 +1072,12 @@ namespace webrtc
     captureFrame.set_ntp_time_ms(captureTime);
 
     OnFrame(captureFrame, captureFrame.width(), captureFrame.height());
+    
+    winrt::Windows::Foundation::IInspectable mediaSample =
+      spMediaSample.as<winrt::Windows::Foundation::IInspectable>();
+
+    receivedFrames_.Append(mediaSample);
+    fireVideoFrameReceived();
   }
 
   //-----------------------------------------------------------------------------
@@ -1060,6 +1126,14 @@ namespace webrtc
       rotateFrame_ = VideoRotation::kVideoRotation_0;
       break;
     }
+  }
+
+  //-----------------------------------------------------------------------------
+  void VideoCapturer::fireVideoFrameReceived() noexcept
+  {
+    //firedVideoFrameReceived_ = true;
+    //subscriptions_.delegate()->onVideoFrameReceived(VideoCapturerPtr(), receivedFrames_.GetAt(receivedFrames_.Size()-1));
+    //receivedFrames_.RemoveAtEnd();
   }
 
   //-----------------------------------------------------------------------------
