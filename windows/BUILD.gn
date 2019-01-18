@@ -33,8 +33,19 @@ compile_idl_macro("webrtc_idl") {
     "../idl/config.json",
   ]
     
-  outputs = webrtc_sources
+  #outputs = webrtc_sources
 
   idlOutputPath = "../windows"
   idlAlreadyCompletedFlag =  "webrtcIdlCompiledFlag.flg"
+}
+
+compile_single_event_macro("webrtc_wrapper_events") {
+  
+  sources = [
+    "wrapper/Org.WebRtc.Glue.events.json",
+  ]
+  
+  idlOutputPath = "."
+  idlAlreadyCompletedFlag =  "Org.WebRtc.Glue_eventsCompiled.flg"
+    
 }
