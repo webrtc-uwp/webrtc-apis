@@ -310,9 +310,11 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bo
 
   rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
   audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
-    RTC_FROM_HERE, []() {
+    RTC_FROM_HERE, [playoutEnabled, recordingEnabled]() {
     webrtc::IAudioDeviceWasapi::CreationProperties props;
     props.id_ = "";
+    props.playoutEnabled_ = playoutEnabled;
+    props.recordingEnabled_ = recordingEnabled;
     return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
   });
 
