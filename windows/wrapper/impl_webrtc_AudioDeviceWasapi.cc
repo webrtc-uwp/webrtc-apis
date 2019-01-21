@@ -780,8 +780,8 @@ namespace webrtc
       inputDeviceIndex_(0),
       outputDeviceIndex_(0),
       newMicLevel_(0),
-		  recordingEnabled_(true),
-		  playoutEnabled_(true),
+      recordingEnabled_(true),
+      playoutEnabled_(true),
       subscriptions_(decltype(subscriptions_)::create()) {
       WEBRTC_TRACE(kTraceMemory, kTraceAudioDevice, id_, "%s created",
         __FUNCTION__);
@@ -903,8 +903,8 @@ namespace webrtc
   void AudioDeviceWasapi::init(const CreationProperties &props) noexcept {
     id_ = String(props.id_);
 
-		recordingEnabled_ = props.recordingEnabled_;
-		playoutEnabled_ = props.playoutEnabled_;
+    recordingEnabled_ = props.recordingEnabled_;
+    playoutEnabled_ = props.playoutEnabled_;
 
     if (props.delegate_) {
       defaultSubscription_ = subscriptions_.subscribe(props.delegate_, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
@@ -1030,9 +1030,9 @@ namespace webrtc
         return -1;
     }
 
-		if (!playoutEnabled_) {
-			return 0;
-		}
+    if (!playoutEnabled_) {
+      return 0;
+    }
 
     if (usingOutputDeviceIndex_) {
       int16_t nDevices = PlayoutDevices();
@@ -1159,9 +1159,9 @@ namespace webrtc
         return -1;
     }
 
-		if (!recordingEnabled_) {
-			return 0;
-		}
+    if (!recordingEnabled_) {
+      return 0;
+    }
 
     if (usingInputDeviceIndex_) {
       int16_t nDevices = RecordingDevices();
@@ -1876,9 +1876,9 @@ namespace webrtc
       return -1;
     }
 
-		if (!playoutEnabled_) {
-			return 0;
-		}
+    if (!playoutEnabled_) {
+      return 0;
+    }
 
     // Get current number of available rendering endpoint devices and refresh the
     // rendering collection.
@@ -1922,9 +1922,9 @@ namespace webrtc
       return -1;
     }
 
-		if (!playoutEnabled_) {
-			return 0;
-		}
+    if (!playoutEnabled_) {
+      return 0;
+    }
 
     rtc::CritScope lock(&critSect_);
 
@@ -2131,9 +2131,9 @@ namespace webrtc
         return -1;
     }
 
-		if (!recordingEnabled_) {
-			return 0;
-		}
+    if (!recordingEnabled_) {
+      return 0;
+    }
 
     // Get current number of available capture endpoint devices and refresh the
     // capture collection.
@@ -2178,9 +2178,9 @@ namespace webrtc
         return -1;
     }
 
-		if (!recordingEnabled_) {
-			return 0;
-		}
+    if (!recordingEnabled_) {
+      return 0;
+    }
 
     rtc::CritScope lock(&critSect_);
 
@@ -2255,9 +2255,9 @@ namespace webrtc
   //  InitPlayout
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::InitPlayout() {
-		if (!playoutEnabled_) {
-			return 0;
-		}
+    if (!playoutEnabled_) {
+      return 0;
+    }
 
     rtc::CritScope lock(&playoutControlMutex_);
     return InitPlayoutInternal();
@@ -2492,9 +2492,10 @@ namespace webrtc
   //  InitRecording
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::InitRecording() {
-		if (!recordingEnabled_) {
-			return 0;
-		}
+    if (!recordingEnabled_) {
+      return 0;
+    }
+
     rtc::CritScope lock(&recordingControlMutex_);
     return InitRecordingInternal();
   }
@@ -2693,9 +2694,9 @@ namespace webrtc
   //  StartRecording
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::StartRecording() {
-		if (!recordingEnabled_) {
-			return 0;
-		}
+    if (!recordingEnabled_) {
+      return 0;
+    }
 
     rtc::CritScope lock(&recordingControlMutex_);
     if (ptrAudioBuffer_)
@@ -2786,9 +2787,9 @@ namespace webrtc
   //  StopRecording
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::StopRecording() {
-		if (!recordingEnabled_) {
-			return 0;
-		}
+    if (!recordingEnabled_) {
+      return 0;
+    }
 
     rtc::CritScope lock(&recordingControlMutex_);
     int32_t result = StopRecordingInternal();
@@ -2907,9 +2908,9 @@ namespace webrtc
   //  StartPlayout
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::StartPlayout() {
-		if (!playoutEnabled_) {
-			return 0;
-		}
+    if (!playoutEnabled_) {
+      return 0;
+    }
 
     rtc::CritScope lock(&playoutControlMutex_);
     if (ptrAudioBuffer_)
@@ -2971,9 +2972,9 @@ namespace webrtc
   //  StopPlayout
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::StopPlayout() {
-		if (!playoutEnabled_) {
-			return 0;
-		}
+    if (!playoutEnabled_) {
+      return 0;
+    }
 
     rtc::CritScope lock(&playoutControlMutex_);
     int32_t result = StopPlayoutInternal();
@@ -4086,26 +4087,26 @@ namespace webrtc
     // There is a bug in the OS preventing the Effects detection (Noise SUppression and AEC) to work for Win10 Phones.
     // The bug is severe enough that it's not only the detection that doesn't work but the activation of the effect.
     // For Windows phone (until the bug is solved at the OS level, it will return false, and the software AEC will be used
-		if (recordingEnabled_)
-			return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::AcousticEchoCancellation);
-		else
-			return false;
+    if (recordingEnabled_)
+      return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::AcousticEchoCancellation);
+    else
+      return false;
   }
 
   //-----------------------------------------------------------------------------
   bool AudioDeviceWasapi::BuiltInAGCIsAvailable() const {
-		if (playoutEnabled_)
-			return CheckBuiltInRenderCapability(winrt::Windows::Media::Effects::AudioEffectType::AutomaticGainControl);
-		else
-			return false;
+    if (playoutEnabled_)
+      return CheckBuiltInRenderCapability(winrt::Windows::Media::Effects::AudioEffectType::AutomaticGainControl);
+    else
+      return false;
   }
 
   //-----------------------------------------------------------------------------
   bool AudioDeviceWasapi::BuiltInNSIsAvailable() const {
-		if (recordingEnabled_)
-			return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::NoiseSuppression);
-		else
-			return false;
+    if (recordingEnabled_)
+      return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::NoiseSuppression);
+    else
+      return false;
   }
 
   //-----------------------------------------------------------------------------

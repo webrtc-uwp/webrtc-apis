@@ -513,8 +513,8 @@ namespace webrtc {
 
       std::unique_ptr<DefaultAudioDeviceWatcher> defaultDeviceWatcher_;
 
-			bool                                    recordingEnabled_;
-			bool                                    playoutEnabled_;
+      bool                                    recordingEnabled_;
+      bool                                    playoutEnabled_;
   };
 
 #endif    // #if (_MSC_VER >= 1400)

@@ -49,8 +49,8 @@ namespace webrtc
 
       const char *id_{};
 
-			bool recordingEnabled_;
-			bool playoutEnabled_;
+      bool recordingEnabled_;
+      bool playoutEnabled_;
     };
 
     static rtc::scoped_refptr<AudioDeviceModule> create(const CreationProperties &info) noexcept;
