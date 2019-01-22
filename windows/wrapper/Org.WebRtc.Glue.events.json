@@ -64,7 +64,7 @@
           "type": "binary"
         }
       ]
-    }
+    },
     "sources": {
       "source": [
         "impl_webrtc_VideoCapturer.cpp",
