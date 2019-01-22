@@ -1,0 +1,83 @@
+{
+  "provider": {
+    "id": "9f85d9b5-36ba-4ea5-9ebb-3c8e80e33d5f",
+    "name": "Org.WebRtc.Glue",
+    "symbol": "Org.WebRtc.Glue",
+    "description": "Wrapper API",
+    "resourceName": "Org.WebRtc.Glue.events",
+    "aliases": {
+      "alias": [
+        {
+          "in": "i",
+          "out": "Info"
+        },
+        {
+          "in": "w",
+          "out": "Warning"
+        },
+        {
+          "in": "e",
+          "out": "Error"
+        },
+        {
+          "in": "f",
+          "out": "Fatal"
+        }
+      ]
+    },
+    "typedefs": {
+      "typedef": [
+        {
+          "name": "boolean",
+          "type": "bool"
+        },
+        {
+          "name": "puid",
+          "type": "size_t"
+        },
+        {
+          "name": "size_t",
+          "type": "uint64"
+        },
+        {
+          "name": "ssize_t",
+          "type": "int64"
+        },
+        {
+          "name": "this",
+          "type": "pointer"
+        },
+        {
+          "name": "socket",
+          "type": "uint64"
+        },
+        {
+          "name": "enum",
+          "type": "int64"
+        },
+        {
+          "name": "duration",
+          "type": "longlong"
+        },
+        {
+          "name": "buffer",
+          "type": "binary"
+        }
+      ]
+    },
+    "sources": {
+      "source": [
+        "impl_webrtc_VideoCapturer.cpp",
+      ]
+    },
+    "channels": {
+      "channel": [
+        {
+          "id": "glue",
+          "name": "Org.WebRtc.Glue",
+          "type": "Debug"
+        }
+      ]
+    }
+  }
+}
