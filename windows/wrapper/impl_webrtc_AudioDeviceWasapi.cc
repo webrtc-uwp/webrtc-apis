@@ -4087,26 +4087,26 @@ namespace webrtc
     // There is a bug in the OS preventing the Effects detection (Noise SUppression and AEC) to work for Win10 Phones.
     // The bug is severe enough that it's not only the detection that doesn't work but the activation of the effect.
     // For Windows phone (until the bug is solved at the OS level, it will return false, and the software AEC will be used
-    if (recordingEnabled_)
-      return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::AcousticEchoCancellation);
-    else
+    if (!recordingEnabled_)
       return false;
+
+    return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::AcousticEchoCancellation);
   }
 
   //-----------------------------------------------------------------------------
   bool AudioDeviceWasapi::BuiltInAGCIsAvailable() const {
-    if (playoutEnabled_)
-      return CheckBuiltInRenderCapability(winrt::Windows::Media::Effects::AudioEffectType::AutomaticGainControl);
-    else
-      return false;
+    if (!playoutEnabled_)
+      return false; 
+
+    return CheckBuiltInRenderCapability(winrt::Windows::Media::Effects::AudioEffectType::AutomaticGainControl);
   }
 
   //-----------------------------------------------------------------------------
   bool AudioDeviceWasapi::BuiltInNSIsAvailable() const {
-    if (recordingEnabled_)
-      return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::NoiseSuppression);
-    else
-      return false;
+    if (!recordingEnabled_)
+      return false; 
+
+    return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::NoiseSuppression);
   }
 
   //-----------------------------------------------------------------------------
