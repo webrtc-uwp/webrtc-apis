@@ -4097,7 +4097,7 @@ namespace webrtc
   bool AudioDeviceWasapi::BuiltInAGCIsAvailable() const {
     if (!playoutEnabled_)
       return false; 
-      
+
     return CheckBuiltInRenderCapability(winrt::Windows::Media::Effects::AudioEffectType::AutomaticGainControl);
   }
 
@@ -4105,7 +4105,7 @@ namespace webrtc
   bool AudioDeviceWasapi::BuiltInNSIsAvailable() const {
     if (!recordingEnabled_)
       return false; 
-      
+
     return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::NoiseSuppression);
   }
 
