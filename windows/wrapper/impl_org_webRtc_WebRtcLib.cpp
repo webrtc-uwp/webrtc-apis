@@ -43,6 +43,8 @@
 #include "modules/audio_device/include/audio_device.h"
 #include "impl_org_webRtc_post_include.h"
 
+#include "impl_org_webRtc.h"
+
 #include <zsLib/IMessageQueueThread.h>
 
 using ::zsLib::String;
@@ -108,7 +110,7 @@ static NativePeerConnectionFactoryInterface *unproxy(NativePeerConnectionFactory
 //------------------------------------------------------------------------------
 WrapperImplType::WebRtcLib() noexcept
 {
-  ZS_GET_LOG_LEVEL(); // force the subsystem to get referenced before any usage happens
+  wrapper::impl::org::webRtc::initSubsystems();
 }
 
 //------------------------------------------------------------------------------
@@ -536,6 +538,7 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
 
       void actual_setup() noexcept final {}
       void actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept final {}
+      void actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept final {}
       void actual_startMediaTracing() noexcept final {}
       void actual_stopMediaTracing() noexcept final {}
       bool actual_isMediaTracing() noexcept final { return false; }
