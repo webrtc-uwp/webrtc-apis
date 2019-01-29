@@ -537,8 +537,8 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
     private:
 
       void actual_setup() noexcept final {}
-      void actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept final {}
-      void actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept final {}
+      void actual_setup(wrapper::org::webRtc::EventQueuePtr) noexcept final {}
+      void actual_setup(wrapper::org::webRtc::EventQueuePtr, bool, bool) noexcept final {}
       void actual_startMediaTracing() noexcept final {}
       void actual_stopMediaTracing() noexcept final {}
       bool actual_isMediaTracing() noexcept final { return false; }

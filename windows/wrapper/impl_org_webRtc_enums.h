@@ -125,6 +125,8 @@ namespace wrapper {
           ZS_NO_DISCARD() static wrapper::org::webRtc::RTCPriorityType toWrapperRTCPriorityType(double value) noexcept;
           ZS_NO_DISCARD() static double toNative(wrapper::org::webRtc::RTCPriorityType value) noexcept;
 
+          ZS_NO_DISCARD() static const char *toString(wrapper::org::webRtc::RTCPriorityType value) noexcept;
+
           ZS_NO_DISCARD() static wrapper::org::webRtc::RTCRtpTransceiverDirection toWrapper(::webrtc::RtpTransceiverDirection value) noexcept;
           ZS_NO_DISCARD() static ::webrtc::RtpTransceiverDirection toNative(wrapper::org::webRtc::RTCRtpTransceiverDirection value) noexcept;
 
@@ -152,6 +154,11 @@ namespace wrapper {
           ZS_NO_DISCARD() static const char *toString(::cricket::MediaType value) noexcept;
           ZS_NO_DISCARD() static ::cricket::MediaType toNativeMediaType(const char *value) noexcept(false); // throws InvalidParameters
 
+          ZS_NO_DISCARD() static const char *toString(wrapper::org::webRtc::RTCQualityLimitationReason value) noexcept;
+
+          ZS_NO_DISCARD() static const char *toString(wrapper::org::webRtc::RTCCodecType value) noexcept;
+
+          ZS_NO_DISCARD() static const char *toString(wrapper::org::webRtc::RTCIceRole value) noexcept;
 
 #if 0
 

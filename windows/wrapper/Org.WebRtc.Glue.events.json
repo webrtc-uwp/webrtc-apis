@@ -67,7 +67,33 @@
     },
     "sources": {
       "source": [
-        "impl_webrtc_VideoCapturer.cpp",
+        "impl_org_webRtc_RTCStats.cpp",
+        "impl_org_webRtc_RTCIceCandidatePairStats.cpp",
+        "impl_org_webRtc_RTCIceCandidateStats.cpp",
+        "impl_org_webRtc_RTCInboundRtpStreamStats.cpp",
+        "impl_org_webRtc_RTCMediaHandlerStats.cpp",
+        "impl_org_webRtc_RTCMediaStreamStats.cpp",
+        "impl_org_webRtc_RTCOutboundRtpStreamStats.cpp",
+        "impl_org_webRtc_RTCSentRtpStreamStats.cpp",
+        "impl_org_webRtc_RTCReceivedRtpStreamStats.cpp",
+        "impl_org_webRtc_RTCRtpStreamStats.cpp",
+        "impl_org_webRtc_RTCRemoteInboundRtpStreamStats.cpp",
+        "impl_org_webRtc_RTCRemoteOutboundRtpStreamStats.cpp",
+        "impl_org_webRtc_RTCAudioHandlerStats.cpp",
+        "impl_org_webRtc_RTCAudioReceiverStats.cpp",
+        "impl_org_webRtc_RTCAudioSenderStats.cpp",
+        "impl_org_webRtc_RTCCertificateStats.cpp",
+        "impl_org_webRtc_RTCSenderAudioTrackAttachmentStats.cpp",
+        "impl_org_webRtc_RTCCodecStats.cpp",
+        "impl_org_webRtc_RTCDataChannelStats.cpp",
+        "impl_org_webRtc_RTCVideoHandlerStats.cpp",
+        "impl_org_webRtc_RTCVideoReceiverStats.cpp",
+        "impl_org_webRtc_RTCSenderVideoTrackAttachmentStats.cpp",
+        "impl_org_webRtc_RTCVideoSenderStats.cpp",
+        "impl_org_webRtc_RTCPeerConnectionStats.cpp",
+        "impl_org_webRtc_RTCRtpContributingSourceStats.cpp",
+        "impl_org_webRtc_RTCTransportStats.cpp",
+        "impl_org_webRtc_RTCSenderVideoTrackAttachmentStats.cpp"
       ]
     },
     "channels": {
@@ -76,6 +102,18 @@
           "id": "glue",
           "name": "Org.WebRtc.Glue",
           "type": "Debug"
+        },
+        {
+          "id": "stats",
+          "name": "Org.WebRtc.Glue.Stats",
+          "type": "Debug"
+        }
+      ]
+    },
+    "tasks": {
+      "task": [
+        {
+          "name": "Stats"
         }
       ]
     }

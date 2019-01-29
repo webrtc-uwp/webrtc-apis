@@ -26,6 +26,7 @@ namespace wrapper {
           RTCMediaHandlerStats() noexcept;
           virtual ~RTCMediaHandlerStats() noexcept;
 
+          void trace() noexcept;
 
           // properties RTCStats
           ::zsLib::Time get_timestamp() noexcept override;
@@ -41,6 +42,13 @@ namespace wrapper {
           wrapper::org::webRtc::RTCPriorityType get_priority() noexcept override;
 
           ZS_NO_DISCARD() static WrapperTypePtr toWrapper(NativeTypeUniPtr value) noexcept;
+
+          ZS_NO_DISCARD() static String get_trackIdentifier(const NativeStats *native) noexcept;
+          ZS_NO_DISCARD() static Optional< bool > get_remoteSource(const NativeStats *native) noexcept;
+          ZS_NO_DISCARD() static bool get_ended(const NativeStats *native) noexcept;
+          ZS_NO_DISCARD() static String get_kind(const NativeStats *native) noexcept;
+          ZS_NO_DISCARD() static wrapper::org::webRtc::RTCPriorityType get_priority(const NativeStats *native) noexcept;
+
           ZS_NO_DISCARD() const NativeStats &cast() noexcept;
         };
 

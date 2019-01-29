@@ -27,6 +27,7 @@ namespace wrapper {
           RTCPeerConnectionStats() noexcept;
           virtual ~RTCPeerConnectionStats() noexcept;
 
+          void trace() noexcept;
 
           // properties RTCStats
           ::zsLib::Time get_timestamp() noexcept override;
@@ -41,6 +42,12 @@ namespace wrapper {
           unsigned long get_dataChannelsAccepted() noexcept override;
 
           ZS_NO_DISCARD() static WrapperTypePtr toWrapper(NativeTypeUniPtr value) noexcept;
+
+          ZS_NO_DISCARD() static unsigned long get_dataChannelsOpened(const NativeStats *native) noexcept;
+          ZS_NO_DISCARD() static unsigned long get_dataChannelsClosed(const NativeStats *native) noexcept;
+          ZS_NO_DISCARD() static unsigned long get_dataChannelsRequested(const NativeStats *native) noexcept;
+          ZS_NO_DISCARD() static unsigned long get_dataChannelsAccepted(const NativeStats *native) noexcept;
+
           ZS_NO_DISCARD() const NativeStats &cast() noexcept;
         };
 

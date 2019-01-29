@@ -26,6 +26,7 @@ namespace wrapper {
           RTCIceCandidatePairStats() noexcept;
           virtual ~RTCIceCandidatePairStats() noexcept;
 
+          void trace() noexcept;
 
           // properties RTCStats
           ::zsLib::Time get_timestamp() noexcept override;

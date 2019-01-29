@@ -1,6 +1,12 @@
 
 #include "impl_org_webRtc_RTCSenderVideoTrackAttachmentStats.h"
+#include "impl_org_webRtc_RTCVideoSenderStats.h"
+#include "impl_org_webRtc_RTCVideoHandlerStats.h"
+#include "impl_org_webRtc_RTCMediaHandlerStats.h"
 #include "impl_org_webRtc_RTCStats.h"
+
+#include "impl_org_webRtc_enums.h"
+#include "Org.WebRtc.Glue.events.h"
 
 #include <zsLib/SafeInt.h>
 
@@ -29,6 +35,13 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeStats, NativeStats);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCStats, ImplRTCStats);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCMediaHandlerStats, ImplRTCMediaHandlerStats);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCVideoHandlerStats, ImplRTCVideoHandlerStats);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCVideoSenderStats, ImplRTCVideoSenderStats);
+
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
+
+namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::RTCSenderVideoTrackAttachmentStats() noexcept
@@ -50,152 +63,128 @@ wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::~RTCSenderVideoT
 }
 
 //------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::trace() noexcept
+{
+  if (!ZS_EVENTING_IS_LOGGING(Detail))
+    return;
+
+  auto type = get_statsType();
+
+  ZS_EVENTING_16(
+    x, i, Detail, RTCSenderVideoTrackAttachmentStats, stats, Stats, Info,
+    string, type, type.has_value() ? UseEnum::toString(type.value()) : "",
+    string, otherType, get_statsTypeOther(),
+    string, id, get_id(),
+    string, trackIdentifier, get_trackIdentifier(),
+    bool, hasRemoteSourceValue, get_remoteSource().has_value(),
+    bool, remoteSource, get_remoteSource().has_value() ? get_remoteSource().value() : false,
+    bool, ended, get_ended(),
+    string, kind, get_kind(),
+    string, priority, UseEnum::toString(get_priority()),
+    ulong, frameWidth, get_frameWidth(),
+    ulong, frameHeight, get_frameHeight(),
+    double, framesPerSecond, get_framesPerSecond(),
+    ulong, framesCaptured, get_framesCaptured(),
+    ulong, framesSent, get_framesSent(),
+    ulong, hugeFramesSent, get_hugeFramesSent(),
+    ulong, keyFramesSent, get_keyFramesSent()
+  );
+}
+
+//------------------------------------------------------------------------------
 ::zsLib::Time wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_timestamp() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_timestamp(native_.get());
 }
 
 //------------------------------------------------------------------------------
 Optional< wrapper::org::webRtc::RTCStatsType > wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_statsType() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsType(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_statsTypeOther() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsTypeOther(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_id() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_id(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_trackIdentifier() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.track_identifier.is_defined()) return {};
-  return (*converted.track_identifier);
+  return ImplRTCMediaHandlerStats::get_trackIdentifier(&cast());
 }
 
 //------------------------------------------------------------------------------
 Optional< bool > wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_remoteSource() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.remote_source.is_defined()) return {};
-  return (*converted.remote_source);
+  return ImplRTCMediaHandlerStats::get_remoteSource(&cast());
 }
 
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_ended() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.ended.is_defined()) return {};
-  return (*converted.ended);
+  return ImplRTCMediaHandlerStats::get_ended(&cast());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_kind() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.kind.is_defined()) return {};
-  return (*converted.kind);
+  return ImplRTCMediaHandlerStats::get_kind(&cast());
 }
 
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::RTCPriorityType wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_priority() noexcept
 {
-  return wrapper::org::webRtc::RTCPriorityType::RTCPriorityType_medium;
+  return ImplRTCMediaHandlerStats::get_priority(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_frameWidth() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.frame_width.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.frame_width);
+  return ImplRTCVideoHandlerStats::get_frameWidth(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_frameHeight() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.frame_height.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.frame_height);
+  return ImplRTCVideoHandlerStats::get_frameHeight(&cast());
 }
 
 //------------------------------------------------------------------------------
 double wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_framesPerSecond() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.frames_per_second.is_defined()) return {};
-  return (*converted.frames_per_second);
+  return ImplRTCVideoHandlerStats::get_framesPerSecond(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_framesCaptured() noexcept
 {
-  return {};
+  return ImplRTCVideoSenderStats::get_framesCaptured(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_framesSent() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.frames_sent.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.frames_sent);
+  return ImplRTCVideoSenderStats::get_framesSent(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_hugeFramesSent() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.huge_frames_sent.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.huge_frames_sent);
+  return ImplRTCVideoSenderStats::get_hugeFramesSent(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCSenderVideoTrackAttachmentStats::get_keyFramesSent() noexcept
 {
-  return {};
+  return ImplRTCVideoSenderStats::get_keyFramesSent(&cast());
 }
 
 //------------------------------------------------------------------------------

@@ -26,6 +26,7 @@ namespace wrapper {
           RTCSenderAudioTrackAttachmentStats() noexcept;
           virtual ~RTCSenderAudioTrackAttachmentStats() noexcept;
 
+          void trace() noexcept;
 
           // properties RTCStats
           ::zsLib::Time get_timestamp() noexcept override;

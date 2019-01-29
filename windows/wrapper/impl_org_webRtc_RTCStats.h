@@ -31,6 +31,8 @@ namespace wrapper {
           String get_statsTypeOther() noexcept override;
           String get_id() noexcept override;
 
+          void trace() noexcept override;
+
           ZS_NO_DISCARD() static WrapperTypePtr toWrapper(NativeTypeUniPtr value) noexcept;
 
           ZS_NO_DISCARD() static ::zsLib::Time get_timestamp(const NativeType *native) noexcept;

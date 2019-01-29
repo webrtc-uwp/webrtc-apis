@@ -1,9 +1,16 @@
 
 #include "impl_org_webRtc_RTCInboundRtpStreamStats.h"
+#include "impl_org_webRtc_RTCReceivedRtpStreamStats.h"
+#include "impl_org_webRtc_RTCRtpStreamStats.h"
 #include "impl_org_webRtc_RTCStats.h"
 
-#include <zsLib/SafeInt.h>
+#include "impl_org_webRtc_enums.h"
+#include "Org.WebRtc.Glue.events.h"
 
+#include <zsLib/SafeInt.h>
+#include <zsLib/helpers.h>
+
+using ::zsLib::Milliseconds;
 using ::zsLib::String;
 using ::zsLib::Optional;
 using ::zsLib::Any;
@@ -29,6 +36,12 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeStats, NativeStats);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCStats, ImplRTCStats);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCRtpStreamStats, ImplRTCRtpStreamStats);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCReceivedRtpStreamStats, ImplRTCReceivedRtpStreamStats);
+
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
+
+namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::RTCInboundRtpStreamStats() noexcept
@@ -50,277 +63,226 @@ wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::~RTCInboundRtpStreamStats(
 }
 
 //------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::trace() noexcept
+{
+  if (!ZS_EVENTING_IS_LOGGING(Detail))
+    return;
+
+  auto type = get_statsType();
+
+  auto dscpPackets = get_perDscpPacketsReceived();
+
+  ZS_EVENTING_37(
+    x, i, Detail, RTCInboundRtpStreamStats, stats, Stats, Info,
+    string, type, type.has_value() ? UseEnum::toString(type.value()) : "",
+    string, otherType, get_statsTypeOther(),
+    string, id, get_id(),
+    bool, hasSsrcValue, get_ssrc().has_value(),
+    uint32, ssrc, get_ssrc().has_value() ? get_ssrc().value() : 0,
+    string, kind, get_kind(),
+    string, transportId, get_transportId(),
+    string, codecId, get_codecId(),
+    ulong, firCount, get_firCount(),
+    ulong, pliCount, get_pliCount(),
+    ulong, nackCount, get_nackCount(),
+    ulong, sliCount, get_sliCount(),
+    ulonglong, qpSum, get_qpSum(),
+    ulong, packetsReceived, get_packetsReceived(),
+    ulong, get_packetsLost, get_packetsLost(),
+    double, jitter, get_jitter(),
+    ulong, packetsDiscarded, get_packetsDiscarded(),
+    ulong, packetsRepaired, get_packetsRepaired(),
+    ulong, burstPacketsLost, get_burstPacketsLost(),
+    ulong, burstPacketsDiscarded, get_burstPacketsDiscarded(),
+    ulong, burstLossCount, get_burstLossCount(),
+    ulong, burstDiscardCount, get_burstDiscardCount(),
+    double, burstLossRate, get_burstLossRate(),
+    double, burstDiscardRate, get_burstDiscardRate(),
+    double, gapLossRate, get_gapLossRate(),
+    double, gapDiscardRate, get_gapDiscardRate(),
+    string, trackId, get_trackId(),
+    string, receiverId, get_receiverId(),
+    string, remoteId, get_remoteId(),
+    bool, hasFramesDecodedValue, get_framesDecoded().has_value(),
+    ulong, framesDecoded, get_framesDecoded().has_value() ? get_framesDecoded().value() : 0,
+    duration, timestamp, zsLib::timeSinceEpoch<Milliseconds>(get_lastPacketReceivedTimestamp()).count(),
+    double, averageRtcpInterval, get_averageRtcpInterval(),
+    ulong, fecPacketsReceived, get_fecPacketsReceived(),
+    ulong, bytesReceived, get_bytesReceived(),
+    ulong, packetsFailedDecryption, get_packetsFailedDecryption(),
+    size_t, perDscpPacketsReceived, ((bool)dscpPackets) ? dscpPackets->size() : 0
+  );
+
+  if (!ZS_EVENTING_IS_LOGGING(Debug))
+    return;
+
+
+  if (dscpPackets) {
+    for (auto iter = dscpPackets->begin(); iter != dscpPackets->end(); ++iter) {
+      ZS_EVENTING_2(
+        x, i, Debug, RTCInboundRtpStreamStats_perDscpPacketsReceived, stats, Stats, Info,
+        string, id, (*iter).first,
+        uint64, perDscpPacketsSent, (*iter).second
+      );
+    }
+  }
+
+}
+
+//------------------------------------------------------------------------------
 ::zsLib::Time wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_timestamp() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_timestamp(native_.get());
 }
 
 //------------------------------------------------------------------------------
 Optional< wrapper::org::webRtc::RTCStatsType > wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_statsType() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsType(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_statsTypeOther() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsTypeOther(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_id() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_id(native_.get());
 }
 
 //------------------------------------------------------------------------------
 Optional< uint32_t > wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_ssrc() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.ssrc.is_defined()) return {};
-  return SafeInt<uint32_t>(*converted.ssrc);
+  return ImplRTCRtpStreamStats::get_ssrc(&cast());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_kind() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.media_type.is_defined()) return {};
-  return (*converted.media_type);
+  return ImplRTCRtpStreamStats::get_kind(&cast());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_transportId() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.transport_id.is_defined()) return {};
-  return (*converted.transport_id);
+  return ImplRTCRtpStreamStats::get_transportId(&cast());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_codecId() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.codec_id.is_defined()) return {};
-  return (*converted.codec_id);
+  return ImplRTCRtpStreamStats::get_codecId(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_firCount() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.fir_count.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.fir_count);
+  return ImplRTCRtpStreamStats::get_firCount(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_pliCount() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.pli_count.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.pli_count);
+  return ImplRTCRtpStreamStats::get_pliCount(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_nackCount() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.nack_count.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.nack_count);
+  return ImplRTCRtpStreamStats::get_nackCount(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_sliCount() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.sli_count.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.sli_count);
+  return ImplRTCRtpStreamStats::get_sliCount(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_qpSum() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.qp_sum.is_defined()) return {};
-  return SafeInt<unsigned long long>(*converted.qp_sum);
+  return ImplRTCRtpStreamStats::get_qpSum(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_packetsReceived() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.packets_received.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.packets_received);
+  return ImplRTCReceivedRtpStreamStats::get_packetsReceived(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_packetsLost() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.packets_lost.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.packets_lost);
+  return ImplRTCReceivedRtpStreamStats::get_packetsLost(&cast());
 }
 
 //------------------------------------------------------------------------------
 double wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_jitter() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.jitter.is_defined()) return {};
-  return (*converted.jitter);
+  return ImplRTCReceivedRtpStreamStats::get_jitter(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_packetsDiscarded() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.packets_discarded.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.packets_discarded);
+  return ImplRTCReceivedRtpStreamStats::get_packetsDiscarded(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_packetsRepaired() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.packets_repaired.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.packets_repaired);
+  return ImplRTCReceivedRtpStreamStats::get_packetsRepaired(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_burstPacketsLost() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.burst_packets_lost.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.burst_packets_lost);
+  return ImplRTCReceivedRtpStreamStats::get_burstPacketsLost(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_burstPacketsDiscarded() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.packets_discarded.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.packets_discarded);
+  return ImplRTCReceivedRtpStreamStats::get_burstPacketsDiscarded(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_burstLossCount() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.burst_loss_count.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.burst_loss_count);
+  return ImplRTCReceivedRtpStreamStats::get_burstLossCount(&cast());
 }
 
 //------------------------------------------------------------------------------
 unsigned long wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_burstDiscardCount() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.burst_discard_count.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.burst_discard_count);
+  return ImplRTCReceivedRtpStreamStats::get_burstDiscardCount(&cast());
 }
 
 //------------------------------------------------------------------------------
 double wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_burstLossRate() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.burst_loss_rate.is_defined()) return {};
-  return (*converted.burst_loss_rate);
+  return ImplRTCReceivedRtpStreamStats::get_burstLossRate(&cast());
 }
 
 //------------------------------------------------------------------------------
 double wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_burstDiscardRate() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.burst_discard_rate.is_defined()) return {};
-  return (*converted.burst_discard_rate);
+  return ImplRTCReceivedRtpStreamStats::get_burstDiscardRate(&cast());
 }
 
 //------------------------------------------------------------------------------
 double wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_gapLossRate() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.gap_loss_rate.is_defined()) return {};
-  return (*converted.gap_loss_rate);
+  return ImplRTCReceivedRtpStreamStats::get_gapLossRate(&cast());
 }
 
 //------------------------------------------------------------------------------
 double wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::get_gapDiscardRate() noexcept
 {
-  ZS_ASSERT(native_);
-  if (!native_) return {};
-
-  auto converted = cast();
-  if (!converted.gap_discard_rate.is_defined()) return {};
-  return (*converted.gap_discard_rate);
+  return ImplRTCReceivedRtpStreamStats::get_gapDiscardRate(&cast());
 }
 
 //------------------------------------------------------------------------------
