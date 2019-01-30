@@ -1,6 +1,8 @@
 
 #include "impl_org_webRtc_RTCMediaStreamStats.h"
 #include "impl_org_webRtc_RTCStats.h"
+#include "impl_org_webRtc_enums.h"
+#include "Org.WebRtc.Glue.events.h"
 
 #include <zsLib/SafeInt.h>
 
@@ -30,6 +32,9 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeStats, NativeStats);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCStats, ImplRTCStats);
 
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
+
+namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::RTCMediaStreamStats::RTCMediaStreamStats() noexcept
@@ -51,34 +56,57 @@ wrapper::impl::org::webRtc::RTCMediaStreamStats::~RTCMediaStreamStats() noexcept
 }
 
 //------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::RTCMediaStreamStats::trace() noexcept
+{
+  if (!ZS_EVENTING_IS_LOGGING(Detail))
+    return;
+
+  auto type = get_statsType();
+  auto tracks = get_trackIds();
+
+  ZS_EVENTING_5(
+    x, i, Detail, RTCMediaStreamStats, stats, Stats, Info,
+    string, type, type.has_value() ? UseEnum::toString(type.value()) : "",
+    string, otherType, get_statsTypeOther(),
+    string, id, get_id(),
+    string, streamIdentifier, get_streamIdentifier(),
+    size_t, totalTracks, ((bool)tracks) ? tracks->size() : 0
+  );
+
+  if (!ZS_EVENTING_IS_LOGGING(Debug))
+    return;
+
+  if (tracks) {
+    for (auto iter = tracks->begin(); iter != tracks->end(); ++iter) {
+      ZS_EVENTING_1(
+        x, i, Debug, RTCMediaStreamStats_TrackId, stats, Stats, Info,
+        string, otherType, *iter
+      );
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 ::zsLib::Time wrapper::impl::org::webRtc::RTCMediaStreamStats::get_timestamp() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_timestamp(native_.get());
 }
 
 //------------------------------------------------------------------------------
 Optional< wrapper::org::webRtc::RTCStatsType > wrapper::impl::org::webRtc::RTCMediaStreamStats::get_statsType() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsType(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCMediaStreamStats::get_statsTypeOther() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsTypeOther(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCMediaStreamStats::get_id() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_id(native_.get());
 }
 

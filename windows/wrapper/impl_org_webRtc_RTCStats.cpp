@@ -23,7 +23,11 @@
 
 #include <zsLib/SafeInt.h>
 #include <zsLib/date.h>
+#include <zsLib/helpers.h>
 
+#include "Org.WebRtc.Glue.events.h"
+
+using ::zsLib::Milliseconds;
 using ::zsLib::String;
 using ::zsLib::Optional;
 using ::zsLib::Any;
@@ -50,6 +54,8 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
+
+namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::RTCStats::RTCStats() noexcept
@@ -96,6 +102,23 @@ String wrapper::impl::org::webRtc::RTCStats::get_id() noexcept
 {
   ZS_ASSERT(native_);
   return get_id(native_.get());
+}
+
+//------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::RTCStats::trace() noexcept
+{
+  if (!ZS_EVENTING_IS_LOGGING(Detail))
+    return;
+
+  auto type = get_statsType();
+
+  ZS_EVENTING_4(
+    x, i, Detail, RTCStats, stats, Stats, Info,
+    string, type, type.has_value() ? UseEnum::toString(type.value()) : "",
+    string, otherType, get_statsTypeOther(),
+    string, id, get_id(),
+    duration, timestamp, zsLib::timeSinceEpoch<Milliseconds>(get_timestamp()).count()
+  );
 }
 
 //------------------------------------------------------------------------------

@@ -923,6 +923,20 @@ double UseEnum::toNative(wrapper::org::webRtc::RTCPriorityType value) noexcept
 }
 
 //-----------------------------------------------------------------------------
+const char *UseEnum::toString(wrapper::org::webRtc::RTCPriorityType value) noexcept
+{
+  switch (value)
+  {
+  case wrapper::org::webRtc::RTCPriorityType::RTCPriorityType_veryLow:    return "veryLow";
+  case wrapper::org::webRtc::RTCPriorityType::RTCPriorityType_low:        return "low";
+  case wrapper::org::webRtc::RTCPriorityType::RTCPriorityType_medium:     return "medium";
+  case wrapper::org::webRtc::RTCPriorityType::RTCPriorityType_high:       return "high";
+  }
+  ZS_ASSERT_FAIL("unknown priority type");
+  return "unknown";
+}
+
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::RTCRtpTransceiverDirection UseEnum::toWrapper(::webrtc::RtpTransceiverDirection value) noexcept
 {
   switch (value)
@@ -1235,3 +1249,39 @@ const char *UseEnum::toString(::cricket::MediaType value) noexcept
   }
   ZS_THROW_INVALID_ARGUMENT("MediaType is not understood: " + str);
 }
+
+//-----------------------------------------------------------------------------
+const char *UseEnum::toString(wrapper::org::webRtc::RTCQualityLimitationReason value) noexcept
+{
+  switch (value) {
+    case wrapper::org::webRtc::RTCQualityLimitationReason_none:       return "none";
+    case wrapper::org::webRtc::RTCQualityLimitationReason_cpu:        return "cpu";
+    case wrapper::org::webRtc::RTCQualityLimitationReason_bandwidth:  return "bandwidth";
+    case wrapper::org::webRtc::RTCQualityLimitationReason_other:      return "other";
+  }
+  ZS_ASSERT_FAIL("unknown type");
+  return "unknown";
+}
+
+//-----------------------------------------------------------------------------
+const char *UseEnum::toString(wrapper::org::webRtc::RTCCodecType value) noexcept
+{
+  switch (value) {
+    case wrapper::org::webRtc::RTCCodecType_encode:       return "encode";
+    case wrapper::org::webRtc::RTCCodecType_decode:       return "decode";
+  }
+  ZS_ASSERT_FAIL("unknown type");
+  return "unknown";
+}
+
+//-----------------------------------------------------------------------------
+const char *UseEnum::toString(wrapper::org::webRtc::RTCIceRole value) noexcept
+{
+  switch (value) {
+  case wrapper::org::webRtc::RTCIceRole_controlling:      return "controlling";
+  case wrapper::org::webRtc::RTCIceRole_controlled:       return "controlled";
+  }
+  ZS_ASSERT_FAIL("unknown role");
+  return "unknown";
+}
+

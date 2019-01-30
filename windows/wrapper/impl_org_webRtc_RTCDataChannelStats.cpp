@@ -2,6 +2,7 @@
 #include "impl_org_webRtc_RTCDataChannelStats.h"
 #include "impl_org_webRtc_RTCStats.h"
 #include "impl_org_webRtc_enums.h"
+#include "Org.WebRtc.Glue.events.h"
 
 #include <zsLib/SafeInt.h>
 
@@ -32,6 +33,8 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeStats, NativeStats);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCStats, ImplRTCStats);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 
+namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
+
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::RTCDataChannelStats::RTCDataChannelStats() noexcept
 {
@@ -52,34 +55,52 @@ wrapper::impl::org::webRtc::RTCDataChannelStats::~RTCDataChannelStats() noexcept
 }
 
 //------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::RTCDataChannelStats::trace() noexcept
+{
+  if (!ZS_EVENTING_IS_LOGGING(Detail))
+    return;
+
+  auto type = get_statsType();
+
+  ZS_EVENTING_12(
+    x, i, Detail, RTCDataChannelStats, stats, Stats, Info,
+    string, type, type.has_value() ? UseEnum::toString(type.value()) : "",
+    string, otherType, get_statsTypeOther(),
+    string, id, get_id(),
+    string, label, get_label(),
+    string, protocol, get_protocol(),
+    long, dataChannelIdentifier, get_dataChannelIdentifier(),
+    string, transportId, get_transportId(),
+    string, state, UseEnum::toString(get_state()),
+    ulong, messagesSent, get_messagesSent(),
+    ulong, bytesSent, get_bytesSent(),
+    ulong, messagesReceived, get_messagesReceived(),
+    ulong, bytesReceived, get_bytesReceived()
+  );
+
+}
+
+//------------------------------------------------------------------------------
 ::zsLib::Time wrapper::impl::org::webRtc::RTCDataChannelStats::get_timestamp() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_timestamp(native_.get());
 }
 
 //------------------------------------------------------------------------------
 Optional< wrapper::org::webRtc::RTCStatsType > wrapper::impl::org::webRtc::RTCDataChannelStats::get_statsType() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsType(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCDataChannelStats::get_statsTypeOther() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsTypeOther(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCDataChannelStats::get_id() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_id(native_.get());
 }
 

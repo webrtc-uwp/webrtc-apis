@@ -26,6 +26,7 @@ namespace wrapper {
           RTCCertificateStats() noexcept;
           virtual ~RTCCertificateStats() noexcept;
 
+          void trace() noexcept;
 
           // properties RTCStats
           ::zsLib::Time get_timestamp() noexcept override;

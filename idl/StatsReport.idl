@@ -108,6 +108,12 @@ namespace org
 
       [constructor, default, delete]
       void RTCStats();
+
+      /// <summary>
+      /// Cause an event trace event (ETW) containing information about the
+      /// current stats object.
+      /// </summary>
+      void trace();
     };
 
     /// <summary>

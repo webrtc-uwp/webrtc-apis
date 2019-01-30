@@ -2,9 +2,12 @@
 #include "impl_org_webRtc_RTCIceCandidatePairStats.h"
 #include "impl_org_webRtc_RTCStats.h"
 #include "impl_org_webRtc_enums.h"
+#include "Org.WebRtc.Glue.events.h"
 
 #include <zsLib/SafeInt.h>
+#include <zsLib/helpers.h>
 
+using ::zsLib::Milliseconds;
 using ::zsLib::String;
 using ::zsLib::Optional;
 using ::zsLib::Any;
@@ -31,7 +34,9 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeStats, NativeStats);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCStats, ImplRTCStats);
 
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnums);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
+
+namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::RTCIceCandidatePairStats::RTCIceCandidatePairStats() noexcept
@@ -53,34 +58,72 @@ wrapper::impl::org::webRtc::RTCIceCandidatePairStats::~RTCIceCandidatePairStats(
 }
 
 //------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::RTCIceCandidatePairStats::trace() noexcept
+{
+  if (!ZS_EVENTING_IS_LOGGING(Detail))
+    return;
+
+  auto type = get_statsType();
+
+  ZS_EVENTING_33(
+    x, i, Detail, RTCIceCandidatePairStats, stats, Stats, Info,
+    string, type, type.has_value() ? UseEnum::toString(type.value()) : "",
+    string, otherType, get_statsTypeOther(),
+    string, id, get_id(),
+    duration, timestamp, zsLib::timeSinceEpoch<Milliseconds>(get_timestamp()).count(),
+    string, transportId, get_transportId(),
+    string, localCandidateId, get_localCandidateId(),
+    string, remoteCandidateId, get_remoteCandidateId(),
+    string, state, UseEnum::toString(get_state()),
+    bool, nominated, get_nominated(),
+    ulong, packetsSent, get_packetsSent(),
+    ulong, packetsReceived, get_packetsReceived(),
+    ulonglong, bytesSent, get_bytesSent(),
+    ulonglong, bytesReceived, get_bytesReceived(),
+    duration, lastPacketSentTimestamp, zsLib::timeSinceEpoch<Milliseconds>(get_lastPacketSentTimestamp()).count(),
+    duration, lastPacketReceivedTimestamp, zsLib::timeSinceEpoch<Milliseconds>(get_lastPacketReceivedTimestamp()).count(),
+    duration, firstRequestTimestamp, zsLib::timeSinceEpoch<Milliseconds>(get_firstRequestTimestamp()).count(),
+    duration, lastRequestTimestamp, zsLib::timeSinceEpoch<Milliseconds>(get_lastRequestTimestamp()).count(),
+    duration, lastResponseTimestamp, zsLib::timeSinceEpoch<Milliseconds>(get_lastResponseTimestamp()).count(),
+    duration, totalRoundTripTime, get_totalRoundTripTime().count(),
+    duration, currentRoundTripTime, get_currentRoundTripTime().count(),
+    bool, hasAvailableOutgoingBitrateValue, get_availableOutgoingBitrate().has_value(),
+    double, availableOutgoingBitrate, get_availableOutgoingBitrate().has_value() ? get_availableOutgoingBitrate().value() : 0,
+    bool, hasAvailableIncomingBitrateValue, get_availableIncomingBitrate().has_value(),
+    double, availableIncomingBitrate, get_availableIncomingBitrate().has_value() ? get_availableIncomingBitrate().value() : 0,
+    ulong, circuitBreakerTriggerCount, get_circuitBreakerTriggerCount(),
+    ulonglong, requestsReceived, get_requestsReceived(),
+    ulonglong, requestsSent, get_requestsSent(),
+    ulonglong, responsesReceived, get_responsesReceived(),
+    ulonglong, responsesSent, get_responsesSent(),
+    ulonglong, retransmissionsReceived, get_retransmissionsReceived(),
+    ulonglong, retransmissionsSent, get_retransmissionsSent(),
+    ulonglong, consentRequestsSent, get_consentRequestsSent(),
+    duration, consentExpiredTimestamp, zsLib::timeSinceEpoch<Milliseconds>(get_consentExpiredTimestamp()).count()
+    );
+}
+
+//------------------------------------------------------------------------------
 ::zsLib::Time wrapper::impl::org::webRtc::RTCIceCandidatePairStats::get_timestamp() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_timestamp(native_.get());
 }
 
 //------------------------------------------------------------------------------
 Optional< wrapper::org::webRtc::RTCStatsType > wrapper::impl::org::webRtc::RTCIceCandidatePairStats::get_statsType() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsType(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCIceCandidatePairStats::get_statsTypeOther() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_statsTypeOther(native_.get());
 }
 
 //------------------------------------------------------------------------------
 String wrapper::impl::org::webRtc::RTCIceCandidatePairStats::get_id() noexcept
 {
-  if (!native_) return {};
-  ZS_ASSERT(native_);
   return ImplRTCStats::get_id(native_.get());
 }
 
@@ -127,7 +170,7 @@ wrapper::org::webRtc::RTCStatsIceCandidatePairState wrapper::impl::org::webRtc::
   if (!converted.state.is_defined()) return {};
   try
   {
-    return UseEnums::toWrapperRTCStatsIceCandidatePairState((*converted.state).c_str());
+    return UseEnum::toWrapperRTCStatsIceCandidatePairState((*converted.state).c_str());
   } catch (const InvalidParameters &) {
   }
   return wrapper::org::webRtc::RTCStatsIceCandidatePairState::RTCStatsIceCandidatePairState_cancelled;

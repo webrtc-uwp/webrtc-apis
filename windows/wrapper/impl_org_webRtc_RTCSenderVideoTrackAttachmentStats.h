@@ -26,6 +26,7 @@ namespace wrapper {
           RTCSenderVideoTrackAttachmentStats() noexcept;
           virtual ~RTCSenderVideoTrackAttachmentStats() noexcept;
 
+          void trace() noexcept;
 
           // properties RTCStats
           ::zsLib::Time get_timestamp() noexcept override;
