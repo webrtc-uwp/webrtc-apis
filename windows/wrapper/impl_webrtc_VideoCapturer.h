@@ -91,8 +91,6 @@ namespace webrtc
     virtual void ApplyDisplayOrientation(
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
 
-    void fireVideoFrameReceived() noexcept;
-
   private:
     mutable zsLib::RecursiveLock lock_;
 
@@ -116,10 +114,6 @@ namespace webrtc
       video_encoding_properties_;
     winrt::Windows::Media::MediaProperties::MediaEncodingProfile
       media_encoding_profile_;
-
-    std::atomic_bool firedVideoFrameReceived_ {};
-    winrt::Windows::Foundation::Collections::IVector<winrt::Windows::Foundation::IInspectable> receivedFrames_ 
-      { winrt::single_threaded_vector<winrt::Windows::Foundation::IInspectable>() };
 
     bool mrc_enabled_{ false };
   };
