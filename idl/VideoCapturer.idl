@@ -100,7 +100,7 @@ namespace org
       void VideoCapturer();
 
       [static]
-      VideoCapturer create(string name, string id);
+      VideoCapturer create(string name, string id, bool enableMrc);
 
       [static]
       PromiseWithVideoDeviceInfoList getDevices();

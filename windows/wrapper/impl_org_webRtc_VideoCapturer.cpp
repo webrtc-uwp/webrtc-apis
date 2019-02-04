@@ -105,12 +105,14 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::create(
   String name,
-  String id
+  String id,
+  bool enableMrc
   ) noexcept
 {
   webrtc::IVideoCapturer::CreationProperties props;
   props.name_ = name.c_str();
   props.id_ = id.c_str();
+  props.mrcEnabled_ = enableMrc;
   auto native = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
   if (!native) return WrapperTypePtr();
 
