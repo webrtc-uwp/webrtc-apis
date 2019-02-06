@@ -86,6 +86,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::wrap
 wrapper::impl::org::webRtc::VideoCapturer::~VideoCapturer() noexcept
 {
   thisWeak_.reset();
+  teardownObserver();
   wrapper_dispose();
 }
 
@@ -94,6 +95,7 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
 {
   if (!native_) return;
 
+  teardownObserver();
   if (!stopCalled_.exchange(true)) {
     native_->Stop();
   }
@@ -103,18 +105,22 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::create(
   String name,
-  String id
+  String id,
+  bool enableMrc
   ) noexcept
 {
   webrtc::IVideoCapturer::CreationProperties props;
   props.name_ = name.c_str();
   props.id_ = id.c_str();
+  props.mrcEnabled_ = enableMrc;
   auto native = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
   if (!native) return WrapperTypePtr();
 
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
   result->native_ = std::move(native);
+  result->setupObserver();
+  result->subscription_ = (dynamic_cast<webrtc::VideoCapturer*>(result->native_.get()))->subscribe(result->videoObserver_);
   return result;
 }
 
@@ -385,6 +391,35 @@ wrapper::org::webRtc::VideoCaptureState wrapper::impl::org::webRtc::VideoCapture
     return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed;
   }
   return UseEnum::toWrapper(native_->capture_state());
+}
+
+//------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::VideoCapturer::wrapper_onObserverCountChanged(ZS_MAYBE_USED() size_t count) noexcept
+{
+  ZS_MAYBE_USED(count);
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::setupObserver() noexcept
+{
+  if (!native_) return;
+
+  videoObserver_ = std::make_shared<WebrtcVideoObserver>(thisWeak_.lock(), UseWebrtcLib::delegateQueue());
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::teardownObserver() noexcept
+{
+  if (!native_) return;
+
+  if (videoObserver_)
+    videoObserver_.reset();
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::onWebrtcObserverVideoFrameReceived(UseMediaSamplePtr sample) noexcept
+{
+  onVideoSampleReceived(sample);
 }
 
 //------------------------------------------------------------------------------

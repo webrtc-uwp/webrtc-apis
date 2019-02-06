@@ -15,8 +15,8 @@
 #include <zsLib/String.h>
 #include <zsLib/IMessageQueueThread.h>
 
+#include "impl_org_webRtc_MediaSample.h"
 #include "impl_org_webRtc_WebrtcLib.h"
-
 #include "impl_webrtc_MRCAudioEffectDefinition.h"
 #include "impl_webrtc_MRCVideoEffectDefinition.h"
 
@@ -880,17 +880,7 @@ namespace webrtc
     AutoRecursiveLock lock(lock_);
     if (!originalDelegate) return defaultSubscription_;
 
-    auto subscription = subscriptions_.subscribe(originalDelegate, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
-
-    auto delegate = subscriptions_.delegate(subscription, true);
-
-    if (delegate) {
-      //if (firedVideoFrameReceived_) {
-      //  delegate->onVideoFrameReceived(VideoCapturerPtr(), receivedFrames_.GetAt(receivedFrames_.Size() - 1));
-      //}
-    }
-
-    return subscription;
+    return subscriptions_.subscribe(originalDelegate, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
   }
 
   //-----------------------------------------------------------------------------
@@ -1105,12 +1095,10 @@ namespace webrtc
     captureFrame.set_ntp_time_ms(captureTime);
 
     OnFrame(captureFrame, captureFrame.width(), captureFrame.height());
-    
-    winrt::Windows::Foundation::IInspectable mediaSample =
-      spMediaSample.as<winrt::Windows::Foundation::IInspectable>();
 
-    receivedFrames_.Append(mediaSample);
-    fireVideoFrameReceived();
+    wrapper::org::webRtc::MediaSamplePtr sample =
+      wrapper::impl::org::webRtc::MediaSample::toWrapper(spMediaSample);
+    subscriptions_.delegate()->onVideoFrameReceived(VideoCapturerPtr(), sample);
   }
 
   //-----------------------------------------------------------------------------
@@ -1159,14 +1147,6 @@ namespace webrtc
       rotateFrame_ = VideoRotation::kVideoRotation_0;
       break;
     }
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCapturer::fireVideoFrameReceived() noexcept
-  {
-    //firedVideoFrameReceived_ = true;
-    //subscriptions_.delegate()->onVideoFrameReceived(VideoCapturerPtr(), receivedFrames_.GetAt(receivedFrames_.Size()-1));
-    //receivedFrames_.RemoveAtEnd();
   }
 
   //-----------------------------------------------------------------------------
