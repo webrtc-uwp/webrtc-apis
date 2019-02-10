@@ -34,17 +34,17 @@ namespace wrapper {
 
           ZS_DECLARE_STRUCT_PTR(WebrtcVideoObserver);
 
-          struct WebrtcVideoObserver
+          struct WebrtcVideoObserver : public zsLib::MessageQueueAssociator
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
-                                      : public ::webrtc::IVideoCapturerDelegate
+                                     , public ::webrtc::IVideoCapturerDelegate
 #endif // CPPWINRT_VERSION
 #endif //WINUWP
           {
             WebrtcVideoObserver(
                                 WrapperImplTypePtr wrapper,
                                 IMessageQueuePtr queue
-                                ) noexcept : outer_(wrapper), queue_(queue) {}
+                                ) noexcept : zsLib::MessageQueueAssociator(queue), outer_(wrapper) {}
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
@@ -62,7 +62,6 @@ namespace wrapper {
 
           private:
             WrapperImplTypeWeakPtr outer_;
-            IMessageQueuePtr queue_;
           };
 
           WebrtcVideoObserverPtr videoObserver_;

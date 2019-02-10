@@ -90,6 +90,7 @@ namespace wrapper {
           static UseVideoDeviceCaptureFacrtoryPtr videoDeviceCaptureFactory() noexcept;
           static bool checkSetup(bool assert = true) noexcept;
           static zsLib::IMessageQueuePtr delegateQueue() noexcept;
+          static zsLib::IMessageQueuePtr frameProcessingQueue() noexcept;
         };
 
       } // webRtc

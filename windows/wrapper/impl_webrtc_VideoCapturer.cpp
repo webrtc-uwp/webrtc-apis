@@ -797,7 +797,7 @@ namespace webrtc
     SetId(String(props.id_));
 
     if (props.delegate_) {
-      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
+      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::frameProcessingQueue());
     }
 
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties properties{ nullptr };
@@ -880,7 +880,7 @@ namespace webrtc
     AutoRecursiveLock lock(lock_);
     if (!originalDelegate) return defaultSubscription_;
 
-    return subscriptions_.subscribe(originalDelegate, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
+    return subscriptions_.subscribe(originalDelegate, UseWebrtcLib::frameProcessingQueue());
   }
 
   //-----------------------------------------------------------------------------
@@ -891,7 +891,7 @@ namespace webrtc
     winrt::hstring subtype = CaptureDevice::GetVideoSubtype(capture_format.fourcc);
     if (subtype.empty()) {
       RTC_LOG(LS_ERROR) <<
-        "The specified raw video format is not supported on this plaform.";
+        "The specified raw video format is not supported on this platform.";
       return CS_FAILED;
     }
     if (_wcsicmp(subtype.c_str(),

@@ -543,7 +543,7 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
     private:
 
       void actual_setup() noexcept final {}
-      void actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationPtr configuration) noexcept final {}
+      void actual_setup(ZS_MAYBE_USED() wrapper::org::webRtc::WebRtcLibConfigurationPtr configuration) noexcept final {}
       void actual_startMediaTracing() noexcept final {}
       void actual_stopMediaTracing() noexcept final {}
       bool actual_isMediaTracing() noexcept final { return false; }
@@ -634,4 +634,11 @@ zsLib::IMessageQueuePtr WrapperImplType::delegateQueue() noexcept
 {
   auto singleton = WrapperImplType::singleton();
   return singleton->actual_delegateQueue();
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::frameProcessingQueue() noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  return singleton->actual_frameProcessingQueue();
 }
