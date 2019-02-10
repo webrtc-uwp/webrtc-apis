@@ -29,7 +29,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(::cricket::VideoDeviceCapturerFactory, UseVideoDeviceCaptureFacrtory);
 
           WebRtcLib() noexcept;
-          WebRtcLib(const WebRtcLib &) = delete;
+          WebRtcLib(const WebRtcLib &) noexcept = delete;
           virtual ~WebRtcLib() noexcept;
 
           WebRtcLibWeakPtr thisWeak_;
@@ -43,6 +43,7 @@ namespace wrapper {
           PeerConnectionFactoryInterfaceScopedPtr peerConnectionFactory_;
           UseVideoDeviceCaptureFacrtoryPtr videoDeviceCaptureFactory_;
           ::zsLib::Milliseconds ntpServerTime_;
+          ::zsLib::IMessageQueuePtr frameProcessingQueue_;
 
           std::unique_ptr<rtc::Thread> networkThread;
           std::unique_ptr<rtc::Thread> workerThread;
@@ -51,10 +52,9 @@ namespace wrapper {
           // constructor
           static WrapperImplTypePtr create() noexcept;
 
-          // overrides of base class
+          // overrides of static base class
           virtual void actual_setup() noexcept;
-          virtual void actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept;
-          virtual void actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept;
+          virtual void actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationPtr configuration) noexcept;
           virtual void actual_startMediaTracing() noexcept;
           virtual void actual_stopMediaTracing() noexcept;
           virtual bool actual_isMediaTracing() noexcept;
@@ -73,6 +73,7 @@ namespace wrapper {
           virtual PeerConnectionFactoryScopedPtr actual_realPeerConnectionFactory() noexcept;
           virtual UseVideoDeviceCaptureFacrtoryPtr actual_videoDeviceCaptureFactory() noexcept;
           virtual zsLib::IMessageQueuePtr actual_delegateQueue() noexcept;
+          virtual zsLib::IMessageQueuePtr actual_frameProcessingQueue() noexcept;
 
           //-------------------------------------------------------------------
           //

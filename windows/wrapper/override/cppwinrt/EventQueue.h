@@ -67,6 +67,19 @@ namespace winrt {
           EventQueue(Windows::Foundation::IInspectable const & queue);
 #endif //0
           /// <summary>
+          /// Gets or creates an event queue by queue name. If the queue is not
+          /// found then a new thread queue will be created.
+          /// </summary>
+          static Org::WebRtc::IEventQueue GetOrCreateThreadQueueByName(hstring const & queueName);
+          /// <summary>
+          /// Creates an event thread pool queue object. If a queue name already
+          /// exists an existing queue with that name will be returned.
+          /// </summary>
+          static Org::WebRtc::IEventQueue CreateThreadQueuePool(
+            hstring const & queueName,
+            uint64_t minimumNumberOfThreads
+          );
+          /// <summary>
           /// The default windows message queue for the system GUI thread.
           /// </summary>
           static Org::WebRtc::IEventQueue GetDefaultForUi();

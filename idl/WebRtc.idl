@@ -153,16 +153,27 @@ namespace org
       void EventQueue(Any queue);
 
       /// <summary>
+      /// Gets or creates an event queue by queue name. If the queue is not
+      /// found then a new thread queue will be created.
+      /// </summary>
+      [static]
+      EventQueue getOrCreateThreadQueueByName(string queueName);
+
+      /// <summary>
+      /// Creates an event thread pool queue object. If a queue name already
+      /// exists an existing queue with that name will be returned.
+      /// </summary>
+      [static]
+      EventQueue createThreadQueuePool(
+        string queueName,
+        size_t minimumNumberOfThreads
+        );
+
+      /// <summary>
       /// The default windows message queue for the system GUI thread.
       /// </summary>
       [static]
       EventQueue getDefaultForUi();
-
-      /// <summary>
-      /// Gets or sets the default system dispatcher object.
-      /// </summary>
-      [static, getter, setter]
-      EventQueue singleton;
 
       /// <summary>
       /// Gets a native queue from an event queue object.
@@ -186,31 +197,49 @@ namespace org
       Any extract(EventQueue queue);
     };
 
+    [dictionary]
+    struct WebRtcLibConfiguration
+    {
+      /// <summary>
+      /// Gets or sets the default queue for delegate events. If not
+      /// specified then GUI queue is used.
+      /// </summary>
+      EventQueue queue;
+
+      /// <summary>
+      /// Gets or sets the default queue for processing frame events. If
+      /// not specified then the GUI queue is used.
+      /// </summary>
+      EventQueue frameProcessingQueue;
+
+      /// <summary>
+      /// Gets or sets if audio capturing is be enabled.
+      /// </summary>
+      bool audioCapturingEnabled = true;
+
+      /// <summary>
+      /// Gets or sets if audio rendering is enabled.
+      /// </summary>
+      bool audioRenderingEnabled = true;
+    };
+
     /// <summary>
-    /// Setup methods for the ORTC Lib stack.
+    /// Setup methods for the WebRtc Lib stack.
     /// </summary>
     [static]
     interface WebRtcLib
     {
       /// <summary>
-      /// Initialize the ORTC stack.
+      /// Initialize the WebRtc stack.
       /// </summary>
       [static, default]
       void setup();
 
       /// <summary>
-      /// Initialize the ORTC stack with a target event queue for delegate events.
+      /// Initialize the WebRtc stack with setup configurations.
       /// </summary>
-      [static, altname(setupWithQueue)]
-      void setup(EventQueue queue);
-
-      /// <summary>
-      /// Initialize the ORTC stack with a target event queue for delegate events
-      /// and set audio engine recording and playout to enabled or disabled state
-      /// (if omitted, the default value is true for both parameters).
-      /// </summary>
-      [static, altname(setupWithQueueAndAudioDevicePararms)]
-      void setup(EventQueue queue, bool recordingEnabled, bool playoutEnabled);
+      [static, altname(setupWithConfiguration)]
+      void setup(WebRtcLibConfiguration configuration);
 
       /// <summary>
       /// Gets or sets the NTP server time discovered in milliseconds since

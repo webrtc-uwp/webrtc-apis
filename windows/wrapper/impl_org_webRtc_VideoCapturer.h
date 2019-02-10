@@ -34,10 +34,10 @@ namespace wrapper {
 
           ZS_DECLARE_STRUCT_PTR(WebrtcVideoObserver);
 
-          struct WebrtcVideoObserver :
+          struct WebrtcVideoObserver
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
-                                       public ::webrtc::IVideoCapturerDelegate
+                                      : public ::webrtc::IVideoCapturerDelegate
 #endif // CPPWINRT_VERSION
 #endif //WINUWP
           {

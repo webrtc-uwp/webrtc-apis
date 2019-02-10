@@ -21,6 +21,7 @@
 #endif //WINUWP
 
 #include "impl_org_webRtc_WebRtcLib.h"
+#include "impl_org_webRtc_WebRtcLibConfiguration.h"
 #include "impl_org_webRtc_EventQueue.h"
 #include "impl_org_webRtc_helpers.h"
 #include "impl_webrtc_IMediaStreamSource.h"
@@ -110,7 +111,7 @@ WrapperImplType::WebRtcLib() noexcept
 }
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::WebRtcLib::~WebRtcLib()
+wrapper::impl::org::webRtc::WebRtcLib::~WebRtcLib() noexcept
 {
   thisWeak_.reset();
   notifySingletonCleanup();
@@ -132,17 +133,10 @@ void wrapper::org::webRtc::WebRtcLib::setup() noexcept
 }
 
 //------------------------------------------------------------------------------
-void wrapper::org::webRtc::WebRtcLib::setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept
+void wrapper::org::webRtc::WebRtcLib::setup(wrapper::org::webRtc::WebRtcLibConfigurationPtr configuration) noexcept
 {
   auto singleton = WrapperImplType::singleton();
-  singleton->actual_setup(queue);
-}
-
-//------------------------------------------------------------------------------
-void wrapper::org::webRtc::WebRtcLib::setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept
-{
-  auto singleton = WrapperImplType::singleton();
-  singleton->actual_setup(queue, recordingEnabled, playoutEnabled);
+  singleton->actual_setup(configuration);
 }
 
 //------------------------------------------------------------------------------
@@ -200,20 +194,20 @@ void wrapper::org::webRtc::WebRtcLib::set_ntpServerTime(::zsLib::Milliseconds va
 //------------------------------------------------------------------------------
 void WrapperImplType::actual_setup() noexcept
 {
-  actual_setup(wrapper::org::webRtc::EventQueuePtr());
+  auto configuration = make_shared<wrapper::org::webRtc::WebRtcLibConfiguration>();
+  actual_setup(configuration);
 }
 
 //------------------------------------------------------------------------------
-void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept
+void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationPtr configuration) noexcept
 {
-  actual_setup(queue, true, true);
-}
-
-//------------------------------------------------------------------------------
-void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bool recordingEnabled, bool playoutEnabled) noexcept
-{
-  // prevent multiple setups being called simulatuously
+  // prevent multiple setups being called simultaneously
   if (setupCalledOnce_.test_and_set()) return;
+
+  wrapper::org::webRtc::EventQueuePtr queue = configuration ? configuration->queue : nullptr;
+  bool audioCapturingEnabled = configuration? configuration->audioCapturingEnabled : true;
+  bool audioRenderingEnabled = configuration ? configuration->audioRenderingEnabled : true;
+  wrapper::org::webRtc::EventQueuePtr frameProcessingQueue = configuration ? configuration->frameProcessingQueue : nullptr;
 
 #ifdef WINUWP
 
@@ -297,6 +291,13 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bo
   rtc::EnsureWinsockInit();
   rtc::InitializeSSL([](void *) { return false; }); // no custom verifier of SSL
 
+  // scope: setup frame processing queue
+  {
+     auto nativeQueue = EventQueue::toNative(frameProcessingQueue);
+     // use the native queue if available otherwise use delegate queue
+     frameProcessingQueue_ = nativeQueue ? nativeQueue : actual_delegateQueue();
+  }
+
   networkThread = rtc::Thread::CreateWithSocketServer();
   networkThread->Start();
 
@@ -312,10 +313,10 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bo
 
   rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
   audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
-    RTC_FROM_HERE, [recordingEnabled, playoutEnabled]() {
+    RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
     return ::webrtc::AudioDeviceModule::Create(
       ::webrtc::AudioDeviceModule::AudioLayer::kWindowsWasapiAudio,
-      recordingEnabled, playoutEnabled);
+      audioCapturingEnabled, audioRenderingEnabled);
   });
 
   peerConnectionFactory_ = ::webrtc::CreatePeerConnectionFactory(
@@ -338,7 +339,7 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::EventQueuePtr queue, bo
   rtc::tracing::SetupInternalTracer();
 
   if (setupComplete_.exchange(true)) {
-    ZS_ASSERT_FAIL("already setup webrtc wrapper");
+    ZS_ASSERT_FAIL("already setup WebRtc wrapper");
     return;
   }
 }
@@ -494,6 +495,13 @@ zsLib::IMessageQueuePtr WrapperImplType::actual_delegateQueue() noexcept
 }
 
 //------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::actual_frameProcessingQueue() noexcept
+{
+  ::zsLib::AutoLock lock(lock_);
+  return frameProcessingQueue_;
+}
+
+//------------------------------------------------------------------------------
 void WrapperImplType::notifySingletonCleanup() noexcept
 {
   // prevent clean-up twice
@@ -535,7 +543,7 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
     private:
 
       void actual_setup() noexcept final {}
-      void actual_setup(wrapper::org::webRtc::EventQueuePtr queue) noexcept final {}
+      void actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationPtr configuration) noexcept final {}
       void actual_startMediaTracing() noexcept final {}
       void actual_stopMediaTracing() noexcept final {}
       bool actual_isMediaTracing() noexcept final { return false; }
@@ -578,6 +586,12 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
       zsLib::IMessageQueuePtr actual_delegateQueue() noexcept final
       {
         return zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue();
+      }
+
+      //-----------------------------------------------------------------------
+      zsLib::IMessageQueuePtr actual_frameProcessingQueue() noexcept final
+      {
+        return actual_delegateQueue();
       }
 
       void notifySingletonCleanup() noexcept final {}

@@ -110,6 +110,7 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(VideoTrackSource);
         ZS_DECLARE_STRUCT_PTR(VideoTrackSourceStats);
         ZS_DECLARE_STRUCT_PTR(WebRtcLib);
+        ZS_DECLARE_STRUCT_PTR(WebRtcLibConfiguration);
 
       } // namespace webRtc
     } // namespace org
