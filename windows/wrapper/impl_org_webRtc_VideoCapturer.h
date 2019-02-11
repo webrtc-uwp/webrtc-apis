@@ -69,6 +69,9 @@ namespace wrapper {
           std::atomic_bool stopCalled_{};
           NativeTypeUniPtr native_;
           VideoCapturerWeakPtr thisWeak_;
+
+          zsLib::Lock lock_;
+          size_t totalObservers_{};
           webrtc::IVideoCapturerSubscriptionPtr subscription_;
 
           VideoCapturer() noexcept;

@@ -120,7 +120,6 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   result->thisWeak_ = result;
   result->native_ = std::move(native);
   result->setupObserver();
-  result->subscription_ = (dynamic_cast<webrtc::VideoCapturer*>(result->native_.get()))->subscribe(result->videoObserver_);
   return result;
 }
 
@@ -394,9 +393,31 @@ wrapper::org::webRtc::VideoCaptureState wrapper::impl::org::webRtc::VideoCapture
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::VideoCapturer::wrapper_onObserverCountChanged(ZS_MAYBE_USED() size_t count) noexcept
+void wrapper::impl::org::webRtc::VideoCapturer::wrapper_onObserverCountChanged(size_t count) noexcept
 {
-  ZS_MAYBE_USED(count);
+  bool needObservers = (0 != count);
+
+  // scope: preform subscribe based on observers being attached
+  {
+    zsLib::AutoLock lock(lock_);
+
+    bool hadObservers = (0 != totalObservers_);
+    totalObservers_ = count;
+
+    if (hadObservers == needObservers)
+      return;
+
+    if (!needObservers) {
+      subscription_->cancel();
+      subscription_.reset();
+      return;
+    }
+
+    auto capturer = (dynamic_cast<webrtc::VideoCapturer*>(native_.get()));
+    ZS_ASSERT(capturer);
+
+    subscription_ = capturer->subscribe(videoObserver_);
+  }
 }
 
 //------------------------------------------------------------------------------
