@@ -142,23 +142,30 @@ Org::WebRtc::implementation::EventQueue::EventQueue(Windows::Foundation::IInspec
 #endif //0
 
 //------------------------------------------------------------------------------
+Org::WebRtc::IEventQueue Org::WebRtc::implementation::EventQueue::GetOrCreateThreadQueueByName(hstring const & queueName)
+{
+  Org::WebRtc::IEventQueue result{ nullptr };
+  result = ::Internal::Helper::ToCppWinrt_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::getOrCreateThreadQueueByName(::Internal::Helper::FromCppWinrt_String(queueName)));
+  return result;
+}
+
+//------------------------------------------------------------------------------
+Org::WebRtc::IEventQueue Org::WebRtc::implementation::EventQueue::CreateThreadQueuePool(
+  hstring const & queueName,
+  uint64_t minimumNumberOfThreads
+)
+{
+  Org::WebRtc::IEventQueue result{ nullptr };
+  result = ::Internal::Helper::ToCppWinrt_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::createThreadQueuePool(::Internal::Helper::FromCppWinrt_String(queueName), ::Internal::Helper::FromCppWinrt_Uint64_t(minimumNumberOfThreads)));
+  return result;
+}
+
+//------------------------------------------------------------------------------
 Org::WebRtc::IEventQueue Org::WebRtc::implementation::EventQueue::GetDefaultForUi()
 {
   Org::WebRtc::IEventQueue result {nullptr};
   result = ::Internal::Helper::ToCppWinrt_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::getDefaultForUi());
   return result;
-}
-
-//------------------------------------------------------------------------------
-Org::WebRtc::IEventQueue Org::WebRtc::implementation::EventQueue::Singleton()
-{
-  return ::Internal::Helper::ToCppWinrt_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::get_singleton());
-}
-
-//------------------------------------------------------------------------------
-void Org::WebRtc::implementation::EventQueue::Singleton(Org::WebRtc::IEventQueue const & value)
-{
-  wrapper::org::webRtc::EventQueue::set_singleton(::Internal::Helper::FromCppWinrt_Org_WebRtc_EventQueue(value));
 }
 
 #if 0

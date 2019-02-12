@@ -16,10 +16,13 @@ namespace wrapper {
 
 
         virtual void wrapper_init_org_webRtc_EventQueue(AnyPtr queue) noexcept { ZS_MAYBE_USED(queue); }
+        static wrapper::org::webRtc::EventQueuePtr getOrCreateThreadQueueByName(String queueName) noexcept;
+        static wrapper::org::webRtc::EventQueuePtr createThreadQueuePool(
+          String queueName,
+          uint64_t minimumNumberOfThreads
+        ) noexcept;
         static wrapper::org::webRtc::EventQueuePtr getDefaultForUi() noexcept;
 
-        static wrapper::org::webRtc::EventQueuePtr get_singleton() noexcept;
-        static void set_singleton(wrapper::org::webRtc::EventQueuePtr value) noexcept;
         virtual AnyPtr get_queue() noexcept = 0;
       };
 

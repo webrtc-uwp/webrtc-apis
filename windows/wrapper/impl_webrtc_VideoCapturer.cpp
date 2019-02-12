@@ -15,8 +15,8 @@
 #include <zsLib/String.h>
 #include <zsLib/IMessageQueueThread.h>
 
+#include "impl_org_webRtc_MediaSample.h"
 #include "impl_org_webRtc_WebrtcLib.h"
-
 #include "impl_webrtc_MRCAudioEffectDefinition.h"
 #include "impl_webrtc_MRCVideoEffectDefinition.h"
 
@@ -106,15 +106,13 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   DisplayOrientation::DisplayOrientation(DisplayOrientationListener* listener)
     : listener_(listener) {
-    std::mutex mutex;
-    std::condition_variable condition_variable;
     auto queue = UseWebrtcLib::delegateQueue();
     ZS_ASSERT(queue);
-    queue->postClosure([this, &condition_variable]() {
-      // GetForCurrentView() only works on a thread associated with
-      // a CoreWindow.  If this doesn't work because we're running in
-      // a background task then the orientation needs to come from the
-      // foreground as a notification.
+    // GetForCurrentView() only works on a thread associated with
+    // a CoreWindow.  If this doesn't work because we're running in
+    // a background task then the orientation needs to come from the
+    // foreground as a notification.
+    if (queue->isCurrentThread()) {
       try {
         display_info_ = DisplayInformation::GetForCurrentView();
         orientation_ = display_info_.CurrentOrientation();
@@ -127,11 +125,28 @@ namespace webrtc
         orientation_ = winrt::Windows::Graphics::Display::DisplayOrientations::Portrait;
         RTC_LOG(LS_ERROR) << "DisplayOrientation could not be initialized.";
       }
-      condition_variable.notify_one();
-    });
-    {
-      std::unique_lock<std::mutex> lock(mutex);
-      condition_variable.wait(lock);
+    } else {
+      std::mutex mutex;
+      std::condition_variable condition_variable;
+      queue->postClosure([this, &condition_variable]() {
+        try {
+          display_info_ = DisplayInformation::GetForCurrentView();
+          orientation_ = display_info_.CurrentOrientation();
+          orientation_changed_registration_token_ =
+            display_info_.OrientationChanged(
+              TypedEventHandler<DisplayInformation,
+              winrt::Windows::Foundation::IInspectable>(this, &DisplayOrientation::OnOrientationChanged));
+        } catch (...) {
+          display_info_ = nullptr;
+          orientation_ = winrt::Windows::Graphics::Display::DisplayOrientations::Portrait;
+          RTC_LOG(LS_ERROR) << "DisplayOrientation could not be initialized.";
+        }
+        condition_variable.notify_one();
+      });
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        condition_variable.wait(lock);
+      }
     }
   }
 
@@ -574,24 +589,14 @@ namespace webrtc
       winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture>
         media_capture_agile = winrt::Windows::Media::Capture::MediaCapture();
 
-      std::mutex mutex;
-      std::condition_variable condition_variable;
       auto queue = UseWebrtcLib::delegateQueue();
       ZS_ASSERT(queue);
 
-      Concurrency::task<void> initialize_async_task;
-      queue->postClosure([this, &initialize_async_task, media_capture_agile, &condition_variable]() {
+      if (queue->isCurrentThread()) {
+        Concurrency::task<void> initialize_async_task;
         auto settings = MediaCaptureInitializationSettings();
         settings.VideoDeviceId(device_id_);
 
-        // If Communications media category is configured, the
-        // GetAvailableMediaStreamProperties will report only H264 frame format
-        // for some devices (ex: Surface Pro 3). Since at the moment, WebRTC does
-        // not support receiving H264 frames from capturer, the Communications
-        // category is not configured.
-
-        // settings.MediaCategory(
-        //  winrt::Windows::Media::Capture::MediaCategory::Communications);
         initialize_async_task = Concurrency::create_task([this, media_capture_agile, settings]() {
           return media_capture_agile.get().InitializeAsync(settings).get();
         }).then([this, media_capture_agile](Concurrency::task<void> initTask) {
@@ -603,15 +608,43 @@ namespace webrtc
               << rtc::ToUtf8(e.message().c_str());
           }
         });
-        condition_variable.notify_one();
-      });
+      } else {
+        std::mutex mutex;
+        std::condition_variable condition_variable;
+        Concurrency::task<void> initialize_async_task;
+        queue->postClosure([this, &initialize_async_task, media_capture_agile, &condition_variable]() {
+          auto settings = MediaCaptureInitializationSettings();
+          settings.VideoDeviceId(device_id_);
 
-      {
-        std::unique_lock<std::mutex> lock(mutex);
-        condition_variable.wait(lock);
+          // If Communications media category is configured, the
+          // GetAvailableMediaStreamProperties will report only H264 frame format
+          // for some devices (ex: Surface Pro 3). Since at the moment, WebRTC does
+          // not support receiving H264 frames from capturer, the Communications
+          // category is not configured.
+          // settings.MediaCategory(
+          //  winrt::Windows::Media::Capture::MediaCategory::Communications);
+
+          initialize_async_task = Concurrency::create_task([this, media_capture_agile, settings]() {
+            return media_capture_agile.get().InitializeAsync(settings).get();
+          }).then([this, media_capture_agile](Concurrency::task<void> initTask) {
+            try {
+              initTask.get();
+            } catch (winrt::hresult_error const& e) {
+              RTC_LOG(LS_ERROR)
+                << "Failed to initialize media capture device. "
+                << rtc::ToUtf8(e.message().c_str());
+            }
+          });
+          condition_variable.notify_one();
+        });
+
+        {
+          std::unique_lock<std::mutex> lock(mutex);
+          condition_variable.wait(lock);
+        }
+
+        initialize_async_task.wait();
       }
-
-      initialize_async_task.wait();
 
       // Cache the MediaCapture object so we don't recreate it later.
       media_capture_ = media_capture_agile;
@@ -764,7 +797,7 @@ namespace webrtc
     SetId(String(props.id_));
 
     if (props.delegate_) {
-      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
+      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::frameProcessingQueue());
     }
 
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties properties{ nullptr };
@@ -847,11 +880,7 @@ namespace webrtc
     AutoRecursiveLock lock(lock_);
     if (!originalDelegate) return defaultSubscription_;
 
-    auto subscription = subscriptions_.subscribe(originalDelegate, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
-
-    auto delegate = subscriptions_.delegate(subscription, true);
-
-    return subscription;
+    return subscriptions_.subscribe(originalDelegate, UseWebrtcLib::frameProcessingQueue());
   }
 
   //-----------------------------------------------------------------------------
@@ -862,7 +891,7 @@ namespace webrtc
     winrt::hstring subtype = CaptureDevice::GetVideoSubtype(capture_format.fourcc);
     if (subtype.empty()) {
       RTC_LOG(LS_ERROR) <<
-        "The specified raw video format is not supported on this plaform.";
+        "The specified raw video format is not supported on this platform.";
       return CS_FAILED;
     }
     if (_wcsicmp(subtype.c_str(),
@@ -1066,6 +1095,10 @@ namespace webrtc
     captureFrame.set_ntp_time_ms(captureTime);
 
     OnFrame(captureFrame, captureFrame.width(), captureFrame.height());
+
+    wrapper::org::webRtc::MediaSamplePtr sample =
+      wrapper::impl::org::webRtc::MediaSample::toWrapper(spMediaSample);
+    subscriptions_.delegate()->onVideoFrameReceived(VideoCapturerPtr(), sample);
   }
 
   //-----------------------------------------------------------------------------

@@ -100,7 +100,7 @@ namespace org
       void VideoCapturer();
 
       [static]
-      VideoCapturer create(string name, string id);
+      VideoCapturer create(string name, string id, bool enableMrc);
 
       [static]
       PromiseWithVideoDeviceInfoList getDevices();
@@ -206,6 +206,13 @@ namespace org
 
       [getter]
       VideoCaptureState state;
+	  
+      /// <summary>
+      /// Event indicates new captured sample available.
+      /// </summary>
+      [event]
+      void onVideoSampleReceived(MediaSample sample);
+	  
     };
   }
 }
