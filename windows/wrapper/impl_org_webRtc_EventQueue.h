@@ -37,10 +37,9 @@ namespace wrapper {
           ZS_NO_DISCARD() static wrapper::org::webRtc::EventQueuePtr toWrapper(winrt::Windows::UI::Core::CoreDispatcher queue) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::UI::Core::CoreDispatcher toNative_winrt(wrapper::org::webRtc::EventQueuePtr queue) noexcept;
 #endif // CPPWINRT_VERSION
-#else
+#endif //WINUWP
           ZS_NO_DISCARD() static wrapper::org::webRtc::EventQueuePtr toWrapper(::zsLib::IMessageQueuePtr queue) noexcept;
           ZS_NO_DISCARD() static ::zsLib::IMessageQueuePtr toNative(wrapper::org::webRtc::EventQueuePtr queue) noexcept;
-#endif //WINUWP
 
         };
 

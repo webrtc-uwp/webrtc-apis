@@ -26,6 +26,7 @@
         "Error.idl",
         "MediaSource.idl",
         "MediaElement.idl",
+        "MediaSample.idl",
         "StatsReport.idl",
         "StatsProvider.idl",
         "Certificate.idl",

@@ -88,6 +88,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::wrap
 wrapper::impl::org::webRtc::VideoCapturer::~VideoCapturer() noexcept
 {
   thisWeak_.reset();
+  teardownObserver();
   wrapper_dispose();
 }
 
@@ -96,6 +97,7 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
 {
   if (!native_) return;
 
+  teardownObserver();
   if (!stopCalled_.exchange(true)) {
     native_->Stop();
   }
@@ -105,18 +107,21 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::create(
   String name,
-  String id
+  String id,
+  bool enableMrc
   ) noexcept
 {
   webrtc::IVideoCapturer::CreationProperties props;
   props.name_ = name.c_str();
   props.id_ = id.c_str();
+  props.mrcEnabled_ = enableMrc;
   auto native = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
   if (!native) return WrapperTypePtr();
 
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
   result->native_ = std::move(native);
+  result->setupObserver();
   return result;
 }
 
@@ -387,6 +392,57 @@ wrapper::org::webRtc::VideoCaptureState wrapper::impl::org::webRtc::VideoCapture
     return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed;
   }
   return UseEnum::toWrapper(native_->capture_state());
+}
+
+//------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::VideoCapturer::wrapper_onObserverCountChanged(size_t count) noexcept
+{
+  bool needObservers = (0 != count);
+
+  // scope: preform subscribe based on observers being attached
+  {
+    zsLib::AutoLock lock(lock_);
+
+    bool hadObservers = (0 != totalObservers_);
+    totalObservers_ = count;
+
+    if (hadObservers == needObservers)
+      return;
+
+    if (!needObservers) {
+      subscription_->cancel();
+      subscription_.reset();
+      return;
+    }
+
+    auto capturer = (dynamic_cast<webrtc::VideoCapturer*>(native_.get()));
+    ZS_ASSERT(capturer);
+
+    subscription_ = capturer->subscribe(videoObserver_);
+  }
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::setupObserver() noexcept
+{
+  if (!native_) return;
+
+  videoObserver_ = std::make_shared<WebrtcVideoObserver>(thisWeak_.lock(), UseWebrtcLib::frameProcessingQueue());
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::teardownObserver() noexcept
+{
+  if (!native_) return;
+
+  if (videoObserver_)
+    videoObserver_.reset();
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::onWebrtcObserverVideoFrameReceived(UseMediaSamplePtr sample) noexcept
+{
+  onVideoSampleReceived(sample);
 }
 
 //------------------------------------------------------------------------------

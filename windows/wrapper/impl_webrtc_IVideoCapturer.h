@@ -36,6 +36,14 @@
 #include <atomic>
 #include <mfidl.h>
 
+namespace wrapper {
+  namespace org {
+    namespace webRtc {
+      struct MediaSample;
+      ZS_DECLARE_STRUCT_PTR(MediaSample);
+    }
+  }
+}
 
 namespace webrtc
 {
@@ -53,6 +61,7 @@ namespace webrtc
 
       const char *name_ {};
       const char *id_ {};
+      bool mrcEnabled_ {};
     };
 
     static IVideoCapturerUniPtr create(const CreationProperties &info) noexcept;
@@ -64,8 +73,9 @@ namespace webrtc
   
   interaction IVideoCapturerDelegate
   {
-    virtual void onDummyEvent(
-      IVideoCapturerPtr source
+    virtual void onVideoFrameReceived(
+      IVideoCapturerPtr source,
+      wrapper::org::webRtc::MediaSamplePtr sample
     ) = 0;
   };
 
@@ -80,12 +90,12 @@ namespace webrtc
 
 ZS_DECLARE_PROXY_BEGIN(webrtc::IVideoCapturerDelegate)
 ZS_DECLARE_PROXY_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
-ZS_DECLARE_PROXY_METHOD(onDummyEvent, IVideoCapturerPtr)
+ZS_DECLARE_PROXY_METHOD(onVideoFrameReceived, IVideoCapturerPtr, wrapper::org::webRtc::MediaSamplePtr)
 ZS_DECLARE_PROXY_END()
 
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_BEGIN(webrtc::IVideoCapturerDelegate, webrtc::IVideoCapturerSubscription)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
-ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onDummyEvent, IVideoCapturerPtr)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onVideoFrameReceived, IVideoCapturerPtr, wrapper::org::webRtc::MediaSamplePtr)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_END()
 
 #endif //CPPWINRT_VERSION

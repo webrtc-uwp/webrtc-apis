@@ -30,14 +30,26 @@ namespace Org
             static Org.WebRtc.EventQueue Cast(Org.WebRtc.IEventQueue source);
 
             /// <summary>
+            /// Gets or creates an event queue by queue name. If the queue is
+            /// not found then a new thread queue will be created.
+            /// </summary>
+            static Org.WebRtc.IEventQueue GetOrCreateThreadQueueByName(String QueueName);
+
+            /// <summary>
+            /// Creates an event thread pool queue object. If a queue name
+            /// already exists an existing queue with that name will be
+            /// returned.
+            /// </summary>
+            static Org.WebRtc.IEventQueue CreateThreadQueuePool(
+              String QueueName,
+              UInt64 MinimumNumberOfThreads
+            );
+
+            /// <summary>
             /// The default windows message queue for the system GUI thread.
             /// </summary>
             static Org.WebRtc.IEventQueue GetDefaultForUi();
 
-            /// <summary>
-            /// Gets or sets the default system dispatcher object.
-            /// </summary>
-            static Org.WebRtc.IEventQueue Singleton { get; set; };
         };
 
     } // namespace WebRtc
