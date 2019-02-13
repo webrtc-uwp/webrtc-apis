@@ -61,10 +61,6 @@
 //
 #define PROPERTY_MAX_VSBUFFER 30U
 
-#include <wrapper/impl_org_webRtc_pre_include.h>
-#include "typedefs.h"
-#include <wrapper/impl_org_webRtc_post_include.h>
-
 namespace webrtc {
   class MrcVideoEffectDefinition : public winrt::implements<MrcVideoEffectDefinition, winrt::Windows::Media::Effects::IVideoEffectDefinition>
   {

@@ -18,7 +18,7 @@ namespace webrtc {
   {
     try
     {
-      return static_cast<U>(safe_cast<T>(winrt::unbox_value<T>(propertySet.Lookup(key))));
+      return static_cast<U>(static_cast<T>(winrt::unbox_value<T>(propertySet.Lookup(key))));
     }
     catch (winrt::hresult_out_of_bounds const& /*e*/)
     {
