@@ -112,10 +112,15 @@ namespace wrapper {
           public:
             typedef rtc::scoped_refptr<SessionDescriptionObserver> ObserverScopedPtr;
 
-            void OnSuccess(::webrtc::SessionDescriptionInterface* desc) override
+            void OnSuccess(::webrtc::SessionDescriptionInterface* desc) final
             {
               auto wrapper = UseSessionDescription::toWrapper(desc);
               promise_->resolve(wrapper);
+            }
+
+            void OnFailure(::webrtc::RTCError error) override
+            {
+              UseError::rejectPromise(promise_, error);
             }
 
             void OnFailure(const std::string& error) override
@@ -329,6 +334,11 @@ PromisePtr wrapper::impl::org::webRtc::RTCPeerConnection::setLocalDescription(wr
     void OnSuccess() override
     {
       promise_->resolve();
+    }
+
+    void OnFailure(::webrtc::RTCError error) override
+    {
+      UseError::rejectPromise(promise_, error);
     }
 
     void OnFailure(const std::string& error) override
