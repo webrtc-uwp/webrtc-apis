@@ -91,6 +91,8 @@ namespace webrtc
     virtual void ApplyDisplayOrientation(
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
 
+    void forwardToDelegates(const winrt::com_ptr<IMFSample> &spMediaSample);
+
   private:
     mutable zsLib::RecursiveLock lock_;
 

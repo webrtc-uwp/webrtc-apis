@@ -450,7 +450,7 @@ namespace webrtc
         mrcVideoEffectDefinition.StreamType(MediaStreamType::VideoRecord);
         auto addEffectTask = Concurrency::create_task([this, &mrcVideoEffectDefinition]() {
           return media_capture_.get().AddVideoEffectAsync(mrcVideoEffectDefinition, MediaStreamType::VideoRecord).get();
-        }).then([this](IMediaExtension const& videoExtension)
+        }).then([this](IMediaExtension const& /* videoExtension */)
         {
           OutputDebugString(L"VideoEffect Added\n");
           video_effect_added_ = true;
@@ -1097,14 +1097,20 @@ namespace webrtc
       !apply_rotation ? rotateFrame_ : kVideoRotation_0);
     captureFrame.set_ntp_time_ms(captureTime);
 
+    forwardToDelegates(spMediaSample);
     OnFrame(captureFrame, captureFrame.width(), captureFrame.height());
 
+  }
+
+  //-----------------------------------------------------------------------------
+  void VideoCapturer::forwardToDelegates(const winrt::com_ptr<IMFSample> &spMediaSample)
+  {
     if (subscriptions_.size() < 1)
       return;
 
     winrt::com_ptr<IMFMediaBuffer> spSampleBuffer;
-    DWORD cbCurrentLength {};
-    DWORD cbMaxLength {};
+    DWORD cbCurrentLength{};
+    DWORD cbMaxLength{};
 
     winrt::com_ptr<IMFSample> spSampleCopy;
     winrt::com_ptr<IMFMediaBuffer> spSampleBufferCopy;
@@ -1144,7 +1150,7 @@ namespace webrtc
       return;
     }
 
-    wrapper::org::webRtc::MediaSamplePtr sample = 
+    wrapper::org::webRtc::MediaSamplePtr sample =
       wrapper::impl::org::webRtc::MediaSample::toWrapper(spSampleCopy);
 
     subscriptions_.delegate()->onVideoFrameReceived(VideoCapturerPtr(), sample);
