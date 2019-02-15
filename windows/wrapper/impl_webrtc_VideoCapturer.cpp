@@ -35,6 +35,8 @@
 #include <winrt/windows.devices.enumeration.h>
 #include <winrt/windows.system.profile.h>
 
+#include <mfapi.h>
+
 using zsLib::String;
 using zsLib::Time;
 using zsLib::Seconds;
@@ -1097,8 +1099,54 @@ namespace webrtc
 
     OnFrame(captureFrame, captureFrame.width(), captureFrame.height());
 
-    wrapper::org::webRtc::MediaSamplePtr sample =
-      wrapper::impl::org::webRtc::MediaSample::toWrapper(spMediaSample);
+    if (subscriptions_.size() < 1)
+      return;
+
+    winrt::com_ptr<IMFMediaBuffer> spSampleBuffer;
+    DWORD cbCurrentLength {};
+    DWORD cbMaxLength {};
+
+    winrt::com_ptr<IMFSample> spSampleCopy;
+    winrt::com_ptr<IMFMediaBuffer> spSampleBufferCopy;
+
+    if (!SUCCEEDED(spMediaSample->GetBufferByIndex(0, spSampleBuffer.put()))) {
+      RTC_LOG(LS_ERROR) << "Failed to get MF media buffer by index.";
+      return;
+    }
+
+    if (!SUCCEEDED(spSampleBuffer->GetCurrentLength(&cbCurrentLength))) {
+      RTC_LOG(LS_ERROR) << "Failed to get MF media buffer length.";
+      return;
+    }
+
+    if (!SUCCEEDED(spSampleBuffer->GetMaxLength(&cbMaxLength))) {
+      RTC_LOG(LS_ERROR) << "Failed to get MF media buffer length.";
+      return;
+    }
+
+    if (!SUCCEEDED(MFCreateMemoryBuffer(cbMaxLength, spSampleBufferCopy.put()))) {
+      RTC_LOG(LS_ERROR) << "Failed to create MF media sample buffer.";
+      return;
+    }
+
+    if (!SUCCEEDED(spMediaSample->CopyToBuffer(spSampleBufferCopy.get()))) {
+      RTC_LOG(LS_ERROR) << "Failed to copy MF media sample buffer from source.";
+      return;
+    }
+
+    if (!SUCCEEDED(MFCreateSample(spSampleCopy.put()))) {
+      RTC_LOG(LS_ERROR) << "Failed to create MF media sample.";
+      return;
+    }
+
+    if (!SUCCEEDED(spSampleCopy->AddBuffer(spSampleBufferCopy.get()))) {
+      RTC_LOG(LS_ERROR) << "Failed to add MF media buffer to sample copy.";
+      return;
+    }
+
+    wrapper::org::webRtc::MediaSamplePtr sample = 
+      wrapper::impl::org::webRtc::MediaSample::toWrapper(spSampleCopy);
+
     subscriptions_.delegate()->onVideoFrameReceived(VideoCapturerPtr(), sample);
   }
 
