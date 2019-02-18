@@ -48,6 +48,8 @@ namespace org
     typedef zs::size_t size_t;
     typedef zs::Promise Promise;
 
+    struct AudioBufferConfiguration;
+    struct AudioFrame;
     struct VideoFormat;
     struct RTCOAuthCredential;
     struct RTCIceServer;
@@ -73,6 +75,9 @@ namespace org
     struct RTCRtpCodecCapability;
     struct RTCRtpHeaderExtensionCapability;
     struct RTCRtcpFeedback;
+    struct WebRtcFactoryConfiguration;
+    interface AudioData;
+    interface AudioBuffer;
     interface RTCError;
     interface RTCPeerConnection;
     interface RTCDtmfSender;
@@ -89,6 +94,7 @@ namespace org
     interface RTCCertificate;
     interface RTCKeyParams;
     interface VideoCapturer;
+    interface WebRtcFactory;
 
     typedef zs::PromiseRejectionReason<RTCError> PromiseWithRejectionRTCError;
     typedef zs::PromiseWith<RTCSessionDescription> PromiseWithDescription;
@@ -122,13 +128,14 @@ namespace org
       Milliseconds max;
 
       /// <summary>
-      /// Constructs an empty instance of an RTCConfiguration object.
+      /// Constructs an empty instance of an MillisecondIntervalRange object.
       /// </summary>
       [constructor, default]
       void MillisecondIntervalRange();
 
       /// <summary>
-      /// Constructs an instance of an RTCConfiguration object by cloning the data from an existing object.
+      /// Constructs an instance of an MillisecondIntervalRange object by
+      /// cloning the data from an existing object.
       /// </summary>
       [constructor, default, altname(MillisecondIntervalRangeClone)]
       void MillisecondIntervalRange(MillisecondIntervalRange source);
@@ -207,20 +214,16 @@ namespace org
       EventQueue queue;
 
       /// <summary>
-      /// Gets or sets the default queue for processing frame events. If
-      /// not specified then the GUI queue is used.
+      /// Gets or sets the default queue for processing audio frame events.
+      /// If not specified then the GUI queue is used.
       /// </summary>
-      EventQueue frameProcessingQueue;
+      EventQueue audioFrameProcessingQueue;
 
       /// <summary>
-      /// Gets or sets if audio capturing is be enabled.
+      /// Gets or sets the default queue for processing video frame
+      /// events. If not specified then the GUI queue is used.
       /// </summary>
-      bool audioCapturingEnabled = true;
-
-      /// <summary>
-      /// Gets or sets if audio rendering is enabled.
-      /// </summary>
-      bool audioRenderingEnabled = true;
+      EventQueue videoFrameProcessingQueue;
     };
 
     /// <summary>

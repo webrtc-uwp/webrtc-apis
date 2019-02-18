@@ -57,7 +57,9 @@ namespace org
       /// argument, getCapabilities returns null.
       /// </summary>
       [static]
-      RTCRtpCapabilities getCapabilities(string kind);
+      RTCRtpCapabilities getCapabilities(
+        WebRtcFactory factory,
+        string kind);
 
       /// <summary>
       /// Gets the attribute for the track that is associated with

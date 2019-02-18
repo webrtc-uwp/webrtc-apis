@@ -147,7 +147,9 @@ namespace org
       /// established by RTCPeerConnection.
       /// </summary>
       [static]
-      PromiseWithRTCCertificate generateCertificate(RTCKeyParams keygenAlgorithm);
+      PromiseWithRTCCertificate generateCertificate(
+        WebRtcFactory factory,
+        RTCKeyParams keygenAlgorithm);
 
       /// <summary>
       /// Constructs an RTCPeerConnection with an RTCConfiguration.
@@ -182,13 +184,13 @@ namespace org
       /// The setLocalDescription method instructs the RTCPeerConnection to
       /// apply the supplied RTCSessionDescriptionInit as the local description.
       /// </summary>
-      Promise setLocalDescription(RTCSessionDescription constraints);
+      Promise setLocalDescription(RTCSessionDescription description);
       /// <summary>
       /// The setRemoteDescription method instructs the RTCPeerConnection
       /// to apply the supplied RTCSessionDescriptionInit as the remote offer
       /// or answer. This API changes the local media state.
       /// </summary>
-      Promise setRemoteDescription(RTCSessionDescription constraints);
+      Promise setRemoteDescription(RTCSessionDescription description);
 
       /// <summary>
       /// Returns an RTCConfiguration object representing the current

@@ -23,11 +23,6 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::WebRtcLib, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, WrapperImplType);
 
-          typedef rtc::scoped_refptr<::webrtc::PeerConnectionFactoryInterface> PeerConnectionFactoryInterfaceScopedPtr;
-          typedef rtc::scoped_refptr<::webrtc::PeerConnectionFactory> PeerConnectionFactoryScopedPtr;
-
-          ZS_DECLARE_TYPEDEF_PTR(::cricket::VideoDeviceCapturerFactory, UseVideoDeviceCaptureFacrtory);
-
           WebRtcLib() noexcept;
           WebRtcLib(const WebRtcLib &) noexcept = delete;
           virtual ~WebRtcLib() noexcept;
@@ -40,14 +35,9 @@ namespace wrapper {
           std::atomic_flag isTracingStartOrStopping_ {};
           std::atomic_bool isTracing_ {};
           zsLib::Lock lock_;
-          PeerConnectionFactoryInterfaceScopedPtr peerConnectionFactory_;
-          UseVideoDeviceCaptureFacrtoryPtr videoDeviceCaptureFactory_;
           ::zsLib::Milliseconds ntpServerTime_;
-          ::zsLib::IMessageQueuePtr frameProcessingQueue_;
-
-          std::unique_ptr<rtc::Thread> networkThread;
-          std::unique_ptr<rtc::Thread> workerThread;
-          std::unique_ptr<rtc::Thread> signalingThread;
+          ::zsLib::IMessageQueuePtr audioFrameProcessingQueue_;
+          ::zsLib::IMessageQueuePtr videoFrameProcessingQueue_;
 
           // constructor
           static WrapperImplTypePtr create() noexcept;
@@ -69,11 +59,9 @@ namespace wrapper {
 
           // addition methods needed
           virtual bool actual_checkSetup(bool assert = true) noexcept;
-          virtual PeerConnectionFactoryInterfaceScopedPtr actual_peerConnectionFactory() noexcept;
-          virtual PeerConnectionFactoryScopedPtr actual_realPeerConnectionFactory() noexcept;
-          virtual UseVideoDeviceCaptureFacrtoryPtr actual_videoDeviceCaptureFactory() noexcept;
           virtual zsLib::IMessageQueuePtr actual_delegateQueue() noexcept;
-          virtual zsLib::IMessageQueuePtr actual_frameProcessingQueue() noexcept;
+          virtual zsLib::IMessageQueuePtr actual_audioFrameProcessingQueue() noexcept;
+          virtual zsLib::IMessageQueuePtr actual_videoFrameProcessingQueue() noexcept;
 
           //-------------------------------------------------------------------
           //
@@ -85,12 +73,10 @@ namespace wrapper {
           static WebRtcLibPtr singleton() noexcept;
 
           // addition methods needed
-          static PeerConnectionFactoryInterfaceScopedPtr peerConnectionFactory() noexcept;
-          static PeerConnectionFactoryScopedPtr realPeerConnectionFactory() noexcept;
-          static UseVideoDeviceCaptureFacrtoryPtr videoDeviceCaptureFactory() noexcept;
           static bool checkSetup(bool assert = true) noexcept;
           static zsLib::IMessageQueuePtr delegateQueue() noexcept;
-          static zsLib::IMessageQueuePtr frameProcessingQueue() noexcept;
+          static zsLib::IMessageQueuePtr audioFrameProcessingQueue() noexcept;
+          static zsLib::IMessageQueuePtr videoFrameProcessingQueue() noexcept;
         };
 
       } // webRtc

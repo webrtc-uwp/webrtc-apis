@@ -25,7 +25,8 @@
 #include "impl_org_webRtc_RTCKeyParams.h"
 #include "impl_org_webRtc_RTCStatsReport.h"
 #include "impl_org_webRtc_RTCStatsProvider.h"
-#include "impl_org_webRtc_WebrtcLib.h"
+#include "impl_org_webRtc_WebRtcLib.h"
+#include "impl_org_webRtc_WebRtcFactory.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #include "api/peerconnectionproxy.h"
@@ -63,6 +64,7 @@ typedef wrapper::impl::org::webRtc::RTCPeerConnection::NativeTypeScopedPtr Nativ
 typedef wrapper::impl::org::webRtc::WrapperMapper<NativeType, WrapperImplType> UseWrapperMapper;
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, UseWebrtcFactory);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCConfiguration, UseConfiguration);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCCertificate, UseCertificate);
@@ -202,7 +204,10 @@ shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCStatsReportPtr > > wr
 }
 
 //------------------------------------------------------------------------------
-shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCCertificatePtr > > wrapper::org::webRtc::RTCPeerConnection::generateCertificate(wrapper::org::webRtc::RTCKeyParamsPtr keygenAlgorithm) noexcept
+shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCCertificatePtr > > wrapper::org::webRtc::RTCPeerConnection::generateCertificate(
+  wrapper::org::webRtc::WebRtcFactoryPtr factory,
+  wrapper::org::webRtc::RTCKeyParamsPtr keygenAlgorithm
+  ) noexcept
 {
   typedef PromiseWithHolderPtr< wrapper::org::webRtc::RTCCertificatePtr > CertificatePromiseType;
   ZS_DECLARE_PTR(CertificatePromiseType);
@@ -241,7 +246,14 @@ shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCCertificatePtr > > wr
 
   auto result = CertificatePromiseType::create(UseWebrtcLib::delegateQueue());
 
-  auto realFactory = UseWebrtcLib::realPeerConnectionFactory();
+  auto factoryImpl = UseWebrtcFactory::toWrapper(factory);
+
+  if (!factoryImpl) {
+    UseError::rejectPromise(result, ::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_PARAMETER));
+    return result;
+  }
+
+  auto realFactory = factoryImpl->realPeerConnectionFactory();
   ZS_ASSERT(realFactory);
   if (!realFactory) {
     UseError::rejectPromise(result, ::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_STATE));
@@ -268,10 +280,18 @@ shared_ptr< PromiseWithHolderPtr< wrapper::org::webRtc::RTCCertificatePtr > > wr
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::RTCPeerConnection::wrapper_init_org_webRtc_RTCPeerConnection(wrapper::org::webRtc::RTCConfigurationPtr config) noexcept
 {
-  auto factory = UseWebrtcLib::peerConnectionFactory();
-  if (!factory) return;
-
   ZS_ASSERT(config);
+  if (!config) return;
+
+  auto factoryImpl = UseWebrtcFactory::toWrapper(config->get_factory());
+  ZS_ASSERT(factoryImpl);
+
+  if (!factoryImpl) return;
+
+  auto factory = factoryImpl->peerConnectionFactory();
+
+  ZS_ASSERT(factory);
+  if (!factory) return;
 
   setupObserver();
   ZS_ASSERT(observer_);

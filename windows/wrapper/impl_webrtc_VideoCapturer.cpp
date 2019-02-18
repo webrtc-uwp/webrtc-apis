@@ -800,7 +800,7 @@ namespace webrtc
     SetId(String(props.id_));
 
     if (props.delegate_) {
-      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::frameProcessingQueue());
+      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::videoFrameProcessingQueue());
     }
 
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties properties{ nullptr };
@@ -883,7 +883,7 @@ namespace webrtc
     AutoRecursiveLock lock(lock_);
     if (!originalDelegate) return defaultSubscription_;
 
-    return subscriptions_.subscribe(originalDelegate, UseWebrtcLib::frameProcessingQueue());
+    return subscriptions_.subscribe(originalDelegate, UseWebrtcLib::videoFrameProcessingQueue());
   }
 
   //-----------------------------------------------------------------------------

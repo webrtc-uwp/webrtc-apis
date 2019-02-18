@@ -43,6 +43,12 @@ namespace org
     [dictionary]
     struct RTCConfiguration
     {
+      /// <summary>
+      /// Gets or sets the factory associated with the configuration.
+      /// </summary>
+      [getter, setter]
+      WebRtcFactory        factory;
+
       [getter, setter]
       bool                  dscp;
 

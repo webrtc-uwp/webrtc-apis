@@ -34,6 +34,7 @@
         "MediaConstraints.idl",
         "AudioOptions.idl",
         "AudioTrackSource.idl",
+        "VideoOptions.idl",
         "VideoTrackSource.idl",
         "VideoCapturer.idl",
         "MediaStreamTrack.idl",
@@ -49,6 +50,8 @@
         "RtpTransceiver.idl",
         "SessionDescription.idl",
         "PeerConnection.idl",
+        "AudioBuffers.idl",
+        "WebRtcFactory.idl",
       ]
     }
   }

@@ -7,7 +7,8 @@
 #include "impl_org_webRtc_enums.h"
 #include "impl_org_webRtc_RTCRtpContributingSource.h"
 #include "impl_org_webRtc_RTCRtpSynchronizationSource.h"
-#include "impl_org_webRtc_WebrtcLib.h"
+#include "impl_org_webRtc_WebRtcLib.h"
+#include "impl_org_webRtc_WebRtcFactory.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #include "api/rtpreceiverinterface.h"
@@ -45,6 +46,7 @@ typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 typedef wrapper::impl::org::webRtc::WrapperMapper<NativeType, WrapperImplType> UseWrapperMapper;
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, UseWebrtcFactory);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCRtpReceiveParameters, UseRtpReceiveParameters);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCRtpCapabilities, UseRtpCapabilities);
@@ -131,9 +133,16 @@ void wrapper::impl::org::webRtc::RTCRtpReceiver::wrapper_dispose() noexcept
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::RTCRtpCapabilitiesPtr wrapper::org::webRtc::RTCRtpReceiver::getCapabilities(String kindStr) noexcept
+wrapper::org::webRtc::RTCRtpCapabilitiesPtr wrapper::org::webRtc::RTCRtpReceiver::getCapabilities(
+  wrapper::org::webRtc::WebRtcFactoryPtr factory,
+  String kindStr
+  ) noexcept
 {
-  auto realFactory = UseWebrtcLib::realPeerConnectionFactory();
+  auto factoryImpl = UseWebrtcFactory::toWrapper(factory);
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl) return wrapper::org::webRtc::RTCRtpCapabilitiesPtr();
+
+  auto realFactory = factoryImpl->realPeerConnectionFactory();
   ZS_ASSERT(realFactory);
   if (!realFactory) return wrapper::org::webRtc::RTCRtpCapabilitiesPtr();
 

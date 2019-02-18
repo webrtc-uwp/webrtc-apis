@@ -920,6 +920,23 @@ namespace org
       failed
     };
 
+    enum VadActivity
+    {
+      /// <summary>
+      /// Active voice activity found.
+      /// </summary>
+      Active = 0,
+      /// <summary>
+      /// Passive voice activity found.
+      /// </summary>
+      Passive = 1,
+      /// <summary>
+      /// Voice activity state is unknown.
+      /// </summary>
+      Unknown = 2
+    };
+
+
   }
 }
 

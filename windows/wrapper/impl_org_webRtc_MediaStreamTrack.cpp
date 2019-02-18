@@ -26,7 +26,8 @@
 #include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_AudioTrackSource.h"
 #include "impl_org_webRtc_VideoTrackSource.h"
-#include "impl_org_webRtc_WebrtcLib.h"
+#include "impl_org_webRtc_WebRtcLib.h"
+#include "impl_org_webRtc_WebRtcFactory.h"
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -58,6 +59,8 @@ using ::std::map;
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaStreamTrack::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
+
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoTrackSource::WrapperImplType, UseVideoTrackSource);
 
 typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 
@@ -156,7 +159,18 @@ wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack
   wrapper::org::webRtc::AudioTrackSourcePtr source
   ) noexcept
 {
-  auto factory = UseWebrtcLib::peerConnectionFactory();
+  ZS_ASSERT(source);
+  if (!source) return WrapperTypePtr();
+
+  auto sourceImpl = UseAudioTrackSource::toWrapper(source);
+  ZS_ASSERT(sourceImpl);
+  if (!sourceImpl) return WrapperTypePtr();
+
+  auto factoryImpl = sourceImpl->factory();
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl) return WrapperTypePtr();
+
+  auto factory = factoryImpl->peerConnectionFactory();
   ZS_ASSERT(factory);
   if (!factory) return WrapperTypePtr();
 
@@ -173,7 +187,18 @@ wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack
   wrapper::org::webRtc::VideoTrackSourcePtr source
   ) noexcept
 {
-  auto factory = UseWebrtcLib::peerConnectionFactory();
+  ZS_ASSERT(source);
+  if (!source) return WrapperTypePtr();
+
+  auto sourceImpl = UseVideoTrackSource::toWrapper(source);
+  ZS_ASSERT(sourceImpl);
+  if (!sourceImpl) return WrapperTypePtr();
+
+  auto factoryImpl = sourceImpl->factory();
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl) return WrapperTypePtr();
+
+  auto factory = factoryImpl->peerConnectionFactory();
   ZS_ASSERT(factory);
   if (!factory) return WrapperTypePtr();
 

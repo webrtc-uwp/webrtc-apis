@@ -23,6 +23,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::AudioSourceInterface, NativeType);
 
           typedef rtc::scoped_refptr<NativeType> NativeTypeScopedPtr;
+          ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, UseWebRtcFactory);
 
           ZS_DECLARE_STRUCT_PTR(WebrtcObserver);
 
@@ -45,10 +46,11 @@ namespace wrapper {
             IMessageQueuePtr queue_;
           };
 
+          AudioTrackSourceWeakPtr thisWeak_;
           std::atomic<double> lastVolume_;
           WebrtcObserverUniPtr observer_;
           NativeTypeScopedPtr native_;
-          AudioTrackSourceWeakPtr thisWeak_;
+          UseWebRtcFactoryPtr factory_;
 
           AudioTrackSource() noexcept;
           virtual ~AudioTrackSource() noexcept;
@@ -71,8 +73,12 @@ namespace wrapper {
           // WebrtcObserver methods
           void onWebrtcObserverSetVolume(double volume) noexcept;
 
+          UseWebRtcFactoryPtr factory() noexcept { return factory_; }
+
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeType *native) noexcept;
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeTypeScopedPtr native) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(WrapperTypePtr wrapper) noexcept;
+
           ZS_NO_DISCARD() static NativeTypeScopedPtr toNative(WrapperTypePtr wrapper) noexcept;
         };
 

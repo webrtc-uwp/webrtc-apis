@@ -1,9 +1,11 @@
 
 #include "impl_org_webRtc_VideoTrackSource.h"
+#include "impl_org_webRtc_VideoOptions.h"
 #include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_VideoCapturer.h"
 #include "impl_org_webRtc_VideoTrackSourceStats.h"
-#include "impl_org_webRtc_WebrtcLib.h"
+#include "impl_org_webRtc_WebRtcLib.h"
+#include "impl_org_webRtc_WebRtcFactory.h"
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -32,10 +34,11 @@ using ::std::map;
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoTrackSource::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
+ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseWebRtcFactory, UseWebRtcFactory);
 
 typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebRtcLib);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaConstraints, UseMediaConstraints);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer, UseVideoCapturer);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
@@ -85,6 +88,7 @@ bool wrapper::impl::org::webRtc::VideoTrackSource::get_remote() noexcept
   return native_->remote();
 }
 
+#if 0
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::VideoTrackSourcePtr wrapper::org::webRtc::VideoTrackSource::create(wrapper::org::webRtc::VideoCapturerPtr capturer) noexcept
 {
@@ -96,19 +100,24 @@ wrapper::org::webRtc::VideoTrackSourcePtr wrapper::org::webRtc::VideoTrackSource
 
   return WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(converted)));
 }
+#endif //0
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoTrackSourcePtr wrapper::org::webRtc::VideoTrackSource::create(
-  wrapper::org::webRtc::VideoCapturerPtr capturer,
-  wrapper::org::webRtc::MediaConstraintsPtr constraints
-  ) noexcept
+wrapper::org::webRtc::VideoTrackSourcePtr wrapper::org::webRtc::VideoTrackSource::create(wrapper::org::webRtc::VideoOptionsPtr options) noexcept
 {
-  auto factory = UseWebrtcLib::peerConnectionFactory();
+  auto factoryImpl = UseWebRtcFactory::toWrapper(options ? options->factory : nullptr);
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl) return WrapperTypePtr();
+
+  auto factory = factoryImpl->peerConnectionFactory();
   ZS_ASSERT(factory);
   if (!factory) return WrapperTypePtr();
 
-  auto convertedCapture = UseVideoCapturer::toNative(capturer);
-  auto convertedConstraints = UseMediaConstraints::toNative(constraints);
+  auto convertedCapture = UseVideoCapturer::toNative(options ? options->capturer : nullptr);
+  auto convertedConstraints = UseMediaConstraints::toNative(options ? options->constraints : nullptr);
+
+  if (!convertedConstraints)
+    return WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture)));
 
   return WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture), convertedConstraints.get()));
 }
@@ -162,6 +171,14 @@ WrapperImplTypePtr WrapperImplType::toWrapper(NativeType *native) noexcept
 WrapperImplTypePtr WrapperImplType::toWrapper(NativeTypeScopedPtr native) noexcept
 {
   return toWrapper(native.get());
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(WrapperTypePtr wrapper) noexcept
+{
+  if (!wrapper) return WrapperImplTypePtr();
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
+  return converted;
 }
 
 //------------------------------------------------------------------------------

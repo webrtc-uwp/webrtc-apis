@@ -1,0 +1,46 @@
+//import "windows.foundation.idl";
+import "forwards.idl";
+import "output.idl";
+
+namespace Org
+{
+    namespace WebRtc
+    {
+
+
+        [version(1.0)]
+        [uuid(925491dd-b459-4daa-7108-e1360d566709)]
+        interface IAudioData : IInspectable
+        {
+
+            /// <summary>
+            /// Gets if the data is read-only. <summary> </summary>
+            /// </summary>
+            Boolean ReadOnly { get; };
+
+            /// <summary>
+            /// Gets or sets the audio samples data. <summary> </summary>
+            /// </summary>
+            Windows.Foundation.Collections.IVectorView< Int16 > Data { get; set; };
+        };
+
+        runtimeclass AudioData : [default] IAudioData
+        {
+
+            /// <summary>
+            /// Constructs a new audio data object. <summary> </summary>
+            /// </summary>
+            [default_overload]
+            AudioData();
+
+            /// <summary>
+            /// Cast from Org.WebRtc.IAudioData to Org.WebRtc.AudioData
+            /// </summary>
+            [default_overload]
+            [method_name("CastFromIAudioData")]
+            static Org.WebRtc.AudioData Cast(Org.WebRtc.IAudioData source);
+        };
+
+    } // namespace WebRtc
+} // namespace Org
+

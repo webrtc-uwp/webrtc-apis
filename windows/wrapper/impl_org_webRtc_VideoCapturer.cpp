@@ -427,7 +427,7 @@ void WrapperImplType::setupObserver() noexcept
 {
   if (!native_) return;
 
-  videoObserver_ = std::make_shared<WebrtcVideoObserver>(thisWeak_.lock(), UseWebrtcLib::frameProcessingQueue());
+  videoObserver_ = std::make_shared<WebrtcVideoObserver>(thisWeak_.lock(), UseWebrtcLib::videoFrameProcessingQueue());
 }
 
 //------------------------------------------------------------------------------

@@ -39,6 +39,11 @@ namespace org
     struct AudioOptions
     {
       /// <summary>
+      /// Gets or sets the webrtc  factory.
+      /// </summary>
+      WebRtcFactory factory;
+
+      /// <summary>
       /// Audio processing that attempts to filter away the output signal from
       /// later inbound pickup.
       /// </summary>

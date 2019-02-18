@@ -29,58 +29,29 @@
  
  */
 
+
 namespace org
 {
   namespace webRtc
   {
-    /// <summary>
-    /// Original size of captured frame, before video adaptation.
-    /// </summary>
+
     [dictionary]
-    struct VideoTrackSourceStats
+    struct VideoOptions
     {
-      int inputWidth;
-      int inputHeight;
-    };
-
-    /// <summary>
-    /// VideoTrackSourceInterface is a used for VideoTracks. The same source can
-    /// be used by multiple VideoTracks.
-    /// </summary>
-    [disposable]
-    interface VideoTrackSource : MediaTrackSource
-    {
-      [constructor, delete]
-      void VideoTrackSource();
+      /// <summary>
+      /// Gets or sets the webrtc  factory.
+      /// </summary>
+      WebRtcFactory factory;
 
       /// <summary>
-      /// Creates an VideoTrackSource for use with video options specified.
+      /// Gets or sets the associated video capturer.
       /// </summary>
-      [static, default]
-      VideoTrackSource create(VideoOptions options);
+      VideoCapturer capturer;
 
       /// <summary>
-      /// Indicates that parameters suitable for screencasts should be automatically
-      /// applied to RtpSenders.
+      /// Gets or sets the associated constraints.
       /// </summary>
-      [getter]
-      bool isScreencast;
-
-      /// <summary>
-      /// Indicates that the encoder should denoise video before encoding it.
-      /// If it is not set, the default configuration is used which is different
-      /// depending on video codec.
-      /// </summary>
-      [getter,optional]
-      bool needsDenoising;
-
-      /// <summary>
-      /// Returns null if no stats are available, e.g, for a remote source, or a
-      /// source which has not seen its first frame yet.
-      /// </summary>
-      [getter,optional]
-      VideoTrackSourceStats stats;
-
+      MediaConstraints constraints;
     };
   }
 }
