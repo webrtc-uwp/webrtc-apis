@@ -40,7 +40,8 @@ namespace webrtc
   public:
     virtual void OnIncomingFrame(uint8_t* video_frame,
       size_t video_frame_length,
-      const cricket::VideoFormat& frame_info) = 0;
+      const cricket::VideoFormat& frame_info,
+      winrt::com_ptr<IMFSample> spMediaSample) = 0;
     virtual void OnCaptureDeviceFailed(HRESULT code,
       winrt::hstring const& message) = 0;
   };
@@ -81,14 +82,16 @@ namespace webrtc
     // Overrides from CaptureDeviceListener
     virtual void OnIncomingFrame(uint8_t* video_frame,
       size_t video_frame_length,
-      const cricket::VideoFormat& frame_info) override;
+      const cricket::VideoFormat& frame_info,
+      winrt::com_ptr<IMFSample> spMediaSample) override;
 
     virtual void OnCaptureDeviceFailed(HRESULT code,
       winrt::hstring const& message) override;
 
-
     virtual void ApplyDisplayOrientation(
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
+
+    void forwardToDelegates(const winrt::com_ptr<IMFSample> &spMediaSample);
 
   private:
     mutable zsLib::RecursiveLock lock_;
@@ -113,6 +116,8 @@ namespace webrtc
       video_encoding_properties_;
     winrt::Windows::Media::MediaProperties::MediaEncodingProfile
       media_encoding_profile_;
+
+    bool mrc_enabled_{ false };
   };
 }
 

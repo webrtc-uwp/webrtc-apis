@@ -32,23 +32,30 @@ Org::WebRtc::EventQueue::EventQueue(Platform::Object^ queue)
 #endif //0
 
 //------------------------------------------------------------------------------
+::Org::WebRtc::EventQueue^ Org::WebRtc::EventQueue::GetOrCreateThreadQueueByName(Platform::String^ queueName)
+{
+  ::Org::WebRtc::EventQueue^ result{};
+  result = ::Internal::Helper::ToCx_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::getOrCreateThreadQueueByName(::Internal::Helper::FromCx_String(queueName)));
+  return result;
+}
+
+//------------------------------------------------------------------------------
+::Org::WebRtc::EventQueue^ Org::WebRtc::EventQueue::CreateThreadQueuePool(
+  Platform::String^ queueName,
+  uint64 minimumNumberOfThreads
+)
+{
+  ::Org::WebRtc::EventQueue^ result{};
+  result = ::Internal::Helper::ToCx_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::createThreadQueuePool(::Internal::Helper::FromCx_String(queueName), ::Internal::Helper::FromCx_Uint64(minimumNumberOfThreads)));
+  return result;
+}
+
+//------------------------------------------------------------------------------
 ::Org::WebRtc::EventQueue^ Org::WebRtc::EventQueue::GetDefaultForUi()
 {
   ::Org::WebRtc::EventQueue^ result {};
   result = ::Internal::Helper::ToCx_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::getDefaultForUi());
   return result;
-}
-
-//------------------------------------------------------------------------------
-::Org::WebRtc::EventQueue^ Org::WebRtc::EventQueue::Singleton::get()
-{
-  return ::Internal::Helper::ToCx_Org_WebRtc_EventQueue(wrapper::org::webRtc::EventQueue::get_singleton());
-}
-
-//------------------------------------------------------------------------------
-void Org::WebRtc::EventQueue::Singleton::set(::Org::WebRtc::EventQueue^ value)
-{
-  wrapper::org::webRtc::EventQueue::set_singleton(::Internal::Helper::FromCx_Org_WebRtc_EventQueue(value));
 }
 
 #if 0
