@@ -1,6 +1,7 @@
 
-#include "impl_org_webRtc_AudioBufferEvent.h"
-#include "impl_org_webRtc_AudioBuffer.h"
+#include "impl_org_webRtc_AudioProcessingInitializeEvent.h"
+
+#include <zsLib/SafeInt.h>
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -21,59 +22,53 @@ using ::std::set;
 using ::std::map;
 
 // borrow definitions from class
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioBufferEvent::WrapperImplType, WrapperImplType);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
-ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, UseAudioBuffer);
-
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::AudioBufferEvent::AudioBufferEvent() noexcept
+wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::AudioProcessingInitializeEvent() noexcept
 {
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::AudioBufferEventPtr wrapper::org::webRtc::AudioBufferEvent::wrapper_create() noexcept
+wrapper::org::webRtc::AudioProcessingInitializeEventPtr wrapper::org::webRtc::AudioProcessingInitializeEvent::wrapper_create() noexcept
 {
-  auto pThis = make_shared<wrapper::impl::org::webRtc::AudioBufferEvent>();
+  auto pThis = make_shared<wrapper::impl::org::webRtc::AudioProcessingInitializeEvent>();
   pThis->thisWeak_ = pThis;
   return pThis;
 }
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::AudioBufferEvent::~AudioBufferEvent() noexcept
+wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::~AudioProcessingInitializeEvent() noexcept
 {
   thisWeak_.reset();
-  wrapper_dispose();
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::AudioBufferEvent::wrapper_dispose() noexcept
+void wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::wrapper_dispose() noexcept
 {
-  std::function<void(void)> complete;
-  {
-    zsLib::AutoLock lock(lock_);
-    complete = std::move(complete_);
-  }
-  if (!complete)
-    return;
-  complete();
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::AudioBufferPtr wrapper::impl::org::webRtc::AudioBufferEvent::get_buffer() noexcept
+uint64_t wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::get_samplRateHz() noexcept
 {
-  return buffer_;
+  return sampleHzRate_;
+}
+
+//------------------------------------------------------------------------------
+uint64_t wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::get_channels() noexcept
+{
+  return channels_;
 }
 
 //------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::toWrapper(
-  std::function<void(void)> completeFunction,
-  AudioBufferNativeType *buffer
-) noexcept
+  size_t sampleHzRate,
+  size_t channels) noexcept
 {
   auto result = std::make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->complete_ = std::move(completeFunction);
-  result->buffer_ = UseAudioBuffer::toWrapper(buffer);
+  result->sampleHzRate_ = sampleHzRate;
+  result->channels_ = channels;
   return result;
 }

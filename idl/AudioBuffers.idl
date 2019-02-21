@@ -62,27 +62,27 @@ namespace org
       /// <summary>
       /// Gets or sets the total number of input channels.
       /// <summary>
-      int inputChannels;
+      size_t inputChannels;
 
       /// <summary>
       /// Gets or sets the samples per input channel.
       /// <summary>
-      int inputSamplesPerChannel;
+      size_t inputSamplesPerChannel;
 
       /// <summary>
       /// Gets or sets the total number of process channels.
       /// <summary>
-      int processChannels;
+      size_t processChannels;
 
       /// <summary>
       /// Gets or sets the samples per process channel.
       /// <summary>
-      int procesSamplesPerChannel;
+      size_t procesSamplesPerChannel;
 
       /// <summary>
       /// Gets or sets the total number of output channels.
       /// <summary>
-      int outputChannels;
+      size_t outputChannels;
     };
 
     [dictionary]
@@ -100,14 +100,19 @@ namespace org
       AudioData data;
 
       /// <summary>
+      /// Gets or sets the voice activity flag.
+      /// </summary>
+      VadActivity activity;
+
+      /// <summary>
       /// Gets or sets the samples per input channel.
       /// <summary>
-      int channels;
+      size_t channels;
 
       /// <summary>
       /// Gets or sets the samples per channel.
       /// <summary>
-      int samplesPerChannel;
+      size_t samplesPerChannel;
     };
 
     [disposable]
@@ -123,32 +128,44 @@ namespace org
       /// Gets the total number of channels.
       /// <summary>
       [getter]
-      int channels;
+      size_t channels;
 
       /// <summary>
       /// Gets the samples per channel.
       /// <summary>
       [getter]
-      int samplesPerChannel;
+      size_t samplesPerChannel;
+
+      /// <summary>
+      /// Gets the total number of bands.
+      /// <summary>
+      [getter]
+      size_t bands;
+
+      /// <summary>
+      /// Gets the total number of frames per band.
+      /// <summary>
+      [getter]
+      size_t framesPerBand;
 
       /// <summary>
       /// Gets the audio samples for a given channel.
       /// <summary>
-      AudioData channel(int channelIndex);
+      AudioData channel(size_t channel);
 
       /// <summary>
       /// Gets the audio samples for data split by bands.
       /// <summary>
       AudioData splitBand(
-        int channel,
-        int band);
+        size_t channel,
+        Band band);
 
       /// <summary>
       /// Gets the audio samples for data split by channels.
       /// <summary>
       AudioData splitChannel(
-        int band,
-        int channel);
+        Band band,
+        size_t channel);
 
       /// <summary>
       /// Gets a read-only view of the mixed low pass data.
@@ -157,10 +174,10 @@ namespace org
       AudioData mixedLowPassData;
 
       /// <summary>
-      /// Gets a read-only reference view of the low pass data.
+      /// Gets a read-only reference view of the low pass data
+      /// for a given channel.
       /// </summary>
-      [getter]
-      AudioData lowPassReference;
+      AudioData lowPassReference(size_t channel);
 
       /// <summary>
       /// Gets or sets the voice activity flag.

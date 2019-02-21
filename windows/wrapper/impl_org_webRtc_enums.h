@@ -8,7 +8,9 @@
 #include "api/mediastreaminterface.h"
 #include "api/datachannelinterface.h"
 #include "api/statstypes.h"
+#include "api/audio/audio_frame.h"
 #include "rtc_base/network_constants.h"
+#include "modules/audio_processing/include/audio_processing.h"
 #include "impl_org_webRtc_post_include.h"
 
 
@@ -160,6 +162,15 @@ namespace wrapper {
 
           ZS_NO_DISCARD() static const char *toString(wrapper::org::webRtc::RTCIceRole value) noexcept;
 
+          ZS_NO_DISCARD() static wrapper::org::webRtc::VadActivity toWrapper(::webrtc::AudioFrame::VADActivity value) noexcept;
+          ZS_NO_DISCARD() static ::webrtc::AudioFrame::VADActivity toNative(wrapper::org::webRtc::VadActivity value) noexcept;
+
+          ZS_NO_DISCARD() static wrapper::org::webRtc::Band toWrapper(::webrtc::Band value) noexcept;
+          ZS_NO_DISCARD() static ::webrtc::Band toNative(wrapper::org::webRtc::Band value) noexcept;
+
+          ZS_NO_DISCARD() static wrapper::org::webRtc::RuntimeSetting toWrapper(::webrtc::AudioProcessing::RuntimeSetting::Type value) noexcept;
+          ZS_NO_DISCARD() static ::webrtc::AudioProcessing::RuntimeSetting::Type toNative(wrapper::org::webRtc::RuntimeSetting value) noexcept;
+
 #if 0
 
           enum MediaType {
@@ -167,7 +178,7 @@ namespace wrapper {
             MEDIA_TYPE_VIDEO,
             MEDIA_TYPE_DATA
           };
-          // not possible to convery
+          // not possible to convert
           enum RTCCodecType {
             RTCCodecType_encode,
             RTCCodecType_decode,

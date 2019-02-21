@@ -20,6 +20,8 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(AudioData);
         ZS_DECLARE_STRUCT_PTR(AudioFrame);
         ZS_DECLARE_STRUCT_PTR(AudioOptions);
+        ZS_DECLARE_STRUCT_PTR(AudioProcessingInitializeEvent);
+        ZS_DECLARE_STRUCT_PTR(AudioProcessingRuntimeSettingEvent);
         ZS_DECLARE_STRUCT_PTR(AudioTrackSource);
         ZS_DECLARE_STRUCT_PTR(Constraint);
         ZS_DECLARE_STRUCT_PTR(EventQueue);

@@ -15,11 +15,13 @@ namespace wrapper {
         virtual ~AudioData() noexcept {}
 
 
-        virtual void wrapper_init_org_webRtc_AudioData() noexcept { }
+        virtual void wrapper_init_org_webRtc_AudioData() noexcept = 0;
+        virtual void wrapper_init_org_webRtc_AudioData(size_t size) noexcept = 0;
 
-        virtual bool get_readOnly() noexcept = 0;
-        virtual shared_ptr< list< int16_t > > get_data() noexcept = 0;
-        virtual void set_data(shared_ptr< list< int16_t > > value) noexcept = 0;
+        virtual bool readOnly() noexcept = 0;
+        virtual const int16_t *data() noexcept = 0;
+        virtual int16_t *mutableData() noexcept = 0;
+        virtual size_t size() noexcept = 0;
       };
 
     } // webRtc

@@ -54,6 +54,44 @@ namespace org
     };
 
     /// <summary>
+    /// The event is fired when an audio buffer needs to be reset.
+    /// <summary>
+    [disposable]
+    interface AudioProcessingInitializeEvent
+    {
+      [constructor, delete, default]
+      void AudioProcessingInitializeEvent();
+
+      /// <summary>
+      /// Gets the audio sample hz rate.
+      /// <summary>
+      [getter]
+      size_t samplRateHz;
+
+      /// <summary>
+      /// Gets the total number of channels.
+      /// <summary>
+      [getter]
+      size_t channels;
+    };
+
+    /// <summary>
+    /// The event is fired when an audio buffer needs to be reset.
+    /// <summary>
+    [disposable]
+    interface AudioProcessingRuntimeSettingEvent
+    {
+      [constructor, delete, default]
+      void AudioProcessingRuntimeSettingEvent();
+
+      [getter]
+      RuntimeSetting type;
+
+      [getter]
+      float value;
+    };
+
+    /// <summary>
     /// The WebRtcFactoryConfiguration contains the boot strapping
     /// configuration options for the WebRtcFactory.
     /// </summary>
@@ -86,10 +124,34 @@ namespace org
       void WebRtcFactory(WebRtcFactoryConfiguration configuration);
 
       /// <summary>
+      /// Fires events when capture audio processing is (re-)initialized.
+      /// </summary>
+      [event]
+      void onAudioPostCaptureInitialize(AudioProcessingInitializeEvent event);
+
+      /// <summary>
+      /// Fires events when a capture runtime setting have changed.
+      /// </summary>
+      [event]
+      void onAudioPostCaptureRuntimeSetting(AudioProcessingRuntimeSettingEvent event);
+
+      /// <summary>
       /// Fires events when an audio buffer has been captured.
       /// </summary>
       [event]
       void onAudioPostCapture(AudioBufferEvent buffer);
+
+      /// <summary>
+      /// Fires events when pre-render audio processing is (re-)initialized.
+      /// </summary>
+      [event]
+      void onAudioPreRenderInitialize(AudioProcessingInitializeEvent event);
+
+      /// <summary>
+      /// Fires events when a pre-render runtime setting have changed.
+      /// </summary>
+      [event]
+      void onAudioPreRenderRuntimeSetting(AudioProcessingRuntimeSettingEvent event);
 
       /// <summary>
       /// Fires events before an audio buffer is about to render.

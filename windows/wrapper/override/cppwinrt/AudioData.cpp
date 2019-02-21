@@ -26,7 +26,112 @@
 #include "RTCRtpTransceiver.h"
 #include "RTCRtpSender.h"
 
+#include <zsLib/SafeInt.h>
+
 using namespace winrt;
+
+struct AudioDataVectorView : implements<
+  AudioDataVectorView,
+  Windows::Foundation::Collections::IVectorView<int16_t>,
+  Windows::Foundation::Collections::IIterable<int16_t>>,
+  winrt::vector_view_base<AudioDataVectorView, int16_t>
+{
+  AudioDataVectorView(
+    const int16_t * const data,
+    size_t size
+    ) : container_(data, size)
+  {}
+
+  auto& get_container() const noexcept
+  {
+    return container_;
+  }
+
+  auto& get_container() noexcept
+  {
+    return container_;
+  }
+
+private:
+
+  struct Container
+  {
+    Container(
+      const int16_t * const data,
+      size_t size) :
+      first_(data),
+      last_(data + size)
+    {}
+
+    int16_t const* const first_;
+    int16_t const* const last_;
+
+    auto begin() const noexcept
+    {
+      return first_;
+    }
+
+    auto end() const noexcept
+    {
+      return last_;
+    }
+  };
+
+  Container container_;
+};
+
+#if 0
+struct AudioDataVector : implements<
+  AudioDataVector,
+  Windows::Foundation::Collections::IVector<int16_t>,
+  Windows::Foundation::Collections::IVectorView<int16_t>,
+  Windows::Foundation::Collections::IIterable<int16_t>>,
+  winrt::vector_base<AudioDataVector, int16_t>
+{
+  AudioDataVector(
+    int16_t * const data,
+    size_t size
+  ) : container_(data, size)
+  {}
+
+  auto& get_container() const noexcept
+  {
+    return container_;
+  }
+
+  auto& get_container() noexcept
+  {
+    return container_;
+  }
+
+private:
+
+  struct Container
+  {
+    Container(
+      int16_t * const data,
+      size_t size) :
+      first_(data),
+      last_(data + size)
+    {}
+
+    int16_t * const first_;
+    int16_t * const last_;
+
+    auto begin() const noexcept
+    {
+      return first_;
+    }
+
+    auto end() const noexcept
+    {
+      return last_;
+    }
+  };
+
+  Container container_;
+};
+#endif //0
 
 //------------------------------------------------------------------------------
 winrt::com_ptr< Org::WebRtc::implementation::AudioData > Org::WebRtc::implementation::AudioData::ToCppWinrtImpl(wrapper::org::webRtc::AudioDataPtr value)
@@ -163,21 +268,54 @@ Org::WebRtc::implementation::AudioData::AudioData()
 bool Org::WebRtc::implementation::AudioData::ReadOnly()
 {
   if (!native_) {throw hresult_error(E_POINTER);}
-  return ::Internal::Helper::ToCppWinrt_Bool(native_->get_readOnly());
+  return ::Internal::Helper::ToCppWinrt_Bool(native_->readOnly());
 }
 
 //------------------------------------------------------------------------------
 Windows::Foundation::Collections::IVectorView< int16_t > Org::WebRtc::implementation::AudioData::Data()
 {
-  if (!native_) {throw hresult_error(E_POINTER);}
-  return ::Internal::Helper::ToCppWinrt_List_ToCppWinrt_Int16_t(native_->get_data());
+  if (!native_) { throw hresult_error(E_POINTER); }
+
+  auto data = native_->data();
+  auto size = native_->size();
+
+  return AudioDataVectorView(data, size);
 }
 
 //------------------------------------------------------------------------------
 void Org::WebRtc::implementation::AudioData::Data(Windows::Foundation::Collections::IVectorView< int16_t > const & value)
 {
-  if (!native_) {throw hresult_error(E_POINTER);}
-  native_->set_data(::Internal::Helper::FromCppWinrt_List_FromCppWinrt_Int16_t(value));
+  if (!native_)
+    throw hresult_error(E_POINTER);
+
+  if (!value) {
+    native_->wrapper_init_org_webRtc_AudioData();
+    return;
+  }
+
+  auto data = native_->data();
+  if (!data) {
+    native_->wrapper_init_org_webRtc_AudioData(SafeInt<size_t>(value.Size()));
+  }
+
+  ZS_ASSERT(!native_->readOnly());
+
+  auto bufferSize = native_->size();
+  decltype(bufferSize) passedSize = SafeInt<decltype(bufferSize)>(value.Size());
+
+  ZS_ASSERT(passedSize <= bufferSize);
+
+  if (passedSize > bufferSize)
+    passedSize = bufferSize;
+
+  int16_t * const firstData = native_->mutableData();
+  int16_t * const lastData = firstData + passedSize;
+
+  if (!firstData)
+    throw hresult_error(E_UNEXPECTED);
+
+  winrt::array_view<int16_t> view(firstData, lastData);
+  value.GetMany(0, view);
 }
 
 
