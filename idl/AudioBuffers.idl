@@ -1,0 +1,214 @@
+/*
+
+ Copyright (c) 2017, Optical Tone Ltd.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ The views and conclusions contained in the software and documentation are those
+ of the authors and should not be interpreted as representing official policies,
+ either expressed or implied, of the FreeBSD Project.
+ 
+ */
+
+
+namespace org
+{
+  namespace webRtc
+  {
+    [special, disposable]
+    interface AudioData
+    {
+      /// <summary>
+      /// Constructs a new audio data object.
+      /// <summary>
+      [constructor, default]
+      void AudioData();
+
+      /// <summary>
+      /// Gets if the data is read-only.
+      /// <summary>
+      [getter]
+      bool readOnly;
+
+      /// <summary>
+      /// Gets or sets the audio samples data.
+      /// <summary>
+      [getter, setter]
+      std::list<int16> data;
+    };
+
+    [dictionary]
+    struct AudioBufferConfiguration
+    {
+      /// <summary>
+      /// Gets or sets the total number of input channels.
+      /// <summary>
+      size_t inputChannels;
+
+      /// <summary>
+      /// Gets or sets the samples per input channel.
+      /// <summary>
+      size_t inputSamplesPerChannel;
+
+      /// <summary>
+      /// Gets or sets the total number of process channels.
+      /// <summary>
+      size_t processChannels;
+
+      /// <summary>
+      /// Gets or sets the samples per process channel.
+      /// <summary>
+      size_t procesSamplesPerChannel;
+
+      /// <summary>
+      /// Gets or sets the total number of output channels.
+      /// <summary>
+      size_t outputChannels;
+    };
+
+    [dictionary]
+    struct AudioFrame
+    {
+      /// <summary>
+      /// Contructs an audio frame.
+      /// <summary>
+      [constructor, default]
+      void AudioFrame();
+
+      /// <summary>
+      /// Gets or sets the audio frame data.
+      /// <summary>
+      AudioData data;
+
+      /// <summary>
+      /// Gets or sets the voice activity flag.
+      /// </summary>
+      VadActivity activity;
+
+      /// <summary>
+      /// Gets or sets the samples per input channel.
+      /// <summary>
+      size_t channels;
+
+      /// <summary>
+      /// Gets or sets the samples per channel.
+      /// <summary>
+      size_t samplesPerChannel;
+    };
+
+    [disposable]
+    interface AudioBuffer
+    {
+      /// <summary>
+      /// Constructs a new audio buffer from a configuration.
+      /// </summary>
+      [constructor, default]
+      void AudioBuffer(AudioBufferConfiguration config);
+
+      /// <summary>
+      /// Gets the total number of channels.
+      /// <summary>
+      [getter]
+      size_t channels;
+
+      /// <summary>
+      /// Gets the samples per channel.
+      /// <summary>
+      [getter]
+      size_t samplesPerChannel;
+
+      /// <summary>
+      /// Gets the total number of bands.
+      /// <summary>
+      [getter]
+      size_t bands;
+
+      /// <summary>
+      /// Gets the total number of frames per band.
+      /// <summary>
+      [getter]
+      size_t framesPerBand;
+
+      /// <summary>
+      /// Gets the audio samples for a given channel.
+      /// <summary>
+      AudioData channel(size_t channel);
+
+      /// <summary>
+      /// Gets the audio samples for data split by bands.
+      /// <summary>
+      AudioData splitBand(
+        size_t channel,
+        Band band);
+
+      /// <summary>
+      /// Gets the audio samples for data split by channels.
+      /// <summary>
+      AudioData splitChannel(
+        Band band,
+        size_t channel);
+
+      /// <summary>
+      /// Gets a read-only view of the mixed low pass data.
+      /// </summary>
+      [getter]
+      AudioData mixedLowPassData;
+
+      /// <summary>
+      /// Gets a read-only reference view of the low pass data
+      /// for a given channel.
+      /// </summary>
+      AudioData lowPassReference(size_t channel);
+
+      /// <summary>
+      /// Gets or sets the voice activity flag.
+      /// </summary>
+      [getter, setter]
+      VadActivity activity;
+
+      /// <summary>
+      /// Deinterleaves samples from an audio frame.
+      /// </summary>
+      void deinterleaveFrom(AudioFrame frame);
+      /// <summary>
+      /// Interleaves samples from an audio frame.
+      /// </summary>
+      void interleaveTo(AudioFrame frame);
+
+      /// <summary>
+      /// Copies the low pass data to the low pass reference.
+      /// <summary>
+      void copyLowPassToReference();
+
+      /// <summary>
+      /// Splits the signal into different bands.
+      /// </summary>
+      void splitIntoFrequencyBands();
+      /// <summary>
+      /// Recombine the different bands into one signal.
+      /// </summary>
+      void mergeFrequencyBands();
+    };
+
+
+  }
+}

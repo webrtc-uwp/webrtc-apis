@@ -20,9 +20,11 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::VideoTrackSourceInterface, NativeType);
 
           typedef rtc::scoped_refptr<NativeType> NativeTypeScopedPtr;
+          ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, UseWebRtcFactory);
 
-          NativeTypeScopedPtr native_;
           VideoTrackSourceWeakPtr thisWeak_;
+          NativeTypeScopedPtr native_;
+          UseWebRtcFactoryPtr factory_;
 
           VideoTrackSource() noexcept;
           virtual ~VideoTrackSource() noexcept;
@@ -38,8 +40,11 @@ namespace wrapper {
           Optional< bool > get_needsDenoising() noexcept override;
           Optional< wrapper::org::webRtc::VideoTrackSourceStatsPtr > get_stats() noexcept override;
 
+          UseWebRtcFactoryPtr factory() noexcept { return factory_; }
+
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeType *native) noexcept;
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeTypeScopedPtr native) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(WrapperTypePtr wrapper) noexcept;
 
           ZS_NO_DISCARD() static NativeTypeScopedPtr toNative(WrapperTypePtr wrapper) noexcept;
         };

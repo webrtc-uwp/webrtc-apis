@@ -3,7 +3,8 @@
 #include "impl_org_webRtc_helpers.h"
 #include "impl_org_webRtc_AudioOptions.h"
 #include "impl_org_webRtc_MediaConstraints.h"
-#include "impl_org_webRtc_WebrtcLib.h"
+#include "impl_org_webRtc_WebRtcLib.h"
+#include "impl_org_webRtc_WebRtcFactory.h"
 #include "impl_org_webRtc_enums.h"
 
 //#include "impl_org_webRtc_pre_include.h"
@@ -31,6 +32,7 @@ using ::std::map;
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioTrackSource::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
+ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseWebRtcFactory, UseWebRtcFactory);
 
 typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 
@@ -91,13 +93,20 @@ void wrapper::impl::org::webRtc::AudioTrackSource::wrapper_dispose() noexcept
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::AudioTrackSourcePtr wrapper::org::webRtc::AudioTrackSource::create(wrapper::org::webRtc::AudioOptionsPtr options) noexcept
 {
-  auto factory = UseWebrtcLib::peerConnectionFactory();
+  auto factoryImpl = UseWebRtcFactory::toWrapper(options ? options->factory : nullptr);
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl) return WrapperTypePtr();
+
+  auto factory = factoryImpl->peerConnectionFactory();
   ZS_ASSERT(factory);
   if (!factory) return WrapperTypePtr();
 
   auto converted = UseAudioOptions::toNative(options);
+  ZS_ASSERT(converted);
 
-  return WrapperImplType::toWrapper(factory->CreateAudioSource(*converted));
+  auto result = WrapperImplType::toWrapper(factory->CreateAudioSource(*converted));
+  result->factory_ = factoryImpl;
+  return result;
 }
 
 //------------------------------------------------------------------------------
@@ -185,6 +194,14 @@ WrapperImplTypePtr WrapperImplType::toWrapper(NativeType *native) noexcept
 WrapperImplTypePtr WrapperImplType::toWrapper(NativeTypeScopedPtr native) noexcept
 {
   return toWrapper(native.get());
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(WrapperTypePtr wrapper) noexcept
+{
+  if (!wrapper) return WrapperImplTypePtr();
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
+  return converted;
 }
 
 //------------------------------------------------------------------------------

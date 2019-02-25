@@ -2,6 +2,14 @@
 #include <unknwn.h>
 
 #include "impl_webrtc_VideoCapturer.h"
+#include "impl_org_webRtc_VideoFrameBufferEvent.h"
+#include "impl_org_webRtc_VideoFrameNativeBuffer.h"
+
+#include "impl_org_webRtc_pre_include.h"
+#include "api/video/video_frame_buffer.h"
+#include "rtc_base/refcountedobject.h"
+#include "third_party/winuwp_h264/native_handle_buffer.h"
+#include "impl_org_webRtc_post_include.h"
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
@@ -71,8 +79,42 @@ using namespace cricket;
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameNativeBuffer, UseVideoFrameNativeBuffer);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
+
 namespace webrtc
 {
+  // Used to store a IMFSample native handle buffer for a VideoFrame
+  class MFNativeHandleBuffer : public NativeHandleBuffer {
+  public:
+    MFNativeHandleBuffer(
+      cricket::FourCC fourCC,
+      const winrt::com_ptr<IMFSample> &sample,
+      rtc::scoped_refptr<I420BufferInterface> &i420Buffer,
+      int width,
+      int height) :
+      NativeHandleBuffer(sample.get(), width, height),
+      fourCC_(fourCC),
+      sample_(sample),
+      i420Buffer_(i420Buffer)
+    {
+    }
+
+    virtual ~MFNativeHandleBuffer() {
+    }
+
+    rtc::scoped_refptr<I420BufferInterface> ToI420() override {
+      return i420Buffer_;
+    }
+
+    virtual cricket::FourCC fourCC() const { return fourCC_; }
+
+  private:
+    cricket::FourCC fourCC_{};
+    winrt::com_ptr<IMFSample> sample_;
+    rtc::scoped_refptr<I420BufferInterface> i420Buffer_;
+  };
+
   //-----------------------------------------------------------------------------
   class DisplayOrientation {
   public:
@@ -194,7 +236,7 @@ namespace webrtc
     void OnCaptureFailed(winrt::Windows::Media::Capture::MediaCapture const&  sender,
       winrt::Windows::Media::Capture::MediaCaptureFailedEventArgs const& error_event_args);
 
-    void OnSample(std::shared_ptr<MediaSampleEventArgs> args) override;
+    void OnSample(winrt::com_ptr<IMFSample> &sample) override;
 
     void OnShutdown() override;
 
@@ -512,56 +554,61 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void CaptureDevice::OnCaptureFailed(
     winrt::Windows::Media::Capture::MediaCapture const& /*sender*/,
-    MediaCaptureFailedEventArgs const& error_event_args) {
-    if (capture_device_listener_) {
-      capture_device_listener_->OnCaptureDeviceFailed(
-        error_event_args.Code(),
-        error_event_args.Message());
-    }
+    MediaCaptureFailedEventArgs const& error_event_args)
+  {
+    if (!capture_device_listener_)
+      return;
+
+    capture_device_listener_->OnCaptureDeviceFailed(
+      error_event_args.Code(),
+      error_event_args.Message());
   }
 
   //-----------------------------------------------------------------------------
-  void CaptureDevice::OnSample(std::shared_ptr<MediaSampleEventArgs> args)
+  void CaptureDevice::OnSample(winrt::com_ptr<IMFSample> &sample)
   {
-    if (capture_device_listener_) {
-      winrt::com_ptr<IMFSample> spMediaSample = args->GetMediaSample();
-      winrt::com_ptr<IMFMediaBuffer> spMediaBuffer;
-      HRESULT hr = spMediaSample->GetBufferByIndex(0, spMediaBuffer.put());
-      LONGLONG hnsSampleTime = 0;
-      BYTE* pbBuffer = NULL;
-      DWORD cbMaxLength = 0;
-      DWORD cbCurrentLength = 0;
+    ZS_ASSERT((bool)sample);
+    if (!capture_device_listener_)
+      return;
 
-      if (SUCCEEDED(hr)) {
-        hr = spMediaSample->GetSampleTime(&hnsSampleTime);
-      }
-      if (SUCCEEDED(hr)) {
-        hr = spMediaBuffer->Lock(&pbBuffer, &cbMaxLength, &cbCurrentLength);
-      }
-      if (SUCCEEDED(hr)) {
-        uint8_t* video_frame;
-        size_t video_frame_length;
-        int64_t capture_time;
-        video_frame = pbBuffer;
-        video_frame_length = cbCurrentLength;
-        // conversion from 100-nanosecond to millisecond units
-        capture_time = hnsSampleTime / 10000;
+    winrt::com_ptr<IMFMediaBuffer> spMediaBuffer;
+    HRESULT hr = sample->GetBufferByIndex(0, spMediaBuffer.put());
+    LONGLONG hnsSampleTime = 0;
+    BYTE* pbBuffer = NULL;
+    DWORD cbMaxLength = 0;
+    DWORD cbCurrentLength = 0;
 
-        RemovePaddingPixels(video_frame, video_frame_length);
+    if (SUCCEEDED(hr)) {
+      hr = sample->GetSampleTime(&hnsSampleTime);
+    }
+    if (SUCCEEDED(hr)) {
+      hr = spMediaBuffer->Lock(&pbBuffer, &cbMaxLength, &cbCurrentLength);
+    }
+    if (SUCCEEDED(hr)) {
+      uint8_t* video_frame;
+      size_t video_frame_length;
+      int64_t capture_time;
+      video_frame = pbBuffer;
+      video_frame_length = cbCurrentLength;
+      // conversion from 100-nanosecond to millisecond units
+      capture_time = hnsSampleTime / 10000;
 
-        RTC_LOG(LS_VERBOSE) <<
-          "Video Capture - Media sample received - video frame length: " <<
-          video_frame_length << ", capture time : " << capture_time;
+      RemovePaddingPixels(video_frame, video_frame_length);
 
-        capture_device_listener_->OnIncomingFrame(video_frame,
-          video_frame_length,
-          frame_info_, spMediaSample);
+      RTC_LOG(LS_VERBOSE) <<
+        "Video Capture - Media sample received - video frame length: " <<
+        video_frame_length << ", capture time : " << capture_time;
 
-        hr = spMediaBuffer->Unlock();
-      }
-      if (FAILED(hr)) {
-        RTC_LOG(LS_ERROR) << "Failed to send media sample. " << hr;
-      }
+      capture_device_listener_->OnIncomingFrame(
+        video_frame,
+        video_frame_length,
+        frame_info_,
+        sample);
+
+      hr = spMediaBuffer->Unlock();
+    }
+    if (FAILED(hr)) {
+      RTC_LOG(LS_ERROR) << "Failed to send media sample. " << hr;
     }
   }
 
@@ -768,7 +815,6 @@ namespace webrtc
     device_(nullptr),
     camera_location_(Panel::Unknown),
     display_orientation_(nullptr),
-    last_frame_info_(),
     video_encoding_properties_(nullptr),
     media_encoding_profile_(nullptr),
     subscriptions_(decltype(subscriptions_)::create())
@@ -800,7 +846,7 @@ namespace webrtc
     SetId(String(props.id_));
 
     if (props.delegate_) {
-      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::frameProcessingQueue());
+      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::videoFrameProcessingQueue());
     }
 
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties properties{ nullptr };
@@ -883,7 +929,7 @@ namespace webrtc
     AutoRecursiveLock lock(lock_);
     if (!originalDelegate) return defaultSubscription_;
 
-    return subscriptions_.subscribe(originalDelegate, UseWebrtcLib::frameProcessingQueue());
+    return subscriptions_.subscribe(originalDelegate, UseWebrtcLib::videoFrameProcessingQueue());
   }
 
   //-----------------------------------------------------------------------------
@@ -960,7 +1006,6 @@ namespace webrtc
       ApplyDisplayOrientation(display_orientation_->Orientation());
       device_->StartCapture(media_encoding_profile_,
         video_encoding_properties_, mrc_enabled_);
-      last_frame_info_ = capture_format;
     } catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to start capture. "
         << rtc::ToUtf8(e.message().c_str());
@@ -1032,10 +1077,8 @@ namespace webrtc
     uint8_t* videoFrame,
     size_t videoFrameLength,
     const VideoFormat& frameInfo,
-    winrt::com_ptr<IMFSample> spMediaSample) {
-    if (device_->CaptureStarted()) {
-      last_frame_info_ = frameInfo;
-    }
+    winrt::com_ptr<IMFSample> spMediaSample)
+  {
     rtc::CritScope cs(&apiCs_);
 
     const int32_t width = frameInfo.width;
@@ -1097,63 +1140,30 @@ namespace webrtc
       !apply_rotation ? rotateFrame_ : kVideoRotation_0);
     captureFrame.set_ntp_time_ms(captureTime);
 
-    forwardToDelegates(spMediaSample);
+    forwardToDelegates(frameInfo, spMediaSample, buffer);
     OnFrame(captureFrame, captureFrame.width(), captureFrame.height());
-
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapturer::forwardToDelegates(const winrt::com_ptr<IMFSample> &spMediaSample)
+  void VideoCapturer::forwardToDelegates(
+    const cricket::VideoFormat &frameInfo,
+    const winrt::com_ptr<IMFSample> &spMediaSample,
+    rtc::scoped_refptr<I420BufferInterface> i420Frame)
   {
     if (subscriptions_.size() < 1)
       return;
 
-    winrt::com_ptr<IMFMediaBuffer> spSampleBuffer;
-    DWORD cbCurrentLength{};
-    DWORD cbMaxLength{};
+    rtc::scoped_refptr<MFNativeHandleBuffer> nativeHandleBuffer(new rtc::RefCountedObject<MFNativeHandleBuffer>(
+      static_cast<cricket::FourCC>(frameInfo.fourcc),
+      spMediaSample,
+      i420Frame,
+      frameInfo.width,
+      frameInfo.height));
 
-    winrt::com_ptr<IMFSample> spSampleCopy;
-    winrt::com_ptr<IMFMediaBuffer> spSampleBufferCopy;
+    auto wrapperBuffer = UseVideoFrameNativeBuffer::toWrapper(nativeHandleBuffer.get());
+    auto event = UseVideoFrameBufferEvent::toWrapper(wrapperBuffer);
 
-    if (!SUCCEEDED(spMediaSample->GetBufferByIndex(0, spSampleBuffer.put()))) {
-      RTC_LOG(LS_ERROR) << "Failed to get MF media buffer by index.";
-      return;
-    }
-
-    if (!SUCCEEDED(spSampleBuffer->GetCurrentLength(&cbCurrentLength))) {
-      RTC_LOG(LS_ERROR) << "Failed to get MF media buffer length.";
-      return;
-    }
-
-    if (!SUCCEEDED(spSampleBuffer->GetMaxLength(&cbMaxLength))) {
-      RTC_LOG(LS_ERROR) << "Failed to get MF media buffer length.";
-      return;
-    }
-
-    if (!SUCCEEDED(MFCreateMemoryBuffer(cbMaxLength, spSampleBufferCopy.put()))) {
-      RTC_LOG(LS_ERROR) << "Failed to create MF media sample buffer.";
-      return;
-    }
-
-    if (!SUCCEEDED(spMediaSample->CopyToBuffer(spSampleBufferCopy.get()))) {
-      RTC_LOG(LS_ERROR) << "Failed to copy MF media sample buffer from source.";
-      return;
-    }
-
-    if (!SUCCEEDED(MFCreateSample(spSampleCopy.put()))) {
-      RTC_LOG(LS_ERROR) << "Failed to create MF media sample.";
-      return;
-    }
-
-    if (!SUCCEEDED(spSampleCopy->AddBuffer(spSampleBufferCopy.get()))) {
-      RTC_LOG(LS_ERROR) << "Failed to add MF media buffer to sample copy.";
-      return;
-    }
-
-    wrapper::org::webRtc::MediaSamplePtr sample =
-      wrapper::impl::org::webRtc::MediaSample::toWrapper(spSampleCopy);
-
-    subscriptions_.delegate()->onVideoFrameReceived(VideoCapturerPtr(), sample);
+    subscriptions_.delegate()->onVideoFrameReceived(event);
   }
 
   //-----------------------------------------------------------------------------

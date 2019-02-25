@@ -87,6 +87,18 @@ void wrapper::impl::org::webRtc::RTCConfiguration::wrapper_init_org_webRtc_RTCCo
 }
 
 //------------------------------------------------------------------------------
+wrapper::org::webRtc::WebRtcFactoryPtr wrapper::impl::org::webRtc::RTCConfiguration::get_factory() noexcept
+{
+  return factory_;
+}
+
+//------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::RTCConfiguration::set_factory(wrapper::org::webRtc::WebRtcFactoryPtr value) noexcept
+{
+  factory_ = value;
+}
+
+//------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::RTCConfiguration::get_dscp() noexcept
 {
   if (!native_) return false;

@@ -26,7 +26,10 @@
 #include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_AudioTrackSource.h"
 #include "impl_org_webRtc_VideoTrackSource.h"
-#include "impl_org_webRtc_WebrtcLib.h"
+#include "impl_org_webRtc_WebRtcLib.h"
+#include "impl_org_webRtc_WebRtcFactory.h"
+#include "impl_org_webRtc_VideoFrameBuffer.h"
+#include "impl_org_webRtc_VideoFrameBufferEvent.h"
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -34,6 +37,7 @@
 #include "pc/videotrack.h"
 #include "api/mediastreamtrackproxy.h"
 #include "api/peerconnectioninterface.h"
+#include "third_party/winuwp_h264/native_handle_buffer.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;
@@ -59,6 +63,8 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaStreamTrack::WrapperImpl
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
 
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoTrackSource::WrapperImplType, UseVideoTrackSource);
+
 typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 
 typedef wrapper::impl::org::webRtc::WrapperMapper<NativeType, WrapperImplType> UseWrapperMapper;
@@ -66,6 +72,8 @@ typedef wrapper::impl::org::webRtc::WrapperMapper<NativeType, WrapperImplType> U
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioTrackSource, UseAudioTrackSource);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoTrackSource, UseVideoTrackSource);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBuffer, UseVideoFrameBuffer);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 
 //------------------------------------------------------------------------------
@@ -120,7 +128,8 @@ static void notifyAboutNewMediaSource(WrapperImplType &wrapper, winrt::Windows::
 #endif //WINUWP
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::MediaStreamTrack::MediaStreamTrack() noexcept
+wrapper::impl::org::webRtc::MediaStreamTrack::MediaStreamTrack() noexcept :
+  videoFrameProcessingQueue_(UseWebrtcLib::videoFrameProcessingQueue())
 {
 }
 
@@ -156,7 +165,18 @@ wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack
   wrapper::org::webRtc::AudioTrackSourcePtr source
   ) noexcept
 {
-  auto factory = UseWebrtcLib::peerConnectionFactory();
+  ZS_ASSERT(source);
+  if (!source) return WrapperTypePtr();
+
+  auto sourceImpl = UseAudioTrackSource::toWrapper(source);
+  ZS_ASSERT(sourceImpl);
+  if (!sourceImpl) return WrapperTypePtr();
+
+  auto factoryImpl = sourceImpl->factory();
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl) return WrapperTypePtr();
+
+  auto factory = factoryImpl->peerConnectionFactory();
   ZS_ASSERT(factory);
   if (!factory) return WrapperTypePtr();
 
@@ -173,7 +193,18 @@ wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack
   wrapper::org::webRtc::VideoTrackSourcePtr source
   ) noexcept
 {
-  auto factory = UseWebrtcLib::peerConnectionFactory();
+  ZS_ASSERT(source);
+  if (!source) return WrapperTypePtr();
+
+  auto sourceImpl = UseVideoTrackSource::toWrapper(source);
+  ZS_ASSERT(sourceImpl);
+  if (!sourceImpl) return WrapperTypePtr();
+
+  auto factoryImpl = sourceImpl->factory();
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl) return WrapperTypePtr();
+
+  auto factory = factoryImpl->peerConnectionFactory();
   ZS_ASSERT(factory);
   if (!factory) return WrapperTypePtr();
 
@@ -252,9 +283,15 @@ void wrapper::impl::org::webRtc::MediaStreamTrack::set_element(wrapper::org::web
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::MediaStreamTrack::wrapper_onObserverCountChanged(ZS_MAYBE_USED() size_t count) noexcept
+void wrapper::impl::org::webRtc::MediaStreamTrack::wrapper_onObserverCountChanged(size_t count) noexcept
 {
-  ZS_MAYBE_USED(count);
+  hasObservers_ = (count > 0);
+}
+
+//------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::MediaStreamTrack::wrapper_onObserveronVideoFrameCountChanged(size_t count) noexcept
+{
+  hasVideoFrameObservers_ = (count > 0);
 }
 
 //------------------------------------------------------------------------------
@@ -379,27 +416,67 @@ void WrapperImplType::teardownObserver() noexcept
 //------------------------------------------------------------------------------
 void WrapperImplType::notifyWebrtcObserverFrame(const ::webrtc::VideoFrame& frame) noexcept
 {
-  UseVideoFrameType frameType {};
-	if (frame.video_frame_buffer()->ToI420() != nullptr)
-		frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_I420;
-	else
-		frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_H264;
+  auto frameBuffer = frame.video_frame_buffer();
 
-	if (frameType != currentFrameType_ || !firstFrameReceived_) {
-		{
-			zsLib::AutoLock lock(lock_);
+  ZS_ASSERT(frameBuffer);
+  if (!frameBuffer)
+    return;
 
-			firstFrameReceived_ = true;
-			currentFrameType_ = frameType;
-      mediaStreamSource_ = UseMediaStreamSource::create(UseMediaStreamSource::CreationProperties { frameType });
+  UseVideoFrameType frameType{};
+
+  switch (frameBuffer->type())
+  {
+  case ::webrtc::VideoFrameBuffer::Type::kNative:
+  {
+    ::webrtc::NativeHandleBuffer *nativeBuffer = reinterpret_cast<::webrtc::NativeHandleBuffer *>(frameBuffer.get());
+    switch (nativeBuffer->fourCC())
+    {
+    case cricket::FourCC::FOURCC_H264:
+    {
+      frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_H264;
+    }
+    default:
+    {
+      frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_I420;
+      break;
+    }
+    }
+    break;
+  }
+  default:
+  {
+    frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_I420;
+    break;
+  }
+  }
+
+  if (frameType != currentFrameType_ || !firstFrameReceived_) {
+    {
+      zsLib::AutoLock lock(lock_);
+
+      firstFrameReceived_ = true;
+      currentFrameType_ = frameType;
+      mediaStreamSource_ = UseMediaStreamSource::create(UseMediaStreamSource::CreationProperties{ frameType });
       subscription_ = mediaStreamSource_->subscribe(videoObserver_);
     }
 
-		auto source = mediaStreamSource_->source();
-		notifyAboutNewMediaSource(*this, source);
-	}
+    auto source = mediaStreamSource_->source();
+    notifyAboutNewMediaSource(*this, source);
+  }
 
-	mediaStreamSource_->notifyFrame(frame);
+  mediaStreamSource_->notifyFrame(frame);
+
+  if (!hasVideoFrameObservers_)
+    return;
+
+  auto wrapperBuffer = UseVideoFrameBuffer::toWrapper(frameBuffer);
+  auto wrapperEvent = UseVideoFrameBufferEvent::toWrapper(wrapperBuffer);
+
+  auto pThis = thisWeak_.lock();
+
+  videoFrameProcessingQueue_->postClosure([pThis, wrapperEvent]() {
+    pThis->onVideoFrame(wrapperEvent);
+  });
 }
 
 #elif defined(__cplusplus_winrt)

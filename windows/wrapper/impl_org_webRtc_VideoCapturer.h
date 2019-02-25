@@ -23,6 +23,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer, WrapperImplType);
           ZS_DECLARE_TYPEDEF_PTR(::cricket::VideoCapturer, NativeType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::MediaSample, UseMediaSample);
+          ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
@@ -48,14 +49,11 @@ namespace wrapper {
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
-            void onVideoFrameReceived(
-              UseVideoCapturerPtr source,
-              UseMediaSamplePtr sample
-            ) override
+            void onVideoFrameReceived(UseVideoFrameBufferEventPtr event) override
             {
               auto outer = outer_.lock();
               if (!outer) return;
-              outer->onWebrtcObserverVideoFrameReceived(sample);
+              outer->onWebrtcObserverVideoFrameReceived(event);
             }
 #endif // CPPWINRT_VERSION
 #endif //WINUWP
@@ -105,7 +103,7 @@ namespace wrapper {
           void teardownObserver() noexcept;
 
           // WebrtcObserver methods
-          void onWebrtcObserverVideoFrameReceived(UseMediaSamplePtr sample) noexcept;
+          void onWebrtcObserverVideoFrameReceived(UseVideoFrameBufferEventPtr event) noexcept;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeTypeUniPtr native) noexcept;
           ZS_NO_DISCARD() static NativeTypeUniPtr toNative(WrapperTypePtr wrapper) noexcept;

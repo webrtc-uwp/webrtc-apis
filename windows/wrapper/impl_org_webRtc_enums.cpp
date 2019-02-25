@@ -8,6 +8,7 @@
 #include "api/rtptransceiverinterface.h"
 #include "media/base/videocapturer.h"
 #include "api/stats/rtcstats_objects.h"
+#include "modules/audio_processing/audio_buffer.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/Stringize.h>
@@ -1285,3 +1286,96 @@ const char *UseEnum::toString(wrapper::org::webRtc::RTCIceRole value) noexcept
   return "unknown";
 }
 
+//-----------------------------------------------------------------------------
+wrapper::org::webRtc::VadActivity UseEnum::toWrapper(::webrtc::AudioFrame::VADActivity value) noexcept
+{
+  switch (value)
+  {
+    case ::webrtc::AudioFrame::VADActivity::kVadActive:   return wrapper::org::webRtc::VadActivity::VadActivity_Active;
+    case ::webrtc::AudioFrame::VADActivity::kVadPassive:  return wrapper::org::webRtc::VadActivity::VadActivity_Passive;
+    case ::webrtc::AudioFrame::VADActivity::kVadUnknown:  return wrapper::org::webRtc::VadActivity::VadActivity_Unknown;
+  }
+  ZS_ASSERT_FAIL("unknown activity");
+  return wrapper::org::webRtc::VadActivity::VadActivity_Unknown;
+}
+
+//-----------------------------------------------------------------------------
+::webrtc::AudioFrame::VADActivity UseEnum::toNative(wrapper::org::webRtc::VadActivity value) noexcept
+{
+  switch (value)
+  {
+    case wrapper::org::webRtc::VadActivity::VadActivity_Active: return ::webrtc::AudioFrame::VADActivity::kVadActive;
+    case wrapper::org::webRtc::VadActivity::VadActivity_Passive: return ::webrtc::AudioFrame::VADActivity::kVadPassive;
+    case wrapper::org::webRtc::VadActivity::VadActivity_Unknown: return ::webrtc::AudioFrame::VADActivity::kVadUnknown;
+  }
+  ZS_ASSERT_FAIL("unknown activity");
+  return ::webrtc::AudioFrame::VADActivity::kVadUnknown;
+}
+
+//-----------------------------------------------------------------------------
+wrapper::org::webRtc::Band UseEnum::toWrapper(::webrtc::Band value) noexcept
+{
+  switch (value)
+  {
+    case ::webrtc::Band::kBand0To8kHz:    return wrapper::org::webRtc::Band::Band_Band0To8kHz;
+    case ::webrtc::Band::kBand8To16kHz:   return wrapper::org::webRtc::Band::Band_Band8To16kHz;
+    case ::webrtc::Band::kBand16To24kHz:  return wrapper::org::webRtc::Band::Band_Band16To24kHz;
+  }
+  ZS_ASSERT_FAIL("unknown band");
+  return wrapper::org::webRtc::Band::Band_Band16To24kHz;
+}
+
+//-----------------------------------------------------------------------------
+::webrtc::Band UseEnum::toNative(wrapper::org::webRtc::Band value) noexcept
+{
+  switch (value)
+  {
+    case wrapper::org::webRtc::Band::Band_Band0To8kHz:    return ::webrtc::Band::kBand0To8kHz;
+    case wrapper::org::webRtc::Band::Band_Band8To16kHz:   return ::webrtc::Band::kBand8To16kHz;
+    case wrapper::org::webRtc::Band::Band_Band16To24kHz:  return ::webrtc::Band::kBand16To24kHz;
+  }
+  ZS_ASSERT_FAIL("unknown band");
+  return ::webrtc::Band::kBand0To8kHz;
+}
+
+
+//-----------------------------------------------------------------------------
+wrapper::org::webRtc::RuntimeSetting UseEnum::toWrapper(::webrtc::AudioProcessing::RuntimeSetting::Type value) noexcept
+{
+  switch (value)
+  {
+    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified:                          return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_NotSpecified;
+    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kCapturePreGain:                        return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CapturePreGain;
+    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kCustomRenderProcessingRuntimeSetting:  return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CustomRenderProcessingRuntimeSetting;
+  }
+  ZS_ASSERT_FAIL("unknown type");
+  return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_NotSpecified;
+}
+
+//-----------------------------------------------------------------------------
+::webrtc::AudioProcessing::RuntimeSetting::Type UseEnum::toNative(wrapper::org::webRtc::RuntimeSetting value) noexcept
+{
+  switch (value)
+  {
+    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_NotSpecified:                         return ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified;
+    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CapturePreGain:                       return ::webrtc::AudioProcessing::RuntimeSetting::Type::kCapturePreGain;
+    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CustomRenderProcessingRuntimeSetting: return ::webrtc::AudioProcessing::RuntimeSetting::Type::kCustomRenderProcessingRuntimeSetting;
+  }
+  ZS_ASSERT_FAIL("unknown type");
+  return ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified;
+}
+
+//-----------------------------------------------------------------------------
+wrapper::org::webRtc::VideoFrameBufferType UseEnum::toWrapper(::webrtc::VideoFrameBuffer::Type value) noexcept
+{
+  switch (value)
+  {
+    case ::webrtc::VideoFrameBuffer::Type::kNative:   return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+    case ::webrtc::VideoFrameBuffer::Type::kI420:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I420;
+    case ::webrtc::VideoFrameBuffer::Type::kI420A:    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I420A;
+    case ::webrtc::VideoFrameBuffer::Type::kI444:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I444;
+    case ::webrtc::VideoFrameBuffer::Type::kI010:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I010;
+  }
+  ZS_ASSERT_FAIL("unknown type");
+  return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+}

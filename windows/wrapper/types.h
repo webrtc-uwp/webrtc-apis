@@ -14,7 +14,14 @@ namespace wrapper {
         ZS_DECLARE_TYPEDEF_PTR(::zsLib::Exceptions::InvalidArgument, InvalidParameters);
         ZS_DECLARE_TYPEDEF_PTR(::zsLib::IMessageQueue, IMessageQueue);
 
+        ZS_DECLARE_STRUCT_PTR(AudioBuffer);
+        ZS_DECLARE_STRUCT_PTR(AudioBufferConfiguration);
+        ZS_DECLARE_STRUCT_PTR(AudioBufferEvent);
+        ZS_DECLARE_STRUCT_PTR(AudioData);
+        ZS_DECLARE_STRUCT_PTR(AudioFrame);
         ZS_DECLARE_STRUCT_PTR(AudioOptions);
+        ZS_DECLARE_STRUCT_PTR(AudioProcessingInitializeEvent);
+        ZS_DECLARE_STRUCT_PTR(AudioProcessingRuntimeSettingEvent);
         ZS_DECLARE_STRUCT_PTR(AudioTrackSource);
         ZS_DECLARE_STRUCT_PTR(Constraint);
         ZS_DECLARE_STRUCT_PTR(EventQueue);
@@ -105,10 +112,19 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(RTCVideoSenderStats);
         ZS_DECLARE_STRUCT_PTR(VideoCapturer);
         ZS_DECLARE_STRUCT_PTR(VideoCapturerInputSize);
+        ZS_DECLARE_STRUCT_PTR(VideoData);
         ZS_DECLARE_STRUCT_PTR(VideoDeviceInfo);
         ZS_DECLARE_STRUCT_PTR(VideoFormat);
+        ZS_DECLARE_STRUCT_PTR(VideoFrameBuffer);
+        ZS_DECLARE_STRUCT_PTR(VideoFrameBufferEvent);
+        ZS_DECLARE_STRUCT_PTR(VideoFrameNativeBuffer);
+        ZS_DECLARE_STRUCT_PTR(VideoFramePlanarYuvBuffer);
+        ZS_DECLARE_STRUCT_PTR(VideoFramePlanarYuvaBuffer);
+        ZS_DECLARE_STRUCT_PTR(VideoOptions);
         ZS_DECLARE_STRUCT_PTR(VideoTrackSource);
         ZS_DECLARE_STRUCT_PTR(VideoTrackSourceStats);
+        ZS_DECLARE_STRUCT_PTR(WebRtcFactory);
+        ZS_DECLARE_STRUCT_PTR(WebRtcFactoryConfiguration);
         ZS_DECLARE_STRUCT_PTR(WebRtcLib);
         ZS_DECLARE_STRUCT_PTR(WebRtcLibConfiguration);
 

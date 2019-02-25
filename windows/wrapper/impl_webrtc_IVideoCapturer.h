@@ -26,6 +26,8 @@
 
 #ifdef CPPWINRT_VERSION
 
+#include <wrapper/generated/types.h>
+
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include <wrapper/impl_org_webRtc_post_include.h>
 
@@ -73,10 +75,7 @@ namespace webrtc
   
   interaction IVideoCapturerDelegate
   {
-    virtual void onVideoFrameReceived(
-      IVideoCapturerPtr source,
-      wrapper::org::webRtc::MediaSamplePtr sample
-    ) = 0;
+    virtual void onVideoFrameReceived(wrapper::org::webRtc::VideoFrameBufferEventPtr event) = 0;
   };
 
   interaction IVideoCapturerSubscription
@@ -90,12 +89,12 @@ namespace webrtc
 
 ZS_DECLARE_PROXY_BEGIN(webrtc::IVideoCapturerDelegate)
 ZS_DECLARE_PROXY_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
-ZS_DECLARE_PROXY_METHOD(onVideoFrameReceived, IVideoCapturerPtr, wrapper::org::webRtc::MediaSamplePtr)
+ZS_DECLARE_PROXY_METHOD(onVideoFrameReceived, wrapper::org::webRtc::VideoFrameBufferEventPtr)
 ZS_DECLARE_PROXY_END()
 
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_BEGIN(webrtc::IVideoCapturerDelegate, webrtc::IVideoCapturerSubscription)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_TYPEDEF(webrtc::IVideoCapturerPtr, IVideoCapturerPtr)
-ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onVideoFrameReceived, IVideoCapturerPtr, wrapper::org::webRtc::MediaSamplePtr)
+ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onVideoFrameReceived, wrapper::org::webRtc::VideoFrameBufferEventPtr)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_END()
 
 #endif //CPPWINRT_VERSION

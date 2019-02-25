@@ -21,6 +21,7 @@ namespace wrapper {
 
           RTCConfigurationWeakPtr thisWeak_;
           NativeTypePtr native_;
+          wrapper::org::webRtc::WebRtcFactoryPtr factory_;
 
           RTCConfiguration() noexcept;
           virtual ~RTCConfiguration() noexcept;
@@ -32,6 +33,8 @@ namespace wrapper {
           void wrapper_init_org_webRtc_RTCConfiguration(wrapper::org::webRtc::RTCConfigurationPtr source) noexcept override;
 
           // properties RTCConfiguration
+          wrapper::org::webRtc::WebRtcFactoryPtr get_factory() noexcept override;
+          void set_factory(wrapper::org::webRtc::WebRtcFactoryPtr value) noexcept override;
           bool get_dscp() noexcept override;
           void set_dscp(bool value) noexcept override;
           bool get_cpuAdaptation() noexcept override;

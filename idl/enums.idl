@@ -920,6 +920,45 @@ namespace org
       failed
     };
 
+    enum VadActivity
+    {
+      /// <summary>
+      /// Active voice activity found.
+      /// </summary>
+      Active = 0,
+      /// <summary>
+      /// Passive voice activity found.
+      /// </summary>
+      Passive = 1,
+      /// <summary>
+      /// Voice activity state is unknown.
+      /// </summary>
+      Unknown = 2
+    };
+
+    enum Band
+    {
+      Band0To8kHz = 0,
+      Band8To16kHz = 1,
+      Band16To24kHz = 2
+    };
+
+    enum RuntimeSetting
+    {
+      NotSpecified,
+      CapturePreGain,
+      CustomRenderProcessingRuntimeSetting
+    };
+
+    enum VideoFrameBufferType
+    {
+      Native,
+      I420,
+      I420A,
+      I444,
+      I010
+    };
+
   }
 }
 

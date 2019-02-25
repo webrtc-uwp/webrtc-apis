@@ -54,16 +54,10 @@ namespace org
       void VideoTrackSource();
 
       /// <summary>
-      /// Creates an VideoTrackSource for use with an MediaStreamTrack.
+      /// Creates an VideoTrackSource for use with video options specified.
       /// </summary>
       [static, default]
-      VideoTrackSource create(VideoCapturer capturer);
-
-      /// <summary>
-      /// Creates a VideoTrackSource for use with an MediaStreamTrack.
-      /// </summary>
-      [static, default, altname(createWithContraints)]
-      VideoTrackSource create(VideoCapturer capturer, MediaConstraints constraints);
+      VideoTrackSource create(VideoOptions options);
 
       /// <summary>
       /// Indicates that parameters suitable for screencasts should be automatically

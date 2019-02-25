@@ -60,6 +60,7 @@ using ::std::map;
 
 // borrow types from call defintions
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::WrapperType, WrapperType);
+// borrow definitions from class
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::NativeType, NativeType);
 
@@ -427,7 +428,7 @@ void WrapperImplType::setupObserver() noexcept
 {
   if (!native_) return;
 
-  videoObserver_ = std::make_shared<WebrtcVideoObserver>(thisWeak_.lock(), UseWebrtcLib::frameProcessingQueue());
+  videoObserver_ = std::make_shared<WebrtcVideoObserver>(thisWeak_.lock(), UseWebrtcLib::videoFrameProcessingQueue());
 }
 
 //------------------------------------------------------------------------------
@@ -440,9 +441,9 @@ void WrapperImplType::teardownObserver() noexcept
 }
 
 //------------------------------------------------------------------------------
-void WrapperImplType::onWebrtcObserverVideoFrameReceived(UseMediaSamplePtr sample) noexcept
+void WrapperImplType::onWebrtcObserverVideoFrameReceived(UseVideoFrameBufferEventPtr event) noexcept
 {
-  onVideoSampleReceived(sample);
+  onVideoFrame(event);
 }
 
 //------------------------------------------------------------------------------

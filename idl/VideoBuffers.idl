@@ -1,0 +1,187 @@
+/*
+
+ Copyright (c) 2017, Optical Tone Ltd.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ The views and conclusions contained in the software and documentation are those
+ of the authors and should not be interpreted as representing official policies,
+ either expressed or implied, of the FreeBSD Project.
+ 
+ */
+
+
+namespace org
+{
+  namespace webRtc
+  {
+    [special, disposable]
+    interface VideoData
+    {
+      [constructor, default, delete]
+      void VideoData();
+
+      [getter]
+      bool is8BitColorSpace;
+
+      [getter]
+      bool is16BitColorSpace;
+
+      /// <summary>
+      /// Gets or sets the video 8 bit color space data.
+      /// <summary>
+      [getter]
+      std::list<uint8> data8bit;
+
+      /// <summary>
+      /// Gets or sets the video 16 bit color space data.
+      /// <summary>
+      [getter]
+      std::list<uint16> data16bit;
+    };
+
+    [disposable]
+    interface VideoFrameBuffer
+    {
+      [constructor, default, delete]
+      void VideoFrameBuffer();
+
+      /// <summary>
+      /// Gets the video frame type.
+      /// </summary>
+      [getter]
+      VideoFrameBufferType type;
+
+      /// <summary>
+      /// Gets the width of the video frame.
+      /// <summary>
+      [getter]
+      int width;
+
+      /// <summary>
+      /// Gets the width of the video frame.
+      /// <summary>
+      [getter]
+      int height;
+
+      /// <summary>
+      /// Convert to a new (or return an existing) I420 frame buffer (if possible).
+      /// <summary>
+      VideoFramePlanarYuvBuffer toI420();
+
+      /// <summary>
+      /// Gets the YUV frame if the buffer type is YUV format.
+      /// <summary>
+      [getter]
+      VideoFramePlanarYuvBuffer yuvFrame;
+
+      /// <summary>
+      /// Gets the I420A frame if the buffer type is YUVA.
+      /// <summary>
+      [getter]
+      VideoFramePlanarYuvaBuffer yuvaFrame;
+
+      /// <summary>
+      /// Gets a native frame if the buffer type is native.
+      /// <summary>
+      [getter]
+      VideoFrameNativeBuffer nativeFrame;
+    };
+
+    interface VideoFramePlanarYuvBuffer : VideoFrameBuffer
+    {
+      [constructor, default, delete]
+      void VideoFramePlanarYuvBuffer();
+
+      /// <summary>
+      /// Gets the chroma width of the video frame.
+      /// <summary>
+      [getter]
+      int chromaWidth;
+
+      /// <summary>
+      /// Gets the chroma width of the video frame.
+      /// <summary>
+      [getter]
+      int chromaHeight;
+
+      /// <summary>
+      /// Gets the number of Y steps (in terms of VideoData) between
+      /// successive rows for the given plane.
+      /// <summary>
+      [getter]
+      int strideY;
+
+      /// <summary>
+      /// Gets the number of U steps (in terms of VideoData) between
+      /// successive rows for the given plane.
+      /// <summary>
+      [getter]
+      int strideU;
+
+      /// <summary>
+      /// Gets the number of V steps (in terms of VideoData) between
+      /// successive rows for the given plane.
+      /// <summary>
+      [getter]
+      int strideV;
+
+      [getter]
+      VideoData y;
+
+      [getter]
+      VideoData u;
+
+      [getter]
+      VideoData v;
+    };
+
+    interface VideoFramePlanarYuvaBuffer : VideoFramePlanarYuvBuffer
+    {
+      [constructor, default, delete]
+      void VideoFramePlanarYuvaBuffer();
+
+      /// <summary>
+      /// Gets the number of A steps (in terms of VideoData) between
+      /// successive rows for the given plane.
+      /// <summary>
+      [getter]
+      int strideA;
+
+      [getter]
+      VideoData a;
+    };
+
+    interface VideoFrameNativeBuffer : VideoFrameBuffer
+    {
+      [constructor, default, delete]
+      void VideoFrameNativeBuffer();
+
+      /// <summary>
+      /// Gets the native sample from the video frame.
+      /// <summary>
+      [getter]
+      MediaSample sample;
+
+    };
+  }
+}

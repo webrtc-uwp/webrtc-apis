@@ -34,6 +34,7 @@ namespace rtc
 
 namespace webrtc
 {
+  enum Band;
   enum class SdpSemantics;
   enum class SdpType;
   enum class RtpTransceiverDirection;
@@ -53,6 +54,8 @@ namespace webrtc
   struct RtpCapabilities;
   struct RtpParameters;
 
+  class AudioBuffer;
+  class AudioFrame;
   class RtpSource;
   class AudioTrackInterface;
   class VideoTrackInterface;
@@ -72,6 +75,16 @@ namespace webrtc
   class RTCError;
 
   class VideoFrame;
+
+  class VideoFrameBuffer;
+  class I420BufferInterface;
+  class I420ABufferInterface;
+  class I444BufferInterface;
+  class I010BufferInterface;
+  class NativeHandleBuffer;
+  class PlanarYuvBuffer;
+  class PlanarYuv8Buffer;
+  class PlanarYuv16BBuffer;
 
   class RTCStats;
   class RTCStatsReport;

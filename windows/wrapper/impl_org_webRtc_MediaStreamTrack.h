@@ -92,7 +92,10 @@ namespace wrapper {
             {
               auto outer = outer_.lock();
               if (!outer) return;
-              outer->onWebrtcObserverResolutionChanged(width, height);
+
+              queue_->postClosure([outer, width, height]() {
+                outer->onWebrtcObserverResolutionChanged(width, height);
+              });
             }
 
             void onMediaStreamSourceRotationChanged(
@@ -102,7 +105,9 @@ namespace wrapper {
             {
               auto outer = outer_.lock();
               if (!outer) return;
-              outer->onWebrtcObserverRotationChanged(rotation);
+              queue_->postClosure([outer, rotation]() {
+                outer->onWebrtcObserverRotationChanged(rotation);
+              });
             }
 
             void onMediaStreamSourceFrameRateChanged(
@@ -112,7 +117,9 @@ namespace wrapper {
             {
               auto outer = outer_.lock();
               if (!outer) return;
-              outer->onWebrtcObserverFrameRateChanged(frameRate);
+              queue_->postClosure([outer, frameRate]() {
+                outer->onWebrtcObserverFrameRateChanged(frameRate);
+              });
             }
 #endif // CPPWINRT_VERSION
 #endif //WINUWP
@@ -129,6 +136,9 @@ namespace wrapper {
           UseMediaElementPtr element_;
           UseMediaSourcePtr source_;
           webrtc::IMediaStreamSourceSubscriptionPtr subscription_;
+          std::atomic_bool hasObservers_;
+          std::atomic_bool hasVideoFrameObservers_;
+          zsLib::IMessageQueuePtr videoFrameProcessingQueue_;
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
@@ -157,7 +167,8 @@ namespace wrapper {
           wrapper::org::webRtc::MediaElementPtr get_element() noexcept override;
           void set_element(wrapper::org::webRtc::MediaElementPtr value) noexcept override;
 
-          virtual void wrapper_onObserverCountChanged(size_t count) noexcept override;
+          void wrapper_onObserverCountChanged(size_t count) noexcept override;
+          void wrapper_onObserveronVideoFrameCountChanged(size_t count) noexcept override;
 
           void notifySourceChanged(UseMediaSourcePtr source);
           void autoAttachSourceToElement();

@@ -383,10 +383,10 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  IFACEMETHODIMP VideoCaptureStreamSink::ProcessSample(IMFSample *pSample) {
-    if (pSample == nullptr) {
+  IFACEMETHODIMP VideoCaptureStreamSink::ProcessSample(IMFSample *pSample)
+  {
+    if (pSample == nullptr)
       return E_INVALIDARG;
-    }
 
     HRESULT hr = S_OK;
 
@@ -1008,7 +1008,8 @@ namespace webrtc
           break;
         }
 
-        _callback->OnSample(std::make_shared<MediaSampleEventArgs>(spSample));
+        _callback->OnSample(spSample);
+
         if (!fFlush) {
           fProcessingSample = true;
         }

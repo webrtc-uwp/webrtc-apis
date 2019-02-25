@@ -74,7 +74,7 @@ namespace winrt {
 
         };
 
-      } // namepsace implementation
+      } // namespace implementation
 
       namespace factory_implementation {
 

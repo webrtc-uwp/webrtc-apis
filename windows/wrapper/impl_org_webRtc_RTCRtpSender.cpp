@@ -98,10 +98,13 @@ void wrapper::impl::org::webRtc::RTCRtpSender::wrapper_dispose() noexcept
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::RTCRtpCapabilitiesPtr wrapper::org::webRtc::RTCRtpSender::getCapabilities(String kind) noexcept
+wrapper::org::webRtc::RTCRtpCapabilitiesPtr wrapper::org::webRtc::RTCRtpSender::getCapabilities(
+  wrapper::org::webRtc::WebRtcFactoryPtr factory,
+  String kind
+  ) noexcept
 {
 #pragma ZS_BUILD_NOTE("NOTE","Sender and receiver share same capabilities within WebRTC (for now)")
-  return wrapper::org::webRtc::RTCRtpReceiver::getCapabilities(kind);
+  return wrapper::org::webRtc::RTCRtpReceiver::getCapabilities(factory, kind);
 }
 
 //------------------------------------------------------------------------------

@@ -10,13 +10,15 @@
 #include <zsLib/IMessageQueueThread.h>
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "third_party/winuwp_h264/H264Decoder/H264Decoder.h"
+#include "third_party/winuwp_h264/native_handle_buffer.h"
 #include "media/base/videocommon.h"
 #include "libyuv/convert.h"
 #include "rtc_base/logging.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <winrt/Windows.Media.MediaProperties.h>
+
+#include <mfapi.h>
 
 //#include <mfapi.h>
 //#include <mfidl.h>
@@ -33,8 +35,8 @@ static bool isSampleIDR(IMFSample* sample)
 {
   ZS_ASSERT(nullptr != sample);
 
-  ComPtr<IMFMediaBuffer> pBuffer;
-  sample->GetBufferByIndex(0, &pBuffer);
+  winrt::com_ptr<IMFMediaBuffer> pBuffer;
+  sample->GetBufferByIndex(0, pBuffer.put());
   BYTE* pBytes{};
   DWORD maxLength{};
   DWORD curLength{};
@@ -209,14 +211,13 @@ void MediaStreamSource::notifyFrame(const webrtc::VideoFrame &frame) noexcept
       IMFSample* tmpSample = (IMFSample*)frameBuffer->native_handle();
       if (!tmpSample) return;
 
-      tmpSample->AddRef();
-      data.sample_.Attach(tmpSample);
+      data.sample_.copy_from(tmpSample);
 
       if (isSampleIDR(tmpSample)) {
         data.isIDR_ = true;
 
-        ComPtr<IMFAttributes> sampleAttributes;
-        data.sample_.As(&sampleAttributes);
+        winrt::com_ptr<IMFAttributes> sampleAttributes;
+        sampleAttributes = data.sample_.as<IMFAttributes>();
 
         // sampleAttributes->SetUINT32(MFSampleExtension_Discontinuity, TRUE);
         sampleAttributes->SetUINT32(MFSampleExtension_CleanPoint, TRUE);
@@ -340,7 +341,7 @@ bool MediaStreamSource::respondToRequest(const winrt::Windows::Media::Core::Medi
   if (!imfRequest) return false;
   if (!data->sample_) return false;
 
-  auto result = imfRequest->SetSample(data->sample_.Get());
+  auto result = imfRequest->SetSample(data->sample_.get());
   ZS_ASSERT(SUCCEEDED(result));
 
   return SUCCEEDED(result);
@@ -374,15 +375,15 @@ MediaStreamSource::SampleDataUniPtr MediaStreamSource::dequeue() noexcept
     switch (frameType_) {
       case VideoFrameType::VideoFrameType_I420:
       {
-        // Only make full I420 frame when actually dequeing to prevent
+        // Only make full I420 frame when actually dequeuing to prevent
         // unneeded conversions where some I420 frames may end up being dropped.
         if (!makeI420Sample(sample)) {
           result.reset();
           return result;
         }
 
-        ComPtr<IMFAttributes> sampleAttributes;
-        sample.sample_.As(&sampleAttributes);
+        winrt::com_ptr<IMFAttributes> sampleAttributes;
+        sampleAttributes = sample.sample_.as< IMFAttributes>();
         if (sampleAttributes) {
           sampleAttributes->SetUINT32(MFSampleExtension_CleanPoint, TRUE);
           sampleAttributes->SetUINT32(MFSampleExtension_Discontinuity, TRUE);
@@ -440,29 +441,29 @@ bool MediaStreamSource::makeI420Sample(SampleData &sample)
 {
   ZS_ASSERT(sample.frame_);
 
-  ComPtr<IMFSample> &spSample = sample.sample_;
-  HRESULT hr = MFCreateSample(spSample.GetAddressOf());
+  auto &spSample = sample.sample_;
+  HRESULT hr = MFCreateSample(spSample.put());
   if (FAILED(hr)) {
     return false;
   }
 
-  ComPtr<IMFMediaBuffer> mediaBuffer;
+  winrt::com_ptr<IMFMediaBuffer> mediaBuffer;
   hr = MFCreate2DMediaBuffer(
     (DWORD)sample.frame_->width(),
     (DWORD)sample.frame_->height(),
     cricket::FOURCC_NV12,
     FALSE,
-    mediaBuffer.GetAddressOf()
+    mediaBuffer.put()
   );
 
   if (FAILED(hr)) {
     return false;
   }
 
-  spSample->AddBuffer(mediaBuffer.Get());
+  spSample->AddBuffer(mediaBuffer.get());
 
-  ComPtr<IMF2DBuffer2> imageBuffer;
-  if (FAILED(mediaBuffer.As(&imageBuffer))) {
+  winrt::com_ptr<IMF2DBuffer2> imageBuffer = mediaBuffer.as<IMF2DBuffer2>();
+  if (!imageBuffer) {
     return false;
   }
 

@@ -1,5 +1,6 @@
 
 #ifndef WRAPPER_USE_GENERATED_ORG_WEBRTC_MEDIASAMPLE
+
 #pragma once
 
 #include <wrapper/generated/types.h>
@@ -12,11 +13,7 @@ namespace wrapper {
       {
         static MediaSamplePtr wrapper_create() noexcept;
         virtual ~MediaSample() noexcept {}
-
-
-        virtual void wrapper_init_org_webRtc_MediaSample(AnyPtr sample) noexcept { ZS_MAYBE_USED(sample); }
-
-        virtual AnyPtr get_sample() noexcept = 0;
+        virtual void wrapper_dispose() noexcept = 0;
       };
 
     } // webRtc

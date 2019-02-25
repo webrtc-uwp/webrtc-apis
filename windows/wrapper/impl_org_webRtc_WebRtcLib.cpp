@@ -24,29 +24,23 @@
 #include "impl_org_webRtc_WebRtcLibConfiguration.h"
 #include "impl_org_webRtc_EventQueue.h"
 #include "impl_org_webRtc_helpers.h"
+
+#include "impl_org_webRtc.h"
 #include "impl_webrtc_IMediaStreamSource.h"
 #include "impl_webrtc_IVideoCapturer.h"
 #include "impl_webrtc_IVideoCaptureMediaSink.h"
 #include "impl_webrtc_IAudioDeviceWasapi.h"
 
+#include <zsLib/IMessageQueueThread.h>
+
 #include "impl_org_webRtc_pre_include.h"
-#include "api/audio_codecs/builtin_audio_decoder_factory.h"
-#include "api/audio_codecs/builtin_audio_encoder_factory.h"
-#include "api/peerconnectioninterface.h"
-#include "api/peerconnectionfactoryproxy.h"
-#include "api/test/fakeconstraints.h"
 #include "rtc_base/event_tracer.h"
-#include "rtc_base/ssladapter.h"
 #include "rtc_base/win32socketinit.h"
-#include "third_party/winuwp_h264/winuwp_h264_factory.h"
-#include "media/engine/webrtcvideocapturerfactory.h"
-#include "pc/peerconnectionfactory.h"
-#include "modules/audio_device/include/audio_device.h"
+#include "rtc_base/ssladapter.h"
 #include "impl_org_webRtc_post_include.h"
 
-#include "impl_org_webRtc.h"
+#include <zsLib/eventing/IHelper.h>
 
-#include <zsLib/IMessageQueueThread.h>
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -66,9 +60,15 @@ using ::std::list;
 using ::std::set;
 using ::std::map;
 
-#include <zsLib/eventing/IHelper.h>
+//namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
 
-namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
+// borrow definitions from class
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib::WrapperImplType, WrapperImplType);
+ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
+
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::EventQueue, UseEventQueue);
+
+ZS_DECLARE_TYPEDEF_PTR(zsLib::eventing::IHelper, UseHelper);
 
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
@@ -82,31 +82,6 @@ ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate, webrtc::IAudioDeviceWasapiSubscription)
 #endif  // CPPWINRT_VERSION
 #endif //WINUWP
-
-// borrow definitions from class
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib::WrapperImplType, WrapperImplType);
-ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
-
-typedef WrapperImplType::PeerConnectionFactoryInterfaceScopedPtr PeerConnectionFactoryInterfaceScopedPtr;
-typedef WrapperImplType::PeerConnectionFactoryScopedPtr PeerConnectionFactoryScopedPtr;
-
-ZS_DECLARE_TYPEDEF_PTR(::webrtc::PeerConnectionFactory, NativePeerConnectionFactory)
-ZS_DECLARE_TYPEDEF_PTR(::webrtc::PeerConnectionFactoryInterface, NativePeerConnectionFactoryInterface)
-
-ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseVideoDeviceCaptureFacrtory, UseVideoDeviceCaptureFacrtory);
-
-ZS_DECLARE_TYPEDEF_PTR(::cricket::WebRtcVideoDeviceCapturerFactory, UseWebrtcVideoDeviceCaptureFacrtory);
-
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::EventQueue, UseEventQueue);
-
-ZS_DECLARE_TYPEDEF_PTR(zsLib::eventing::IHelper, UseHelper);
-
-//------------------------------------------------------------------------------
-static NativePeerConnectionFactoryInterface *unproxy(NativePeerConnectionFactoryInterface *native)
-{
-  if (!native) return native;
-  return WRAPPER_DEPROXIFY_CLASS(::webrtc::PeerConnectionFactory, ::webrtc::PeerConnectionFactory, native);
-}
 
 //------------------------------------------------------------------------------
 WrapperImplType::WebRtcLib() noexcept
@@ -209,9 +184,9 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
   if (setupCalledOnce_.test_and_set()) return;
 
   wrapper::org::webRtc::EventQueuePtr queue = configuration ? configuration->queue : nullptr;
-  bool audioCapturingEnabled = configuration? configuration->audioCapturingEnabled : true;
-  bool audioRenderingEnabled = configuration ? configuration->audioRenderingEnabled : true;
-  wrapper::org::webRtc::EventQueuePtr frameProcessingQueue = configuration ? configuration->frameProcessingQueue : nullptr;
+  wrapper::org::webRtc::EventQueuePtr audioCaptureFrameProcessingQueue = configuration ? configuration->audioCaptureFrameProcessingQueue : nullptr;
+  wrapper::org::webRtc::EventQueuePtr audioRenderFrameProcessingQueue = configuration ? configuration->audioRenderFrameProcessingQueue : nullptr;
+  wrapper::org::webRtc::EventQueuePtr videoFrameProcessingQueue = configuration ? configuration->videoFrameProcessingQueue : nullptr;
 
 #ifdef WINUWP
 
@@ -291,52 +266,21 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
   rtc::EnsureWinsockInit();
   rtc::InitializeSSL();
 
-  // scope: setup frame processing queue
+  // scope: setup audio frame processing queue
   {
-     auto nativeQueue = EventQueue::toNative(frameProcessingQueue);
+     auto nativeCaptureQueue = EventQueue::toNative(audioCaptureFrameProcessingQueue);
+     auto nativeRenderQueue = EventQueue::toNative(audioRenderFrameProcessingQueue);
      // use the native queue if available otherwise use delegate queue
-     frameProcessingQueue_ = nativeQueue ? nativeQueue : actual_delegateQueue();
+     audioCaptureFrameProcessingQueue_ = nativeCaptureQueue ? nativeCaptureQueue : actual_delegateQueue();
+     audioRenderFrameProcessingQueue_ = nativeRenderQueue ? nativeRenderQueue : actual_delegateQueue();
   }
 
-  networkThread = rtc::Thread::CreateWithSocketServer();
-  networkThread->Start();
-
-  workerThread = rtc::Thread::Create();
-  workerThread->Start();
-
-  signalingThread = rtc::Thread::Create();
-  signalingThread->Start();
-
-
-  auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
-  auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
-
-  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
-  audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
-    RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
-    webrtc::IAudioDeviceWasapi::CreationProperties props;
-    props.id_ = "";
-    props.playoutEnabled_ = audioCapturingEnabled;
-    props.recordingEnabled_ = audioRenderingEnabled;
-    return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
-  });
-
-  peerConnectionFactory_ = ::webrtc::CreatePeerConnectionFactory(
-    networkThread.get(),
-    workerThread.get(),
-    signalingThread.get(),
-    audioDeviceModule.release(),
-    ::webrtc::CreateBuiltinAudioEncoderFactory(),
-    ::webrtc::CreateBuiltinAudioDecoderFactory(),
-    encoderFactory,
-    decoderFactory
-  );
-  
-#ifdef WINUWP
-  videoDeviceCaptureFactory_ = make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
-#else
-#error PLATFORM REQUIRES FACTORY
-#endif //WEBRTC
+  // scope: setup audio frame processing queue
+  {
+    auto nativeQueue = EventQueue::toNative(videoFrameProcessingQueue);
+    // use the native queue if available otherwise use delegate queue
+    videoFrameProcessingQueue_ = nativeQueue ? nativeQueue : actual_delegateQueue();
+  }
 
   rtc::tracing::SetupInternalTracer();
 
@@ -466,41 +410,30 @@ bool WrapperImplType::actual_checkSetup(bool assert) noexcept
 }
 
 //------------------------------------------------------------------------------
-PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::actual_peerConnectionFactory() noexcept
-{
-  if (!actual_checkSetup()) return PeerConnectionFactoryInterfaceScopedPtr();
-
-  return peerConnectionFactory_;
-}
-
-//------------------------------------------------------------------------------
-PeerConnectionFactoryScopedPtr WrapperImplType::actual_realPeerConnectionFactory() noexcept
-{
-  if (!actual_checkSetup()) return PeerConnectionFactoryScopedPtr();
-
-  auto realInterface = unproxy(peerConnectionFactory_);
-  return dynamic_cast<NativePeerConnectionFactory *>(realInterface);
-}
-
-//------------------------------------------------------------------------------
-UseVideoDeviceCaptureFacrtoryPtr WrapperImplType::actual_videoDeviceCaptureFactory() noexcept
-{
-  if (!actual_checkSetup()) return UseVideoDeviceCaptureFacrtoryPtr();
-
-  return videoDeviceCaptureFactory_;
-}
-
-//------------------------------------------------------------------------------
 zsLib::IMessageQueuePtr WrapperImplType::actual_delegateQueue() noexcept
 {
   return zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue();
 }
 
 //------------------------------------------------------------------------------
-zsLib::IMessageQueuePtr WrapperImplType::actual_frameProcessingQueue() noexcept
+zsLib::IMessageQueuePtr WrapperImplType::actual_audioCaptureFrameProcessingQueue() noexcept
 {
   ::zsLib::AutoLock lock(lock_);
-  return frameProcessingQueue_;
+  return audioCaptureFrameProcessingQueue_;
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::actual_audioRenderFrameProcessingQueue() noexcept
+{
+  ::zsLib::AutoLock lock(lock_);
+  return audioRenderFrameProcessingQueue_;
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::actual_videoFrameProcessingQueue() noexcept
+{
+  ::zsLib::AutoLock lock(lock_);
+  return videoFrameProcessingQueue_;
 }
 
 //------------------------------------------------------------------------------
@@ -515,16 +448,6 @@ void WrapperImplType::notifySingletonCleanup() noexcept
 #pragma ZS_BUILD_NOTE("TODO","(mosa) shutdown webrtc engine here")
 
   rtc::tracing::ShutdownInternalTracer();
-
-  // reset the factory (cannot be used anymore)...
-  peerConnectionFactory_ = PeerConnectionFactoryInterfaceScopedPtr();
-  videoDeviceCaptureFactory_.reset();
-
-#pragma ZS_BUILD_NOTE("TODO","(mosa) shutdown threads need something more?")
-
-  networkThread.reset();
-  workerThread.reset();
-  signalingThread.reset();
 
   rtc::CleanupSSL();
 }
@@ -561,37 +484,25 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
       bool actual_checkSetup(bool) noexcept final { return false; }
 
       //-----------------------------------------------------------------------
-      PeerConnectionFactoryInterfaceScopedPtr actual_peerConnectionFactory() noexcept final
-      {
-        ZS_ASSERT_FAIL("why is the factory needed during shutdown?");
-        // no way around this one with a bogus factory...
-        return PeerConnectionFactoryInterfaceScopedPtr();
-      }
-
-      //-----------------------------------------------------------------------
-      PeerConnectionFactoryScopedPtr actual_realPeerConnectionFactory() noexcept final
-      {
-        ZS_ASSERT_FAIL("why is the factory needed during shutdown?");
-        // no way around this one with a bogus factory...
-        return PeerConnectionFactoryScopedPtr();
-      }
-
-      //-----------------------------------------------------------------------
-      UseVideoDeviceCaptureFacrtoryPtr actual_videoDeviceCaptureFactory() noexcept final
-      {
-        ZS_ASSERT_FAIL("why is the factory needed during shutdown?");
-        // no way around this one with a bogus factory...
-        return UseVideoDeviceCaptureFacrtoryPtr();
-      }
-
-      //-----------------------------------------------------------------------
       zsLib::IMessageQueuePtr actual_delegateQueue() noexcept final
       {
         return zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue();
       }
 
       //-----------------------------------------------------------------------
-      zsLib::IMessageQueuePtr actual_frameProcessingQueue() noexcept final
+      zsLib::IMessageQueuePtr actual_audioCaptureFrameProcessingQueue() noexcept final
+      {
+        return actual_delegateQueue();
+      }
+
+      //-----------------------------------------------------------------------
+      zsLib::IMessageQueuePtr actual_audioRenderFrameProcessingQueue() noexcept final
+      {
+        return actual_delegateQueue();
+      }
+
+      //-----------------------------------------------------------------------
+      zsLib::IMessageQueuePtr actual_videoFrameProcessingQueue() noexcept final
       {
         return actual_delegateQueue();
       }
@@ -611,27 +522,6 @@ bool WrapperImplType::checkSetup(bool assert) noexcept
 }
 
 //------------------------------------------------------------------------------
-PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::peerConnectionFactory() noexcept
-{
-  auto singleton = WrapperImplType::singleton();
-  return singleton->actual_peerConnectionFactory();
-}
-
-//------------------------------------------------------------------------------
-PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noexcept
-{
-  auto singleton = WrapperImplType::singleton();
-  return singleton->actual_realPeerConnectionFactory();
-}
-
-//------------------------------------------------------------------------------
-UseVideoDeviceCaptureFacrtoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
-{
-  auto singleton = WrapperImplType::singleton();
-  return singleton->actual_videoDeviceCaptureFactory();
-}
-
-//------------------------------------------------------------------------------
 zsLib::IMessageQueuePtr WrapperImplType::delegateQueue() noexcept
 {
   auto singleton = WrapperImplType::singleton();
@@ -639,8 +529,22 @@ zsLib::IMessageQueuePtr WrapperImplType::delegateQueue() noexcept
 }
 
 //------------------------------------------------------------------------------
-zsLib::IMessageQueuePtr WrapperImplType::frameProcessingQueue() noexcept
+zsLib::IMessageQueuePtr WrapperImplType::audioCaptureFrameProcessingQueue() noexcept
 {
   auto singleton = WrapperImplType::singleton();
-  return singleton->actual_frameProcessingQueue();
+  return singleton->actual_audioCaptureFrameProcessingQueue();
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::audioRenderFrameProcessingQueue() noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  return singleton->actual_audioRenderFrameProcessingQueue();
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::videoFrameProcessingQueue() noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  return singleton->actual_videoFrameProcessingQueue();
 }

@@ -35,6 +35,22 @@ namespace org
   namespace webRtc
   {
     /// <summary>
+    /// The event is fired when an audio buffer is ready for processing.
+    /// <summary>
+    [disposable]
+    interface VideoFrameBufferEvent
+    {
+      [constructor, delete, default]
+      void VideoFrameBufferEvent();
+
+      /// <summary>
+      /// Gets the video buffer for further processing.
+      /// <summary>
+      [getter]
+      VideoFrameBuffer buffer;
+    };
+
+    /// <summary>
     /// A MediaStreamTrack object represents a media source in the User Agent.
     /// An example source is a device connected to the User Agent. Other
     /// specifications may define sources for MediaStreamTrack that override
@@ -128,6 +144,12 @@ namespace org
       /// </summary>
       [event]
       void onFrameRateChanged(float frameRate);
+
+      /// <summary>
+      /// Fires events when an video buffer is available.
+      /// </summary>
+      [event]
+      void onVideoFrame(VideoFrameBufferEvent buffer);
 
     };
   }
