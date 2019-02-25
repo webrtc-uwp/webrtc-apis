@@ -208,10 +208,10 @@ namespace org
       VideoCaptureState state;
 	  
       /// <summary>
-      /// Event indicates new captured sample available.
+      /// Event fires when a new video frame buffer is available.
       /// </summary>
       [event]
-      void onVideoSampleReceived(MediaSample sample);
+      void onVideoFrame(VideoFrameBufferEvent event);
 	  
     };
   }

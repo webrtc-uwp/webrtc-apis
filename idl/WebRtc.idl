@@ -94,7 +94,13 @@ namespace org
     interface RTCCertificate;
     interface RTCKeyParams;
     interface VideoCapturer;
+    interface VideoData;
     interface WebRtcFactory;
+    interface VideoFrameBuffer;
+    interface VideoFrameBufferEvent;
+    interface VideoFramePlanarYuvBuffer;
+    interface VideoFramePlanarYuvaBuffer;
+    interface VideoFrameNativeBuffer;
 
     typedef zs::PromiseRejectionReason<RTCError> PromiseWithRejectionRTCError;
     typedef zs::PromiseWith<RTCSessionDescription> PromiseWithDescription;
@@ -144,7 +150,6 @@ namespace org
     /// <summary>
     /// A message queue for receiving delegate events.
     /// </summary>
-    [special]
     interface EventQueue
     {
       /// <summary>
@@ -152,12 +157,6 @@ namespace org
       /// </summary>
       [constructor, delete]
       void EventQueue();
-
-      /// <summary>
-      /// Constructs an event queue object from a native queue type.
-      /// </summary>
-      [constructor, default, altname(EventQueueWithNativeQueue)]
-      void EventQueue(Any queue);
 
       /// <summary>
       /// Gets or creates an event queue by queue name. If the queue is not
@@ -181,12 +180,6 @@ namespace org
       /// </summary>
       [static]
       EventQueue getDefaultForUi();
-
-      /// <summary>
-      /// Gets a native queue from an event queue object.
-      /// </summary>
-      [getter]
-      Any queue;
     };
 
     [special, static, platform(webhidden)]
@@ -214,10 +207,16 @@ namespace org
       EventQueue queue;
 
       /// <summary>
-      /// Gets or sets the default queue for processing audio frame events.
-      /// If not specified then the GUI queue is used.
+      /// Gets or sets the default queue for processing audio capture frame
+      /// events. If not specified then the GUI queue is used.
       /// </summary>
-      EventQueue audioFrameProcessingQueue;
+      EventQueue audioCaptureFrameProcessingQueue;
+
+      /// <summary>
+      /// Gets or sets the default queue for processing audio render frame
+      /// events. If not specified then the GUI queue is used.
+      /// </summary>
+      EventQueue audioRenderFrameProcessingQueue;
 
       /// <summary>
       /// Gets or sets the default queue for processing video frame

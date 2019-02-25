@@ -46,5 +46,3 @@ wrapper::impl::org::webRtc::WebRtcLibConfiguration::~WebRtcLibConfiguration() no
 void wrapper::impl::org::webRtc::WebRtcLibConfiguration::wrapper_init_org_webRtc_WebRtcLibConfiguration() noexcept
 {
 }
-
-

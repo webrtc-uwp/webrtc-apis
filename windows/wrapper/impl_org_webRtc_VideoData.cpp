@@ -1,5 +1,10 @@
 
-#include "impl_org_webRtc_AudioData.h"
+#include "impl_org_webRtc_VideoData.h"
+
+#include "impl_org_webRtc_pre_include.h"
+#include "api/video/video_frame.h"
+#include "impl_org_webRtc_post_include.h"
+
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -20,119 +25,119 @@ using ::std::set;
 using ::std::map;
 
 // borrow definitions from class
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioData::WrapperImplType, WrapperImplType);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoData::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::AudioData::AudioData() noexcept
+wrapper::impl::org::webRtc::VideoData::VideoData() noexcept
 {
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::AudioDataPtr wrapper::org::webRtc::AudioData::wrapper_create() noexcept
+wrapper::org::webRtc::VideoDataPtr wrapper::org::webRtc::VideoData::wrapper_create() noexcept
 {
-  auto pThis = make_shared<wrapper::impl::org::webRtc::AudioData>();
+  auto pThis = make_shared<wrapper::impl::org::webRtc::VideoData>();
   pThis->thisWeak_ = pThis;
   return pThis;
 }
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::AudioData::~AudioData() noexcept
+wrapper::impl::org::webRtc::VideoData::~VideoData() noexcept
 {
   thisWeak_.reset();
   wrapper_dispose();
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::AudioData::wrapper_dispose() noexcept
+void wrapper::impl::org::webRtc::VideoData::wrapper_dispose() noexcept
 {
-  zsLib::AutoLock lock(lock_);
-  mutableData_ = {};
-  data_ = {};
-  size_ = {};
-  buffer_.clear();
+  native_ = NativeTypeScopedRefPtr();
+  buffer8bit_ = nullptr;
+  buffer16bit_ = nullptr;
+  size_ = 0;
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::AudioData::wrapper_init_org_webRtc_AudioData() noexcept
+bool wrapper::impl::org::webRtc::VideoData::get_is8BitColorSpace() noexcept
 {
-  wrapper_dispose();
+  return nullptr != buffer8bit_;
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::AudioData::wrapper_init_org_webRtc_AudioData(size_t size) noexcept
+bool wrapper::impl::org::webRtc::VideoData::get_is16BitColorSpace() noexcept
 {
-  if (size < 1) {
-    wrapper_dispose();
-    return;
-  }
-
-  zsLib::AutoLock lock(lock_);
-  buffer_.resize(size);
-  mutableData_ = &(buffer_.front());
-  data_ = mutableData_;
-  size_ = size;
+  return nullptr != buffer16bit_;
 }
 
 //------------------------------------------------------------------------------
-bool wrapper::impl::org::webRtc::AudioData::readOnly() noexcept
+const uint8_t * wrapper::impl::org::webRtc::VideoData::get_data8bit() noexcept
 {
-  zsLib::AutoLock lock(lock_);
-  return ((!mutableData_) && (data_));
+  return buffer8bit_;
 }
 
 //------------------------------------------------------------------------------
-const int16_t *wrapper::impl::org::webRtc::AudioData::data() noexcept
+const uint16_t * wrapper::impl::org::webRtc::VideoData::get_data16bit() noexcept
 {
-  zsLib::AutoLock lock(lock_);
-  return data_;
+  return buffer16bit_;
 }
 
-//------------------------------------------------------------------------------
-int16_t *wrapper::impl::org::webRtc::AudioData::mutableData() noexcept
-{
-  zsLib::AutoLock lock(lock_);
-  return mutableData_;
-}
 
 //------------------------------------------------------------------------------
-size_t wrapper::impl::org::webRtc::AudioData::size() noexcept
+size_t wrapper::impl::org::webRtc::VideoData::get_size() noexcept
 {
-  zsLib::AutoLock lock(lock_);
   return size_;
 }
 
 //------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::toWrapper(
-  int16_t *value,
+  NativeType *native,
+  const uint8_t *buffer,
   size_t size) noexcept
 {
+  if (!native)
+    return {};
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->mutableData_ = value;
-  result->data_ = value;
+  result->native_ = NativeTypeScopedRefPtr(native);
+  result->buffer8bit_ = buffer;
   result->size_ = size;
   return result;
 }
 
 //------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::toWrapper(
-  const int16_t *value,
+  NativeTypeScopedRefPtr native,
+  const uint8_t *buffer,
   size_t size) noexcept
 {
+  if (!native)
+    return {};
+  return toWrapper(native.get(), buffer, size);
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  NativeType *native,
+  const uint16_t *buffer,
+  size_t size) noexcept
+{
+  if (!native)
+    return {};
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->data_ = value;
+  result->native_ = NativeTypeScopedRefPtr(native);
+  result->buffer16bit_ = buffer;
   result->size_ = size;
   return result;
 }
 
 //------------------------------------------------------------------------------
-WrapperImplTypePtr WrapperImplType::toWrapper(WrapperTypePtr wrapper) noexcept
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  NativeTypeScopedRefPtr native,
+  const uint16_t *buffer,
+  size_t size) noexcept
 {
-  if (!wrapper)
+  if (!native)
     return {};
-
-  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
-  return converted;
+  return toWrapper(native.get(), buffer, size);
 }

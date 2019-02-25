@@ -27,22 +27,9 @@ namespace webrtc
 {
   class VideoCaptureMediaSink;
 
-  class MediaSampleEventArgs {
-  public:
-    MediaSampleEventArgs(winrt::com_ptr<IMFSample> spMediaSample) :
-      _spMediaSample(spMediaSample) { }
-
-    winrt::com_ptr<IMFSample> GetMediaSample() {
-      return _spMediaSample;
-    }
-
-  private:
-    winrt::com_ptr<IMFSample> _spMediaSample;
-  };
-
   class ISinkCallback {
   public:
-    virtual void OnSample(std::shared_ptr<MediaSampleEventArgs> args) = 0;
+    virtual void OnSample(winrt::com_ptr<IMFSample> &sample) = 0;
     virtual void OnShutdown() = 0;
   };
 

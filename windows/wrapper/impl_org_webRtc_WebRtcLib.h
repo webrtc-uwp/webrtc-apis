@@ -36,7 +36,8 @@ namespace wrapper {
           std::atomic_bool isTracing_ {};
           zsLib::Lock lock_;
           ::zsLib::Milliseconds ntpServerTime_;
-          ::zsLib::IMessageQueuePtr audioFrameProcessingQueue_;
+          ::zsLib::IMessageQueuePtr audioCaptureFrameProcessingQueue_;
+          ::zsLib::IMessageQueuePtr audioRenderFrameProcessingQueue_;
           ::zsLib::IMessageQueuePtr videoFrameProcessingQueue_;
 
           // constructor
@@ -60,7 +61,8 @@ namespace wrapper {
           // addition methods needed
           virtual bool actual_checkSetup(bool assert = true) noexcept;
           virtual zsLib::IMessageQueuePtr actual_delegateQueue() noexcept;
-          virtual zsLib::IMessageQueuePtr actual_audioFrameProcessingQueue() noexcept;
+          virtual zsLib::IMessageQueuePtr actual_audioCaptureFrameProcessingQueue() noexcept;
+          virtual zsLib::IMessageQueuePtr actual_audioRenderFrameProcessingQueue() noexcept;
           virtual zsLib::IMessageQueuePtr actual_videoFrameProcessingQueue() noexcept;
 
           //-------------------------------------------------------------------
@@ -75,7 +77,8 @@ namespace wrapper {
           // addition methods needed
           static bool checkSetup(bool assert = true) noexcept;
           static zsLib::IMessageQueuePtr delegateQueue() noexcept;
-          static zsLib::IMessageQueuePtr audioFrameProcessingQueue() noexcept;
+          static zsLib::IMessageQueuePtr audioCaptureFrameProcessingQueue() noexcept;
+          static zsLib::IMessageQueuePtr audioRenderFrameProcessingQueue() noexcept;
           static zsLib::IMessageQueuePtr videoFrameProcessingQueue() noexcept;
         };
 

@@ -84,7 +84,7 @@ wrapper::org::webRtc::AudioDataPtr wrapper::impl::org::webRtc::AudioBuffer::chan
   ZS_ASSERT(native_);
   if (!native_)
     return {};
-  return UseAudioData::toWrapper(native_->channels()[channel], native_->num_channels());
+  return UseAudioData::toWrapper(native_->channels()[channel], native_->num_frames());
 }
 
 //------------------------------------------------------------------------------

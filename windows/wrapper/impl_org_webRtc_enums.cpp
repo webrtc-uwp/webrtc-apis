@@ -1364,3 +1364,18 @@ wrapper::org::webRtc::RuntimeSetting UseEnum::toWrapper(::webrtc::AudioProcessin
   ZS_ASSERT_FAIL("unknown type");
   return ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified;
 }
+
+//-----------------------------------------------------------------------------
+wrapper::org::webRtc::VideoFrameBufferType UseEnum::toWrapper(::webrtc::VideoFrameBuffer::Type value) noexcept
+{
+  switch (value)
+  {
+    case ::webrtc::VideoFrameBuffer::Type::kNative:   return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+    case ::webrtc::VideoFrameBuffer::Type::kI420:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I420;
+    case ::webrtc::VideoFrameBuffer::Type::kI420A:    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I420A;
+    case ::webrtc::VideoFrameBuffer::Type::kI444:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I444;
+    case ::webrtc::VideoFrameBuffer::Type::kI010:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I010;
+  }
+  ZS_ASSERT_FAIL("unknown type");
+  return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+}

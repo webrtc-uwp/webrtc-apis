@@ -80,7 +80,8 @@ namespace webrtc
 
   private:
     // Overrides from CaptureDeviceListener
-    virtual void OnIncomingFrame(uint8_t* video_frame,
+    virtual void OnIncomingFrame(
+      uint8_t* video_frame,
       size_t video_frame_length,
       const cricket::VideoFormat& frame_info,
       winrt::com_ptr<IMFSample> spMediaSample) override;
@@ -91,7 +92,10 @@ namespace webrtc
     virtual void ApplyDisplayOrientation(
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
 
-    void forwardToDelegates(const winrt::com_ptr<IMFSample> &spMediaSample);
+    void forwardToDelegates(
+      const cricket::VideoFormat& frameInfo,
+      const winrt::com_ptr<IMFSample> &spMediaSample,
+      rtc::scoped_refptr<I420BufferInterface> i420Frame);
 
   private:
     mutable zsLib::RecursiveLock lock_;
@@ -111,7 +115,6 @@ namespace webrtc
     std::shared_ptr<CaptureDevice> device_;
     winrt::Windows::Devices::Enumeration::Panel camera_location_;
     std::shared_ptr<DisplayOrientation> display_orientation_;
-    cricket::VideoFormat last_frame_info_;
     winrt::Windows::Media::MediaProperties::IVideoEncodingProperties
       video_encoding_properties_;
     winrt::Windows::Media::MediaProperties::MediaEncodingProfile

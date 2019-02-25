@@ -23,6 +23,8 @@ namespace wrapper {
 
           AudioData() noexcept;
           virtual ~AudioData() noexcept;
+          void wrapper_dispose() noexcept override;
+
 
           // methods AudioData
           void wrapper_init_org_webRtc_AudioData() noexcept override;

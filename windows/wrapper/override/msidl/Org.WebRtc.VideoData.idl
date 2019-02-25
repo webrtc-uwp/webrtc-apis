@@ -1,0 +1,46 @@
+//import "windows.foundation.idl";
+import "forwards.idl";
+import "output.idl";
+
+namespace Org
+{
+    namespace WebRtc
+    {
+
+
+        [version(1.0)]
+        [uuid(40919ebf-ab59-7e08-291c-2ba0f6d142c4)]
+        interface IVideoData : IInspectable
+        {
+
+            Boolean Is8BitColorSpace { get; };
+
+            Boolean Is16BitColorSpace { get; };
+
+            /// <summary>
+            /// Gets or sets the video 8 bit color space data. <summary>
+            /// </summary>
+            /// </summary>
+            Windows.Foundation.Collections.IVectorView< UInt8 > Data8bit { get; };
+
+            /// <summary>
+            /// Gets or sets the video 16 bit color space data. <summary>
+            /// </summary>
+            /// </summary>
+            Windows.Foundation.Collections.IVectorView< UInt16 > Data16bit { get; };
+        };
+
+        runtimeclass VideoData : [default] IVideoData
+        {
+
+            /// <summary>
+            /// Cast from Org.WebRtc.IVideoData to Org.WebRtc.VideoData
+            /// </summary>
+            [default_overload]
+            [method_name("CastFromIVideoData")]
+            static Org.WebRtc.VideoData Cast(Org.WebRtc.IVideoData source);
+        };
+
+    } // namespace WebRtc
+} // namespace Org
+

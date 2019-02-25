@@ -72,9 +72,13 @@ namespace winrt {
           /// pixels in the image.
           /// </summary>
           Windows::Foundation::Collections::IVectorView< float > GetCameraProjectionTransform();
+          // Windows.Foundation.IClosable
+          void Close();
+
+
         };
 
-      } // namepsace implementation
+      } // namespace implementation
 
       namespace factory_implementation {
 

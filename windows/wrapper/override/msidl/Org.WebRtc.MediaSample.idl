@@ -13,28 +13,28 @@ namespace Org
         /// media sample.
         /// </summary>
         [version(1.0)]
-        [uuid(874bd3d1-9a59-41cf-b1f9-d4018e84e64c)]
+        [uuid(893fbdcc-5e3b-454c-3b60-1bbc026302cd)]
         interface IMediaSample : IInspectable
         {
 
-          /// <summary>
-          /// Returns camera view transform which maps from the coordinate
-          /// system to the camera.
-          /// </summary>
-          Windows.Foundation.Collections.IVectorView< Single > GetCameraViewTransform();
+            /// <summary>
+            /// Returns camera view transform which maps from the coordinate
+            /// system to the camera.
+            /// </summary>
+            Windows.Foundation.Collections.IVectorView< Single > GetCameraViewTransform();
 
-          /// <summary>
-          /// Returns camera projection transform which maps from the camera
-          /// to pixels in the image.
-          /// </summary>
-          Windows.Foundation.Collections.IVectorView< Single > GetCameraProjectionTransform();
-      };
+            /// <summary>
+            /// Returns camera projection transform which maps from the camera
+            /// to pixels in the image.
+            /// </summary>
+            Windows.Foundation.Collections.IVectorView< Single > GetCameraProjectionTransform();
+        };
 
         /// <summary>
         /// MediaSample represents an object holder for a platform specific
         /// media sample.
         /// </summary>
-        runtimeclass MediaSample : [default] IMediaSample
+        runtimeclass MediaSample : [default] IMediaSample, Windows.Foundation.IClosable
         {
 
             /// <summary>

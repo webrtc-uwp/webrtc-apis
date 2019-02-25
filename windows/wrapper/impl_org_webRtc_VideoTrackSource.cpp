@@ -116,10 +116,14 @@ wrapper::org::webRtc::VideoTrackSourcePtr wrapper::org::webRtc::VideoTrackSource
   auto convertedCapture = UseVideoCapturer::toNative(options ? options->capturer : nullptr);
   auto convertedConstraints = UseMediaConstraints::toNative(options ? options->constraints : nullptr);
 
-  if (!convertedConstraints)
-    return WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture)));
+  WrapperImplTypePtr result;
 
-  return WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture), convertedConstraints.get()));
+  if (!convertedConstraints)
+    result = WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture)));
+  else 
+    result = WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture), convertedConstraints.get()));
+  result->factory_ = factoryImpl;
+  return result;
 }
 
 //------------------------------------------------------------------------------

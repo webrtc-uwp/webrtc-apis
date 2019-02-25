@@ -100,7 +100,7 @@ namespace org
     {
 
       /// <summary>
-      /// Gets or sets if audio capturing is be enabled.
+      /// Gets or sets if audio capturing is enabled.
       /// </summary>
       bool audioCapturingEnabled = true;
 
@@ -108,6 +108,12 @@ namespace org
       /// Gets or sets if audio rendering is enabled.
       /// </summary>
       bool audioRenderingEnabled = true;
+
+      /// <summary>
+      /// Gets or sets if audio post-capture and pre-render events should be
+      /// enabled.
+      /// </summary>
+      bool enableAudioBufferEvents = false;
     };
 
     /// <summary>

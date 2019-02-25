@@ -24,7 +24,7 @@ namespace webrtc
   class MediaStreamSource : public IMediaStreamSource
   {
   private:
-    typedef Microsoft::WRL::ComPtr<IMFSample> IMFSampleComPtr;
+    typedef winrt::com_ptr<IMFSample> IMFSampleComPtr;
     struct make_private {};
 
     typedef uint32_t DimensionType;

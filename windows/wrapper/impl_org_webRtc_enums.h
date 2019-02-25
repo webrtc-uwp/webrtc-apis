@@ -11,6 +11,7 @@
 #include "api/audio/audio_frame.h"
 #include "rtc_base/network_constants.h"
 #include "modules/audio_processing/include/audio_processing.h"
+#include "api/video//video_frame_buffer.h"
 #include "impl_org_webRtc_post_include.h"
 
 
@@ -171,6 +172,7 @@ namespace wrapper {
           ZS_NO_DISCARD() static wrapper::org::webRtc::RuntimeSetting toWrapper(::webrtc::AudioProcessing::RuntimeSetting::Type value) noexcept;
           ZS_NO_DISCARD() static ::webrtc::AudioProcessing::RuntimeSetting::Type toNative(wrapper::org::webRtc::RuntimeSetting value) noexcept;
 
+          ZS_NO_DISCARD() static wrapper::org::webRtc::VideoFrameBufferType toWrapper(::webrtc::VideoFrameBuffer::Type value) noexcept;
 #if 0
 
           enum MediaType {

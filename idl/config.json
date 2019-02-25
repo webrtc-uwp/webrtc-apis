@@ -51,6 +51,7 @@
         "SessionDescription.idl",
         "PeerConnection.idl",
         "AudioBuffers.idl",
+        "VideoBuffers.idl",
         "WebRtcFactory.idl",
       ]
     }

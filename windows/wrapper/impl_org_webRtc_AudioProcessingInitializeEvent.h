@@ -16,6 +16,8 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioProcessingInitializeEvent, WrapperImplType);
           
           AudioProcessingInitializeEventWeakPtr thisWeak_;
+          zsLib::Lock lock_;
+          std::function<void(void)> complete_;
           size_t sampleHzRate_{};
           size_t channels_ {};
 
@@ -29,6 +31,7 @@ namespace wrapper {
           uint64_t get_channels() noexcept override;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(
+            std::function<void(void)> completeFunction,
             size_t sampleHzRate,
             size_t channels) noexcept;
         };

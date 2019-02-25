@@ -9,7 +9,7 @@ namespace Org
 
 
         [version(1.0)]
-        [uuid(925491dd-b459-4daa-7108-e1360d566709)]
+        [uuid(5383522e-090b-ef6c-b517-30a29261535f)]
         interface IAudioData : IInspectable
         {
 
@@ -24,7 +24,7 @@ namespace Org
             Windows.Foundation.Collections.IVectorView< Int16 > Data { get; set; };
         };
 
-        runtimeclass AudioData : [default] IAudioData
+        runtimeclass AudioData : [default] IAudioData, Windows.Foundation.IClosable
         {
 
             /// <summary>

@@ -950,6 +950,15 @@ namespace org
       CustomRenderProcessingRuntimeSetting
     };
 
+    enum VideoFrameBufferType
+    {
+      Native,
+      I420,
+      I420A,
+      I444,
+      I010
+    };
+
   }
 }
 

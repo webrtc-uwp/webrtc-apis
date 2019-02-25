@@ -48,4 +48,20 @@ void wrapper::impl::org::webRtc::WebRtcFactoryConfiguration::wrapper_init_org_we
 {
 }
 
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(WrapperTypePtr wrapper) noexcept
+{
+  if (!wrapper)
+    return {};
+
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
+  if (!converted)
+    return {};
+
+  auto result = std::make_shared<WrapperImplType>();
+  result->audioCapturingEnabled = converted->audioCapturingEnabled;
+  result->audioRenderingEnabled = converted->audioRenderingEnabled;
+  result->enableAudioBufferEvents = converted->enableAudioBufferEvents;
+  return result;
+}
 

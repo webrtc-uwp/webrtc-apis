@@ -21,6 +21,8 @@ namespace wrapper {
 
           AudioProcessingRuntimeSettingEventWeakPtr thisWeak_;
 
+          zsLib::Lock lock_;
+          std::function<void(void)> complete_;
           wrapper::org::webRtc::RuntimeSetting type_ {};
           float value_ {};
 
@@ -33,7 +35,9 @@ namespace wrapper {
           wrapper::org::webRtc::RuntimeSetting get_type() noexcept override;
           float get_value() noexcept override;
 
-          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(const NativeType &native) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(
+            std::function<void(void)> completeFunction,
+            const NativeType &native) noexcept;
         };
 
       } // webRtc

@@ -14,6 +14,7 @@ namespace wrapper {
         static AudioDataPtr wrapper_create() noexcept;
         virtual ~AudioData() noexcept {}
 
+        virtual void wrapper_dispose() noexcept = 0;
 
         virtual void wrapper_init_org_webRtc_AudioData() noexcept = 0;
         virtual void wrapper_init_org_webRtc_AudioData(size_t size) noexcept = 0;

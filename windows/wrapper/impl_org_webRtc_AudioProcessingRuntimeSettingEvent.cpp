@@ -47,11 +47,20 @@ wrapper::org::webRtc::AudioProcessingRuntimeSettingEventPtr wrapper::org::webRtc
 wrapper::impl::org::webRtc::AudioProcessingRuntimeSettingEvent::~AudioProcessingRuntimeSettingEvent() noexcept
 {
   thisWeak_.reset();
+  wrapper_dispose();
 }
 
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::AudioProcessingRuntimeSettingEvent::wrapper_dispose() noexcept
 {
+  std::function<void(void)> complete;
+  {
+    zsLib::AutoLock lock(lock_);
+    complete = std::move(complete_);
+  }
+  if (!complete)
+    return;
+  complete();
 }
 
 //------------------------------------------------------------------------------
@@ -67,10 +76,13 @@ float wrapper::impl::org::webRtc::AudioProcessingRuntimeSettingEvent::get_value(
 }
 
 //------------------------------------------------------------------------------
-WrapperImplTypePtr WrapperImplType::toWrapper(const NativeType &native) noexcept
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  std::function<void(void)> completeFunction,
+  const NativeType &native) noexcept
 {
   auto result = std::make_shared<WrapperImplType>();
   result->thisWeak_ = result;
+  result->complete_ = std::move(completeFunction);
   result->type_ = UseEnum::toWrapper(native.type());
   float value{};
   native.GetFloat(&value);

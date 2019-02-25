@@ -21,6 +21,8 @@ namespace wrapper {
           virtual ~WebRtcFactoryConfiguration() noexcept;
 
           void wrapper_init_org_webRtc_WebRtcFactoryConfiguration() noexcept override;
+
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(WrapperTypePtr wrapper) noexcept;
         };
 
       } // webRtc

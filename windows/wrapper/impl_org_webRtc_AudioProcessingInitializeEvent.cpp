@@ -42,11 +42,20 @@ wrapper::org::webRtc::AudioProcessingInitializeEventPtr wrapper::org::webRtc::Au
 wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::~AudioProcessingInitializeEvent() noexcept
 {
   thisWeak_.reset();
+  wrapper_dispose();
 }
 
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::wrapper_dispose() noexcept
 {
+  std::function<void(void)> complete;
+  {
+    zsLib::AutoLock lock(lock_);
+    complete = std::move(complete_);
+  }
+  if (!complete)
+    return;
+  complete();
 }
 
 //------------------------------------------------------------------------------
@@ -63,11 +72,13 @@ uint64_t wrapper::impl::org::webRtc::AudioProcessingInitializeEvent::get_channel
 
 //------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::toWrapper(
+  std::function<void(void)> completeFunction,
   size_t sampleHzRate,
   size_t channels) noexcept
 {
   auto result = std::make_shared<WrapperImplType>();
   result->thisWeak_ = result;
+  result->complete_ = std::move(completeFunction);
   result->sampleHzRate_ = sampleHzRate;
   result->channels_ = channels;
   return result;

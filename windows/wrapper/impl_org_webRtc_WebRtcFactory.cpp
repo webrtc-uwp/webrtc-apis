@@ -48,6 +48,7 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory::WrapperImplTyp
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebRtcLib);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactoryConfiguration, UseFactoryConfiguration);
 
 typedef WrapperImplType::PeerConnectionFactoryInterfaceScopedPtr PeerConnectionFactoryInterfaceScopedPtr;
 typedef WrapperImplType::PeerConnectionFactoryScopedPtr PeerConnectionFactoryScopedPtr;
@@ -86,15 +87,23 @@ WrapperImplType::WebrtcObserver::WebrtcObserver(
 void WrapperImplType::WebrtcObserver::Initialize(int sample_rate_hz, int num_channels)
 {
   if (!enabled_) return;
-  if (!enabled_) return;
 
   auto outer = outer_.lock();
   if (!outer) return;
 
   WebrtcObserver *pThis = this;
 
-  auto event = UseAudioInitEvent::toWrapper(SafeInt<size_t>(sample_rate_hz), SafeInt<size_t>(num_channels));
+  HANDLE handle = ::CreateEventEx(NULL, NULL, 0, EVENT_ALL_ACCESS);
+
+  std::function<void(void)> callback = [handle]() { ::SetEvent(handle); };
+
+  auto event = UseAudioInitEvent::toWrapper(std::move(callback), SafeInt<size_t>(sample_rate_hz), SafeInt<size_t>(num_channels));
   queue_->postClosure([outer, event, pThis]() { pThis->initEvent_(event); });
+
+  event.reset();
+
+  ::WaitForSingleObjectEx(handle, INFINITE, FALSE /* ALERTABLE */);
+  ::CloseHandle(handle);
 }
 
 //------------------------------------------------------------------------------
@@ -113,6 +122,8 @@ void WrapperImplType::WebrtcObserver::Process(NativeAudioBufferType* audio)
 
   auto event = UseAudioBufferEvent::toWrapper(std::move(callback), audio);
   queue_->postClosure([outer, event, pThis]() { pThis->bufferEvent_(event); });
+
+  event.reset();
 
   ::WaitForSingleObjectEx(handle, INFINITE, FALSE /* ALERTABLE */);
   ::CloseHandle(handle);
@@ -134,8 +145,17 @@ void WrapperImplType::WebrtcObserver::SetRuntimeSetting(::webrtc::AudioProcessin
 
   WebrtcObserver *pThis = this;
 
-  auto event = UseAudioRuntimeEvent::toWrapper(setting);
+  HANDLE handle = ::CreateEventEx(NULL, NULL, 0, EVENT_ALL_ACCESS);
+
+  std::function<void(void)> callback = [handle]() { ::SetEvent(handle); };
+
+  auto event = UseAudioRuntimeEvent::toWrapper(std::move(callback), setting);
   queue_->postClosure([outer, event, pThis]() { pThis->runtimeEvent_(event); });
+
+  event.reset();
+
+  ::WaitForSingleObjectEx(handle, INFINITE, FALSE /* ALERTABLE */);
+  ::CloseHandle(handle);
 }
 
 //------------------------------------------------------------------------------
@@ -171,6 +191,11 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_dispose() noexcept
   zsLib::AutoRecursiveLock lock(lock_);
   if (!peerConnectionFactory_) return;
 
+  // Peer connection factory holds ownership of these objects so the observers
+  // are no longer accessible.
+  audioPostCapture_ = NULL;
+  audioPreRender_ = NULL;
+
   // reset the factory (cannot be used anymore)...
   peerConnectionFactory_ = PeerConnectionFactoryInterfaceScopedPtr();
   videoDeviceCaptureFactory_.reset();
@@ -181,82 +206,58 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_dispose() noexcept
   workerThread.reset();
   signalingThread.reset();
 
+  configuration_.reset();
+
+  audioPostCaptureInit_.reset();
+  audioPreRenderInit_.reset();
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_init_org_webRtc_WebRtcFactory(wrapper::org::webRtc::WebRtcFactoryConfigurationPtr configuration) noexcept
+void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_init_org_webRtc_WebRtcFactory(wrapper::org::webRtc::WebRtcFactoryConfigurationPtr inConfiguration) noexcept
 {
-  AudioPostCapture_ = std::make_shared<WebrtcObserver>(
+  configuration_ = UseFactoryConfiguration::clone(inConfiguration);
+
+  audioPostCaptureInit_ = std::make_unique<WebrtcObserver>(
     thisWeak_.lock(),
-    UseWebRtcLib::audioFrameProcessingQueue(),
+    UseWebRtcLib::audioCaptureFrameProcessingQueue(),
     [this](UseAudioBufferEventPtr event) { this->onAudioPostCapture_Process(std::move(event)); },
     [this](UseAudioInitEventPtr event) { this->onAudioPostCapture_Init(std::move(event)); },
     [this](UseAudioRuntimeEventPtr event) { this->onAudioPostCapture_SetRuntimeSetting(std::move(event)); }
   );
-  AudioPreRender_ = std::make_shared<WebrtcObserver>(
+  audioPreRenderInit_ = std::make_unique<WebrtcObserver>(
     thisWeak_.lock(),
-    UseWebRtcLib::audioFrameProcessingQueue(),
+    UseWebRtcLib::audioRenderFrameProcessingQueue(),
     [this](UseAudioBufferEventPtr event) { this->onAudioPreRender_Process(std::move(event)); },
     [this](UseAudioInitEventPtr event) { this->onAudioPreRender_Init(std::move(event)); },
     [this](UseAudioRuntimeEventPtr event) { this->onAudioPreRender_SetRuntimeSetting(std::move(event)); }
   );
 
-  bool audioCapturingEnabled = configuration ? configuration->audioCapturingEnabled : true;
-  bool audioRenderingEnabled = configuration ? configuration->audioRenderingEnabled : true;
-
-  networkThread = rtc::Thread::CreateWithSocketServer();
-  networkThread->Start();
-
-  workerThread = rtc::Thread::Create();
-  workerThread->Start();
-
-  signalingThread = rtc::Thread::Create();
-  signalingThread->Start();
-
-
-  auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
-  auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
-
-  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
-  audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
-    RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
-    webrtc::IAudioDeviceWasapi::CreationProperties props;
-    props.id_ = "";
-    props.playoutEnabled_ = audioCapturingEnabled;
-    props.recordingEnabled_ = audioRenderingEnabled;
-    return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
-  });
-
-  peerConnectionFactory_ = ::webrtc::CreatePeerConnectionFactory(
-    networkThread.get(),
-    workerThread.get(),
-    signalingThread.get(),
-    audioDeviceModule.release(),
-    ::webrtc::CreateBuiltinAudioEncoderFactory(),
-    ::webrtc::CreateBuiltinAudioDecoderFactory(),
-    encoderFactory,
-    decoderFactory
-  );
-
-#ifdef WINUWP
-  videoDeviceCaptureFactory_ = make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
-#else
-#error PLATFORM REQUIRES FACTORY
-#endif //WEBRTC
+  audioPostCapture_ = audioPostCaptureInit_.get();
+  audioPreRender_ = audioPreRenderInit_.get();
 }
 
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_onObserverCountChanged(size_t count) noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
-  AudioPostCapture_->enabled(count > 0);
-  AudioPreRender_->enabled(count > 0);
+  if ((NULL == audioPostCapture_) ||
+      (NULL == audioPreRender_))
+    return;
+
+  if ((configuration_) &&
+      (count > 0)) {
+    configuration_->enableAudioBufferEvents = true;
+  }
+
+  audioPostCapture_->enabled(count > 0);
+  audioPreRender_->enabled(count > 0);
 }
 
 //------------------------------------------------------------------------------
 PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::peerConnectionFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
+  setup();
   return peerConnectionFactory_;
 }
 
@@ -264,6 +265,7 @@ PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::peerConnectionFactory()
 PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
+  setup();
   auto realInterface = unproxy(peerConnectionFactory_);
   return dynamic_cast<NativePeerConnectionFactory *>(realInterface);
 }
@@ -272,6 +274,7 @@ PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noex
 UseVideoDeviceCaptureFacrtoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
+  setup();
   return videoDeviceCaptureFactory_;
 }
 
@@ -309,6 +312,70 @@ void WrapperImplType::onAudioPreRender_SetRuntimeSetting(UseAudioRuntimeEventPtr
 void WrapperImplType::onAudioPreRender_Process(UseAudioBufferEventPtr event)
 {
   onAudioPreRender(std::move(event));
+}
+
+//------------------------------------------------------------------------------
+void WrapperImplType::setup() noexcept
+{
+  zsLib::AutoRecursiveLock lock(lock_);
+
+  // already setup?
+  if ((!audioPostCaptureInit_) ||
+      (!audioPreRenderInit_))
+    return;
+
+  bool audioCapturingEnabled = configuration_ ? configuration_->audioCapturingEnabled : true;
+  bool audioRenderingEnabled = configuration_ ? configuration_->audioRenderingEnabled : true;
+  bool enableAudioProcessingEvents = configuration_ ? configuration_->enableAudioBufferEvents : false;
+
+  networkThread = rtc::Thread::CreateWithSocketServer();
+  networkThread->Start();
+
+  workerThread = rtc::Thread::Create();
+  workerThread->Start();
+
+  signalingThread = rtc::Thread::Create();
+  signalingThread->Start();
+
+
+  auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
+  auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
+
+  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
+  audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
+    RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
+    webrtc::IAudioDeviceWasapi::CreationProperties props;
+    props.id_ = "";
+    props.playoutEnabled_ = audioCapturingEnabled;
+    props.recordingEnabled_ = audioRenderingEnabled;
+    return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
+  });
+
+  rtc::scoped_refptr<::webrtc::AudioProcessing> audioProcessing;
+  if (enableAudioProcessingEvents)
+    audioProcessing = rtc::scoped_refptr<::webrtc::AudioProcessing>{::webrtc::AudioProcessingBuilder().SetCapturePostProcessing(std::move(audioPostCaptureInit_)).SetRenderPreProcessing(std::move(audioPreRenderInit_)).Create() };
+
+  audioPostCaptureInit_.reset();
+  audioPreRenderInit_.reset();
+
+  peerConnectionFactory_ = ::webrtc::CreatePeerConnectionFactory(
+    networkThread.get(),
+    workerThread.get(),
+    signalingThread.get(),
+    audioDeviceModule.release(),
+    ::webrtc::CreateBuiltinAudioEncoderFactory(),
+    ::webrtc::CreateBuiltinAudioDecoderFactory(),
+    encoderFactory,
+    decoderFactory,
+    nullptr,
+    enableAudioProcessingEvents ? audioProcessing : nullptr
+  );
+
+#ifdef WINUWP
+  videoDeviceCaptureFactory_ = make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
+#else
+#error PLATFORM REQUIRES FACTORY
+#endif //WEBRTC
 }
 
 //------------------------------------------------------------------------------

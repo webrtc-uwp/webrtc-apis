@@ -34,7 +34,7 @@ namespace org
 {
   namespace webRtc
   {
-    [special]
+    [special, disposable]
     interface AudioData
     {
       /// <summary>

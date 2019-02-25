@@ -493,7 +493,6 @@ void wrapper::impl::org::webRtc::RTCPeerConnection::setBitrate(wrapper::org::web
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::RTCPeerConnection::close() noexcept
 {
-  ZS_ASSERT(native_);
   if (!native_) return;
   closeCalled_ = true;
   native_->Close();
@@ -665,7 +664,6 @@ wrapper::org::webRtc::RTCDataChannelPtr wrapper::impl::org::webRtc::RTCPeerConne
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::RTCSignalingState wrapper::impl::org::webRtc::RTCPeerConnection::get_signalingState() noexcept
 {
-  ZS_ASSERT(native_);
   if (!native_) return wrapper::org::webRtc::RTCSignalingState::RTCSignalingState_closed;
   return UseEnum::toWrapper(native_->signaling_state());
 }
@@ -673,7 +671,6 @@ wrapper::org::webRtc::RTCSignalingState wrapper::impl::org::webRtc::RTCPeerConne
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::RTCIceGatheringState wrapper::impl::org::webRtc::RTCPeerConnection::get_iceGatheringState() noexcept
 {
-  ZS_ASSERT(native_);
   if (!native_) return wrapper::org::webRtc::RTCIceGatheringState::RTCIceGatheringState_complete;
   return UseEnum::toWrapper(native_->ice_gathering_state());
 }
@@ -681,7 +678,6 @@ wrapper::org::webRtc::RTCIceGatheringState wrapper::impl::org::webRtc::RTCPeerCo
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::RTCIceConnectionState wrapper::impl::org::webRtc::RTCPeerConnection::get_iceConnectionState() noexcept
 {
-  ZS_ASSERT(native_);
   if (!native_) return wrapper::org::webRtc::RTCIceConnectionState::RTCIceConnectionState_closed;
   return UseEnum::toWrapper(native_->ice_connection_state());
 }

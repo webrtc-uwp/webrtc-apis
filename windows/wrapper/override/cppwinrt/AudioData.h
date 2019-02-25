@@ -63,6 +63,9 @@ namespace winrt {
           /// </summary>
           AudioData();
 
+          // Windows.Foundation.IClosable
+          void Close();
+
           /// <summary>
           /// Gets if the data is read-only. <summary> </summary>
           /// </summary>
@@ -75,7 +78,7 @@ namespace winrt {
 
         };
 
-      } // namepsace implementation
+      } // namespace implementation
 
       namespace factory_implementation {
 

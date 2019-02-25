@@ -76,6 +76,16 @@ namespace webrtc
 
   class VideoFrame;
 
+  class VideoFrameBuffer;
+  class I420BufferInterface;
+  class I420ABufferInterface;
+  class I444BufferInterface;
+  class I010BufferInterface;
+  class NativeHandleBuffer;
+  class PlanarYuvBuffer;
+  class PlanarYuv8Buffer;
+  class PlanarYuv16BBuffer;
+
   class RTCStats;
   class RTCStatsReport;
   class RTCStatsCollectorCallback;

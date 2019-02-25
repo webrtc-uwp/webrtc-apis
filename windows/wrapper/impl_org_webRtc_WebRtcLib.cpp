@@ -184,7 +184,8 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
   if (setupCalledOnce_.test_and_set()) return;
 
   wrapper::org::webRtc::EventQueuePtr queue = configuration ? configuration->queue : nullptr;
-  wrapper::org::webRtc::EventQueuePtr audioFrameProcessingQueue = configuration ? configuration->audioFrameProcessingQueue : nullptr;
+  wrapper::org::webRtc::EventQueuePtr audioCaptureFrameProcessingQueue = configuration ? configuration->audioCaptureFrameProcessingQueue : nullptr;
+  wrapper::org::webRtc::EventQueuePtr audioRenderFrameProcessingQueue = configuration ? configuration->audioRenderFrameProcessingQueue : nullptr;
   wrapper::org::webRtc::EventQueuePtr videoFrameProcessingQueue = configuration ? configuration->videoFrameProcessingQueue : nullptr;
 
 #ifdef WINUWP
@@ -267,9 +268,11 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
 
   // scope: setup audio frame processing queue
   {
-     auto nativeQueue = EventQueue::toNative(audioFrameProcessingQueue);
+     auto nativeCaptureQueue = EventQueue::toNative(audioCaptureFrameProcessingQueue);
+     auto nativeRenderQueue = EventQueue::toNative(audioRenderFrameProcessingQueue);
      // use the native queue if available otherwise use delegate queue
-     audioFrameProcessingQueue_ = nativeQueue ? nativeQueue : actual_delegateQueue();
+     audioCaptureFrameProcessingQueue_ = nativeCaptureQueue ? nativeCaptureQueue : actual_delegateQueue();
+     audioRenderFrameProcessingQueue_ = nativeRenderQueue ? nativeRenderQueue : actual_delegateQueue();
   }
 
   // scope: setup audio frame processing queue
@@ -413,10 +416,17 @@ zsLib::IMessageQueuePtr WrapperImplType::actual_delegateQueue() noexcept
 }
 
 //------------------------------------------------------------------------------
-zsLib::IMessageQueuePtr WrapperImplType::actual_audioFrameProcessingQueue() noexcept
+zsLib::IMessageQueuePtr WrapperImplType::actual_audioCaptureFrameProcessingQueue() noexcept
 {
   ::zsLib::AutoLock lock(lock_);
-  return audioFrameProcessingQueue_;
+  return audioCaptureFrameProcessingQueue_;
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::actual_audioRenderFrameProcessingQueue() noexcept
+{
+  ::zsLib::AutoLock lock(lock_);
+  return audioRenderFrameProcessingQueue_;
 }
 
 //------------------------------------------------------------------------------
@@ -480,7 +490,13 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
       }
 
       //-----------------------------------------------------------------------
-      zsLib::IMessageQueuePtr actual_audioFrameProcessingQueue() noexcept final
+      zsLib::IMessageQueuePtr actual_audioCaptureFrameProcessingQueue() noexcept final
+      {
+        return actual_delegateQueue();
+      }
+
+      //-----------------------------------------------------------------------
+      zsLib::IMessageQueuePtr actual_audioRenderFrameProcessingQueue() noexcept final
       {
         return actual_delegateQueue();
       }
@@ -513,10 +529,17 @@ zsLib::IMessageQueuePtr WrapperImplType::delegateQueue() noexcept
 }
 
 //------------------------------------------------------------------------------
-zsLib::IMessageQueuePtr WrapperImplType::audioFrameProcessingQueue() noexcept
+zsLib::IMessageQueuePtr WrapperImplType::audioCaptureFrameProcessingQueue() noexcept
 {
   auto singleton = WrapperImplType::singleton();
-  return singleton->actual_audioFrameProcessingQueue();
+  return singleton->actual_audioCaptureFrameProcessingQueue();
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::audioRenderFrameProcessingQueue() noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  return singleton->actual_audioRenderFrameProcessingQueue();
 }
 
 //------------------------------------------------------------------------------

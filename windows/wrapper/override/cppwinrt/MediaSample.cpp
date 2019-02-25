@@ -144,8 +144,7 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
 {
   if (!native_) {throw hresult_error(E_POINTER);}
 
-  Windows::Foundation::Collections::IVectorView< float > result{ nullptr };
-  winrt::com_ptr<IMFSample> pSample = wrapper::impl::org::webRtc::MediaSample::toNative_winrt(native_);
+  winrt::com_ptr<IMFSample> pSample = wrapper::impl::org::webRtc::MediaSample::toNative(native_);
 
   HRESULT hr;
   winrt::com_ptr<IUnknown> spUnknown;
@@ -155,7 +154,7 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
   UINT32 cbBlobSize = 0;
   hr = pSample->GetUnknown(MFSampleExtension_Spatial_CameraCoordinateSystem, __uuidof(ABI::Windows::Perception::Spatial::ISpatialCoordinateSystem), spUnknown.put_void());
   if (!SUCCEEDED(hr))
-    return result;
+    return {nullptr};
   //if (!spUnknown.try_as(spSpatialCoordinateSystem))
   //  return result;
   hr = pSample->GetBlob(MFSampleExtension_Spatial_CameraViewTransform,
@@ -163,26 +162,28 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
     sizeof(viewMatrix),
     &cbBlobSize);
   if (!SUCCEEDED(hr) || cbBlobSize != sizeof(ABI::Windows::Foundation::Numerics::Matrix4x4))
-    return result;
-  Windows::Foundation::Collections::IVector viewMatrixVector = single_threaded_vector< float >();
-  viewMatrixVector.Append(viewMatrix.M11);
-  viewMatrixVector.Append(viewMatrix.M12);
-  viewMatrixVector.Append(viewMatrix.M13);
-  viewMatrixVector.Append(viewMatrix.M14);
-  viewMatrixVector.Append(viewMatrix.M21);
-  viewMatrixVector.Append(viewMatrix.M22);
-  viewMatrixVector.Append(viewMatrix.M23);
-  viewMatrixVector.Append(viewMatrix.M24);
-  viewMatrixVector.Append(viewMatrix.M31);
-  viewMatrixVector.Append(viewMatrix.M32);
-  viewMatrixVector.Append(viewMatrix.M33);
-  viewMatrixVector.Append(viewMatrix.M34);
-  viewMatrixVector.Append(viewMatrix.M41);
-  viewMatrixVector.Append(viewMatrix.M42);
-  viewMatrixVector.Append(viewMatrix.M43);
-  viewMatrixVector.Append(viewMatrix.M44);
-  result = viewMatrixVector.GetView();
-  return result;
+    return {nullptr};
+
+  std::vector<float> matrixVector = {
+    viewMatrix.M11,
+    viewMatrix.M12,
+    viewMatrix.M13,
+    viewMatrix.M14,
+    viewMatrix.M21,
+    viewMatrix.M22,
+    viewMatrix.M23,
+    viewMatrix.M24,
+    viewMatrix.M31,
+    viewMatrix.M32,
+    viewMatrix.M33,
+    viewMatrix.M34,
+    viewMatrix.M41,
+    viewMatrix.M42,
+    viewMatrix.M43,
+    viewMatrix.M44
+  };
+
+  return single_threaded_vector< float >(std::move(matrixVector)).GetView();
 }
 
 //------------------------------------------------------------------------------
@@ -190,8 +191,7 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
 {
   if (!native_) { throw hresult_error(E_POINTER); }
 
-  Windows::Foundation::Collections::IVectorView< float > result{ nullptr };
-  winrt::com_ptr<IMFSample> pSample = wrapper::impl::org::webRtc::MediaSample::toNative_winrt(native_);
+  winrt::com_ptr<IMFSample> pSample = wrapper::impl::org::webRtc::MediaSample::toNative(native_);
 
   HRESULT hr;
   winrt::com_ptr<IUnknown> spUnknown;
@@ -201,7 +201,7 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
   UINT32 cbBlobSize = 0;
   hr = pSample->GetUnknown(MFSampleExtension_Spatial_CameraCoordinateSystem, __uuidof(ABI::Windows::Perception::Spatial::ISpatialCoordinateSystem), spUnknown.put_void());
   if (!SUCCEEDED(hr))
-    return result;
+    return {nullptr};
   //if (!spUnknown.try_as(spSpatialCoordinateSystem))
   //  return result;
   hr = pSample->GetBlob(MFSampleExtension_Spatial_CameraProjectionTransform,
@@ -209,26 +209,35 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
     sizeof(projectionMatrix),
     &cbBlobSize);
   if (!SUCCEEDED(hr) || cbBlobSize != sizeof(ABI::Windows::Foundation::Numerics::Matrix4x4))
-    return result;
-  Windows::Foundation::Collections::IVector projectionMatrixVector = single_threaded_vector< float >();
-  projectionMatrixVector.Append(projectionMatrix.M11);
-  projectionMatrixVector.Append(projectionMatrix.M12);
-  projectionMatrixVector.Append(projectionMatrix.M13);
-  projectionMatrixVector.Append(projectionMatrix.M14);
-  projectionMatrixVector.Append(projectionMatrix.M21);
-  projectionMatrixVector.Append(projectionMatrix.M22);
-  projectionMatrixVector.Append(projectionMatrix.M23);
-  projectionMatrixVector.Append(projectionMatrix.M24);
-  projectionMatrixVector.Append(projectionMatrix.M31);
-  projectionMatrixVector.Append(projectionMatrix.M32);
-  projectionMatrixVector.Append(projectionMatrix.M33);
-  projectionMatrixVector.Append(projectionMatrix.M34);
-  projectionMatrixVector.Append(projectionMatrix.M41);
-  projectionMatrixVector.Append(projectionMatrix.M42);
-  projectionMatrixVector.Append(projectionMatrix.M43);
-  projectionMatrixVector.Append(projectionMatrix.M44);
-  result = projectionMatrixVector.GetView();
-  return result;
+    return {nullptr};
+
+  std::vector<float> matrixVector = {
+    projectionMatrix.M11,
+    projectionMatrix.M12,
+    projectionMatrix.M13,
+    projectionMatrix.M14,
+    projectionMatrix.M21,
+    projectionMatrix.M22,
+    projectionMatrix.M23,
+    projectionMatrix.M24,
+    projectionMatrix.M31,
+    projectionMatrix.M32,
+    projectionMatrix.M33,
+    projectionMatrix.M34,
+    projectionMatrix.M41,
+    projectionMatrix.M42,
+    projectionMatrix.M43,
+    projectionMatrix.M44
+  };
+
+  return single_threaded_vector< float >(std::move(matrixVector)).GetView();
+}
+
+//------------------------------------------------------------------------------
+void Org::WebRtc::implementation::MediaSample::Close()
+{
+  if (native_) native_->wrapper_dispose();
+  native_.reset();
 }
 
 

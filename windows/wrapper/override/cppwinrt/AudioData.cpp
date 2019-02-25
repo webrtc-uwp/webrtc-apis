@@ -265,6 +265,13 @@ Org::WebRtc::implementation::AudioData::AudioData()
 }
 
 //------------------------------------------------------------------------------
+void Org::WebRtc::implementation::AudioData::Close()
+{
+  if (native_) native_->wrapper_dispose();
+  native_.reset();
+}
+
+//------------------------------------------------------------------------------
 bool Org::WebRtc::implementation::AudioData::ReadOnly()
 {
   if (!native_) {throw hresult_error(E_POINTER);}
@@ -279,7 +286,7 @@ Windows::Foundation::Collections::IVectorView< int16_t > Org::WebRtc::implementa
   auto data = native_->data();
   auto size = native_->size();
 
-  return AudioDataVectorView(data, size);
+  return winrt::make<AudioDataVectorView>(data, size);
 }
 
 //------------------------------------------------------------------------------

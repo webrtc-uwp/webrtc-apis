@@ -25,6 +25,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioBufferEvent, UseAudioBufferEvent);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioProcessingInitializeEvent, UseAudioInitEvent);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioProcessingRuntimeSettingEvent, UseAudioRuntimeEvent);
+          ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactoryConfiguration, UseFactoryConfiguration);
 
           typedef rtc::scoped_refptr<::webrtc::PeerConnectionFactoryInterface> PeerConnectionFactoryInterfaceScopedPtr;
           typedef rtc::scoped_refptr<::webrtc::PeerConnectionFactory> PeerConnectionFactoryScopedPtr;
@@ -69,8 +70,12 @@ namespace wrapper {
           std::unique_ptr<rtc::Thread> workerThread;
           std::unique_ptr<rtc::Thread> signalingThread;
 
-          WebrtcObserverPtr AudioPostCapture_;
-          WebrtcObserverPtr AudioPreRender_;
+          WebrtcObserver *audioPostCapture_ {};
+          WebrtcObserver *audioPreRender_ {};
+          WebrtcObserverUniPtr audioPostCaptureInit_;
+          WebrtcObserverUniPtr audioPreRenderInit_;
+
+          UseFactoryConfigurationPtr configuration_ {};
 
           WebRtcFactory() noexcept;
           virtual ~WebRtcFactory() noexcept;
@@ -93,6 +98,8 @@ namespace wrapper {
           void onAudioPreRender_Init(UseAudioInitEventPtr event);
           void onAudioPreRender_SetRuntimeSetting(UseAudioRuntimeEventPtr event);
           void onAudioPreRender_Process(UseAudioBufferEventPtr event);
+
+          void setup() noexcept;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(WrapperTypePtr wrapper) noexcept;
         };

@@ -60,7 +60,7 @@ namespace winrt {
           Windows::Devices::Enumeration::DeviceInformation Info();
         };
 
-      } // namepsace implementation
+      } // namespace implementation
 
       namespace factory_implementation {
 
