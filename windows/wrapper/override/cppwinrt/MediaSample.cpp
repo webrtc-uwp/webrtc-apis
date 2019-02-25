@@ -155,8 +155,8 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
   hr = pSample->GetUnknown(MFSampleExtension_Spatial_CameraCoordinateSystem, __uuidof(ABI::Windows::Perception::Spatial::ISpatialCoordinateSystem), spUnknown.put_void());
   if (!SUCCEEDED(hr))
     return {nullptr};
-  //if (!spUnknown.try_as(spSpatialCoordinateSystem))
-  //  return result;
+  if (!spUnknown.try_as(spSpatialCoordinateSystem))
+    return {nullptr};
   hr = pSample->GetBlob(MFSampleExtension_Spatial_CameraViewTransform,
     (UINT8*)(&viewMatrix),
     sizeof(viewMatrix),
@@ -202,8 +202,8 @@ Windows::Foundation::Collections::IVectorView< float > Org::WebRtc::implementati
   hr = pSample->GetUnknown(MFSampleExtension_Spatial_CameraCoordinateSystem, __uuidof(ABI::Windows::Perception::Spatial::ISpatialCoordinateSystem), spUnknown.put_void());
   if (!SUCCEEDED(hr))
     return {nullptr};
-  //if (!spUnknown.try_as(spSpatialCoordinateSystem))
-  //  return result;
+  if (!spUnknown.try_as(spSpatialCoordinateSystem))
+    return {nullptr};
   hr = pSample->GetBlob(MFSampleExtension_Spatial_CameraProjectionTransform,
     (UINT8*)(&projectionMatrix),
     sizeof(projectionMatrix),
