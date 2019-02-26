@@ -4,19 +4,7 @@
 #include "types.h"
 #include "generated/org_webRtc_MediaSample.h"
 
-#ifdef WINUWP
-#ifdef __cplusplus_winrt
-#include <wrl.h>
 #include <mfidl.h>
-#endif //__cplusplus_winrt
-#ifdef CPPWINRT_VERSION
-#include <mfidl.h>
-#endif // CPPWINRT_VERSION
-#else
-#ifdef _WIN32
-#include <mfidl.h>
-#endif //_WIN32
-#endif // WINUWP
 
 namespace wrapper {
   namespace impl {

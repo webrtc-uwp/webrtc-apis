@@ -1,10 +1,6 @@
 
 #ifdef WINUWP
 
-#ifdef __cplusplus_winrt
-#include <windows.ui.xaml.controls.h>
-#endif //__cplusplus_winrt
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #include <winrt/Windows.UI.Xaml.Controls.h>
@@ -45,18 +41,6 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaElement::WrapperImplType
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
 #ifdef WINUWP
-#ifdef __cplusplus_winrt
-
-namespace wrapper { namespace impl { namespace org { namespace webRtc {
-        ZS_DECLARE_STRUCT_PTR(MediaElementWrapperAnyCx);
-
-        struct MediaElementWrapperAnyCx : Any
-        {
-          Windows::UI::Xaml::Controls::MediaElement^ element_ {nullptr};
-        };
-} } } }
-
-#endif //__cplusplus_winrt
 
 #ifdef CPPWINRT_VERSION
 
@@ -119,35 +103,6 @@ AnyPtr wrapper::impl::org::webRtc::MediaElement::get_element() noexcept
 
 
 #ifdef WINUWP
-#ifdef __cplusplus_winrt
-
-wrapper::org::webRtc::MediaElementPtr wrapper::impl::org::webRtc::MediaElement::toWrapper(Windows::UI::Xaml::Controls::MediaElement^ element) noexcept
-{
-  auto any{ make_shared<wrapper::impl::org::webRtc::MediaElementWrapperAnyCx>() };
-  any->element_ = element;
-  auto result = make_shared<WrapperImplType>();
-  result->thisWeak_ = result;
-  result->element_ = any;
-  return result;
-}
-
-Windows::UI::Xaml::Controls::MediaElement^ wrapper::impl::org::webRtc::MediaElement::toNative_cx(wrapper::org::webRtc::MediaElementPtr element) noexcept
-{
-  if (!element) return nullptr;
-  AnyPtr any = element->get_element();
-  if (!any) return nullptr;
-  auto castedAny = ZS_DYNAMIC_PTR_CAST(wrapper::impl::org::webRtc::MediaElementWrapperAnyCx, any);
-  if (!castedAny) {
-#ifdef CPPWINRT_VERSION
-    auto result = toNative_winrt(element);
-    if (result) return WRAPPER_TO_CX(Windows::UI::Xaml::Controls::MediaElement, result);
-#endif //CPPWINRT_VERSION
-    return nullptr;
-  }
-  return castedAny->element_;
-}
-#endif //__cplusplus_winrt
-
 #ifdef CPPWINRT_VERSION
 
 wrapper::org::webRtc::MediaElementPtr wrapper::impl::org::webRtc::MediaElement::toWrapper(winrt::Windows::UI::Xaml::Controls::MediaElement const & element) noexcept
@@ -162,17 +117,13 @@ wrapper::org::webRtc::MediaElementPtr wrapper::impl::org::webRtc::MediaElement::
 
 winrt::Windows::UI::Xaml::Controls::MediaElement wrapper::impl::org::webRtc::MediaElement::toNative_winrt(wrapper::org::webRtc::MediaElementPtr element) noexcept
 {
-  if (!element) return nullptr;
+  if (!element)
+    return {nullptr};
   AnyPtr any = element->get_element();
   if (!any) return nullptr;
   auto castedAny = ZS_DYNAMIC_PTR_CAST(wrapper::impl::org::webRtc::MediaElementWrapperAnyWinrt, any);
-  if (!castedAny) {
-#ifdef __cplusplus_winrt
-    auto result = toNative_cx(element);
-    if (result) return WRAPPER_FROM_CX(winrt::Windows::UI::Xaml::Controls::MediaElement, result);
-#endif //__cplusplus_winrt
-    return nullptr;
-  }
+  if (!castedAny)
+    return {nullptr};
   return castedAny->element_;
 }
 
