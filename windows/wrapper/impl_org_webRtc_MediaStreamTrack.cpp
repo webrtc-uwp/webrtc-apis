@@ -434,6 +434,7 @@ void WrapperImplType::notifyWebrtcObserverFrame(const ::webrtc::VideoFrame& fram
     case cricket::FourCC::FOURCC_H264:
     {
       frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_H264;
+      break;
     }
     default:
     {
