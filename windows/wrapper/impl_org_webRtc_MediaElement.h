@@ -4,10 +4,6 @@
 #include "types.h"
 #include "generated/org_webRtc_MediaElement.h"
 
-#ifdef __cplusplus_winrt
-#include <windows.ui.xaml.controls.h>
-#endif //__cplusplus_winrt
-
 #ifdef CPPWINRT_VERSION
 #include <winrt/Windows.UI.Xaml.Controls.h>
 #endif // CPPWINRT_VERSION
@@ -36,10 +32,6 @@ namespace wrapper {
           AnyPtr get_element() noexcept override;
 
 #ifdef WINUWP
-#ifdef __cplusplus_winrt
-          ZS_NO_DISCARD() static wrapper::org::webRtc::MediaElementPtr toWrapper(Windows::UI::Xaml::Controls::MediaElement^ element) noexcept;
-          ZS_NO_DISCARD() static Windows::UI::Xaml::Controls::MediaElement^ toNative_cx(wrapper::org::webRtc::MediaElementPtr element) noexcept;
-#endif //__cplusplus_winrt
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static wrapper::org::webRtc::MediaElementPtr toWrapper(winrt::Windows::UI::Xaml::Controls::MediaElement const & element) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::UI::Xaml::Controls::MediaElement toNative_winrt(wrapper::org::webRtc::MediaElementPtr element) noexcept;

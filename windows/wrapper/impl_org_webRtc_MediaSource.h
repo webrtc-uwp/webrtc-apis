@@ -33,10 +33,6 @@ namespace wrapper {
           AnyPtr get_source() noexcept override;
 
 #ifdef WINUWP
-#ifdef __cplusplus_winrt
-          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(Windows::Media::Core::IMediaSource^ source) noexcept;
-          ZS_NO_DISCARD() static Windows::Media::Core::IMediaSource^ toNative_cx(wrapper::org::webRtc::MediaSourcePtr source) noexcept;
-#endif //__cplusplus_winrt
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(winrt::Windows::Media::Core::IMediaSource const & source) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::Media::Core::IMediaSource toNative_winrt(wrapper::org::webRtc::MediaSourcePtr source) noexcept;

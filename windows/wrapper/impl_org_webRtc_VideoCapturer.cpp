@@ -3,10 +3,6 @@
 
 #include <unknwn.h>
 
-#ifdef __cplusplus_winrt
-#include <windows.devices.enumeration.h>
-#endif //__cplusplus_winrt
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.Devices.Enumeration.h>)
 #include <winrt/Windows.Devices.Enumeration.h>
@@ -51,14 +47,7 @@ using ::std::list;
 using ::std::set;
 using ::std::map;
 
-#ifdef WINUWP
-#ifdef __cplusplus_winrt
-#include <ppltasks.h>
-#endif //__cplusplus_winrt
-#endif //WINUWP
-
-
-// borrow types from call defintions
+// borrow types from call definitions
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::WrapperType, WrapperType);
 // borrow definitions from class
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::WrapperImplType, WrapperImplType);
@@ -168,29 +157,7 @@ shared_ptr< PromiseWithHolderPtr< shared_ptr< list< wrapper::org::webRtc::VideoD
     return promise;
   }
 #endif // CPPWINRT_VERSION
-
-#ifdef __cplusplus_winrt
-  if (alwaysTrue()) {
-    delegateQueue->postClosure([promise]() {
-
-      concurrency::create_task(Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(Windows::Devices::Enumeration::DeviceClass::VideoCapture)).then([promise](Windows::Devices::Enumeration::DeviceInformationCollection^ devices) {
-        
-        auto output = make_shared<ResultListType::element_type>();
-        for (decltype(devices->Size) i = 0; i < devices->Size; i++)
-        {
-          Windows::Devices::Enumeration::DeviceInformation^ device = devices->GetAt(i);
-          auto wrapper = UseVideoDeviceInfo::toWrapper(device);
-          if (!wrapper) continue;
-          output->push_back(wrapper);
-        }
-
-        promise->resolve(output);
-      });
-    });
-    return promise;
-  }
-#endif //__cplusplus_winrt
-
+  
 #endif //WINUWP
 
   UseError::rejectPromise(promise, ::webrtc::RTCError(::webrtc::RTCErrorType::RESOURCE_EXHAUSTED));
