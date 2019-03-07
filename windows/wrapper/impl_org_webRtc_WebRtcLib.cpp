@@ -20,6 +20,7 @@
 #include "impl_org_webRtc_WebRtcLibConfiguration.h"
 #include "impl_org_webRtc_EventQueue.h"
 #include "impl_org_webRtc_helpers.h"
+#include "impl_webrtc_Logger.h"
 
 #include "impl_org_webRtc.h"
 #include "impl_webrtc_IMediaStreamSource.h"
@@ -56,7 +57,7 @@ using ::std::list;
 using ::std::set;
 using ::std::map;
 
-//namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc); } } } }
+//namespace wrapper { namespace impl { namespace org { namespace webRtc { ZS_DECLARE_SUBSYSTEM(wrapper_org_webRtc_core); } } } }
 
 // borrow definitions from class
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib::WrapperImplType, WrapperImplType);
@@ -178,6 +179,8 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
 {
   // prevent multiple setups being called simultaneously
   if (setupCalledOnce_.test_and_set()) return;
+
+  webrtc::etw::ILogger::setup();
 
   wrapper::org::webRtc::EventQueuePtr queue = configuration ? configuration->queue : nullptr;
   wrapper::org::webRtc::EventQueuePtr audioCaptureFrameProcessingQueue = configuration ? configuration->audioCaptureFrameProcessingQueue : nullptr;

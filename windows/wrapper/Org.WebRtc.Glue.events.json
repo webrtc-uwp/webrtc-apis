@@ -93,7 +93,8 @@
         "impl_org_webRtc_RTCPeerConnectionStats.cpp",
         "impl_org_webRtc_RTCRtpContributingSourceStats.cpp",
         "impl_org_webRtc_RTCTransportStats.cpp",
-        "impl_org_webRtc_RTCSenderVideoTrackAttachmentStats.cpp"
+        "impl_org_webRtc_RTCSenderVideoTrackAttachmentStats.cpp",
+        "impl_webrtc_Logger.cpp"
       ]
     },
     "channels": {
@@ -107,6 +108,11 @@
           "id": "stats",
           "name": "Org.WebRtc.Glue.Stats",
           "type": "Debug"
+        },
+        {
+          "id": "webrtc",
+          "name": "Org.WebRtc",
+          "type": "Debug"
         }
       ]
     },
@@ -114,6 +120,9 @@
       "task": [
         {
           "name": "Stats"
+        },
+        {
+          "name": "Logging"
         }
       ]
     }
