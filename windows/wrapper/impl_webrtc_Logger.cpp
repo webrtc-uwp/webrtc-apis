@@ -34,6 +34,8 @@ namespace webrtc
       //-----------------------------------------------------------------------
       void init()
       {
+        // fake a notification to synchronize the current state
+        notifySubsystemLevelChange(ZS_GET_SUBSYSTEM());
       }
 
     public:
@@ -129,6 +131,8 @@ namespace webrtc
         AutoRecursiveLock lock(lock_);
         auto levelEventing = toNative(inSubsystem.getEventingLevel());
         currentSeverity_ = toNative(inSubsystem.getEventingLevel());
+        if (levelEventing < currentSeverity_)
+          currentSeverity_ = levelEventing;
         setupLoggingIfNeeded();
       }
 
@@ -184,21 +188,19 @@ namespace webrtc
         // WARNING: must be called within a lock
         bool severityChanged = lastSeverity_ != currentSeverity_;
         bool needsLogging = ((currentEventingCount_ + currentLoggingCount_) > 0) && (rtc::LoggingSeverity::LS_NONE != currentSeverity_);
-        bool hasLogging = (lastSeverity_ > 0) && (rtc::LoggingSeverity::LS_NONE != lastCount_);
+        bool hasLogging = (lastCount_ > 0) && (rtc::LoggingSeverity::LS_NONE != lastSeverity_);
 
         lastSeverity_ = currentSeverity_;
         lastCount_ = currentEventingCount_ + currentLoggingCount_;
 
-        rtc::LoggingSeverity level{ rtc::LoggingSeverity::LS_NONE };
-
         if (needsLogging) {
-          if (!severityChanged)
+          if ((!severityChanged) && (hasLogging))
             return;
 
           if (hasLogging) {
             rtc::LogMessage::RemoveLogToStream(this);
           }
-          rtc::LogMessage::AddLogToStream(this, level);
+          rtc::LogMessage::AddLogToStream(this, lastSeverity_);
           return;
         }
 
