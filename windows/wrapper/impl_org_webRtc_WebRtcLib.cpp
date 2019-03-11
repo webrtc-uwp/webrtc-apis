@@ -180,7 +180,7 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
   // prevent multiple setups being called simultaneously
   if (setupCalledOnce_.test_and_set()) return;
 
-  webrtc::etw::ILogger::setup();
+  webrtc::log::ILogger::setup();
 
   wrapper::org::webRtc::EventQueuePtr queue = configuration ? configuration->queue : nullptr;
   wrapper::org::webRtc::EventQueuePtr audioCaptureFrameProcessingQueue = configuration ? configuration->audioCaptureFrameProcessingQueue : nullptr;

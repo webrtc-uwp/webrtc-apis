@@ -10,7 +10,7 @@
 
 namespace webrtc
 {
-  namespace etw
+  namespace log
   {
     ZS_DECLARE_INTERACTION_PTR(ILogger);
 

@@ -23,6 +23,7 @@
       "source": [
         "enums.idl",
         "WebRtc.idl",
+        "Logger.idl",
         "Error.idl",
         "MediaSource.idl",
         "MediaElement.idl",

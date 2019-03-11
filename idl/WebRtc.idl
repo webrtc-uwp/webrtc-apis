@@ -39,6 +39,7 @@ namespace org
     typedef zs::exceptions::NotSupported NotSupportedError;
 
     typedef std::list<string> StringList;
+    typedef zs::Seconds Seconds;
     typedef zs::Milliseconds Milliseconds;
     typedef zs::Nanoseconds Nanoseconds;
 

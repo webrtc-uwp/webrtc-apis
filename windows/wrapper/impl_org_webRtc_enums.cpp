@@ -1000,7 +1000,7 @@ wrapper::org::webRtc::RTCStatsOutputLevel UseEnum::toWrapper(::webrtc::PeerConne
   switch (value)
   {
     case ::webrtc::PeerConnectionInterface::kStatsOutputLevelStandard:   return wrapper::org::webRtc::RTCStatsOutputLevel::RTCStatsOutputLevel_standard;
-    case ::webrtc::PeerConnectionInterface::kStatsOutputLevelDebug:  return wrapper::org::webRtc::RTCStatsOutputLevel::RTCStatsOutputLevel_debug;
+    case ::webrtc::PeerConnectionInterface::kStatsOutputLevelDebug:     return wrapper::org::webRtc::RTCStatsOutputLevel::RTCStatsOutputLevel_debug;
   }
   ZS_ASSERT_FAIL("unknown type");
   return wrapper::org::webRtc::RTCStatsOutputLevel::RTCStatsOutputLevel_standard;
@@ -1378,4 +1378,52 @@ wrapper::org::webRtc::VideoFrameBufferType UseEnum::toWrapper(::webrtc::VideoFra
   }
   ZS_ASSERT_FAIL("unknown type");
   return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+}
+
+//-----------------------------------------------------------------------------
+wrapper::org::webRtc::Level UseEnum::toWrapper(zsLib::Log::Level level) noexcept
+{
+  switch (level)
+  {
+    case zsLib::Log::Level::None:   return wrapper::org::webRtc::Level_none;
+    case zsLib::Log::Level::Basic:  return wrapper::org::webRtc::Level_basic;
+    case zsLib::Log::Level::Detail: return wrapper::org::webRtc::Level_detail;
+    case zsLib::Log::Level::Debug:  return wrapper::org::webRtc::Level_debug;
+    case zsLib::Log::Level::Trace:  return wrapper::org::webRtc::Level_trace;
+    case zsLib::Log::Level::Insane: return wrapper::org::webRtc::Level_insane;
+  }
+  ZS_ASSERT_FAIL("level is unknown");
+  return toWrapper(zsLib::Log::Level_First);
+}
+
+//-----------------------------------------------------------------------------
+zsLib::Log::Level UseEnum::toNative(wrapper::org::webRtc::Level level) noexcept
+{
+  switch (level)
+  {
+    case wrapper::org::webRtc::Level_none:   return zsLib::Log::Level::None;
+    case wrapper::org::webRtc::Level_basic:  return zsLib::Log::Level::Basic;
+    case wrapper::org::webRtc::Level_detail: return zsLib::Log::Level::Detail;
+    case wrapper::org::webRtc::Level_debug:  return zsLib::Log::Level::Debug;
+    case wrapper::org::webRtc::Level_trace:  return zsLib::Log::Level::Trace;
+    case wrapper::org::webRtc::Level_insane: return zsLib::Log::Level::Insane;
+  }
+  ZS_ASSERT_FAIL("level is unknown");
+  return zsLib::Log::Level_First;
+}
+
+//-----------------------------------------------------------------------------
+const char *UseEnum::toNative(wrapper::org::webRtc::Component component) noexcept
+{
+  const char *componentStr{};
+  switch (component) {
+    case wrapper::org::webRtc::Component_all:                     return NULL;
+    case wrapper::org::webRtc::Component_zslib:                   componentStr = "zslib"; break;
+    case wrapper::org::webRtc::Component_socket:                  componentStr = "zslib_socket"; break;
+    case wrapper::org::webRtc::Component_eventing:                componentStr = "zslib_eventing"; break;
+    case wrapper::org::webRtc::Component_webrtc:                  componentStr = "webrtc"; break;
+    case wrapper::org::webRtc::Component_wrapper:                 componentStr = "wrapper_org_webRtc"; break;
+  };
+  ZS_ASSERT(componentStr);
+  return componentStr;
 }

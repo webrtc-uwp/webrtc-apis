@@ -17,11 +17,11 @@ using zsLib::AutoLock;
 using zsLib::RecursiveLock;
 using zsLib::AutoRecursiveLock;
 
-namespace webrtc { namespace etw { ZS_DECLARE_SUBSYSTEM(webrtc); } }
+namespace webrtc { namespace log { ZS_DECLARE_SUBSYSTEM(webrtc); } }
 
 namespace webrtc
 {
-  namespace etw
+  namespace log
   {
     ZS_DECLARE_CLASS_PTR(Logger);
 
@@ -45,7 +45,8 @@ namespace webrtc
       ~Logger()
       {
         currentSeverity_ = rtc::LoggingSeverity::LS_NONE;
-        currentCount_ = 0;
+        currentLoggingCount_ = 0;
+        currentEventingCount_ = 0;
         setupLoggingIfNeeded();
       }
 
@@ -126,7 +127,16 @@ namespace webrtc
           return;
 
         AutoRecursiveLock lock(lock_);
+        auto levelEventing = toNative(inSubsystem.getEventingLevel());
         currentSeverity_ = toNative(inSubsystem.getEventingLevel());
+        setupLoggingIfNeeded();
+      }
+
+      //-----------------------------------------------------------------------
+      void notifyLogSubscriberTotalChanged(size_t count) noexcept override
+      {
+        AutoRecursiveLock lock(lock_);
+        currentLoggingCount_ = count;
         setupLoggingIfNeeded();
       }
 
@@ -134,7 +144,7 @@ namespace webrtc
       void notifyEventingSubscriberTotalChanged(size_t count) noexcept override
       {
         AutoRecursiveLock lock(lock_);
-        currentCount_ = count;
+        currentEventingCount_ = count;
         setupLoggingIfNeeded();
       }
 
@@ -173,11 +183,11 @@ namespace webrtc
       {
         // WARNING: must be called within a lock
         bool severityChanged = lastSeverity_ != currentSeverity_;
-        bool needsLogging = (currentCount_ > 0) && (rtc::LoggingSeverity::LS_NONE != currentSeverity_);
+        bool needsLogging = ((currentEventingCount_ + currentLoggingCount_) > 0) && (rtc::LoggingSeverity::LS_NONE != currentSeverity_);
         bool hasLogging = (lastSeverity_ > 0) && (rtc::LoggingSeverity::LS_NONE != lastCount_);
 
         lastSeverity_ = currentSeverity_;
-        lastCount_ = currentCount_;
+        lastCount_ = currentEventingCount_ + currentLoggingCount_;
 
         rtc::LoggingSeverity level{ rtc::LoggingSeverity::LS_NONE };
 
@@ -203,7 +213,8 @@ namespace webrtc
 
       mutable RecursiveLock lock_;
 
-      size_t currentCount_{};
+      size_t currentLoggingCount_{};
+      size_t currentEventingCount_{};
       rtc::LoggingSeverity currentSeverity_ { rtc::LoggingSeverity::LS_NONE };
 
       size_t lastCount_ {};
@@ -213,7 +224,7 @@ namespace webrtc
 } // namespace webrtc
 
 //-----------------------------------------------------------------------------
-void webrtc::etw::ILogger::setup()
+void webrtc::log::ILogger::setup()
 {
-  webrtc::etw::Logger::setup();
+  webrtc::log::Logger::setup();
 }

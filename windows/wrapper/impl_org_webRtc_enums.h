@@ -173,6 +173,11 @@ namespace wrapper {
           ZS_NO_DISCARD() static ::webrtc::AudioProcessing::RuntimeSetting::Type toNative(wrapper::org::webRtc::RuntimeSetting value) noexcept;
 
           ZS_NO_DISCARD() static wrapper::org::webRtc::VideoFrameBufferType toWrapper(::webrtc::VideoFrameBuffer::Type value) noexcept;
+
+          ZS_NO_DISCARD() static wrapper::org::webRtc::Level toWrapper(zsLib::Log::Level level) noexcept;
+          ZS_NO_DISCARD() static zsLib::Log::Level toNative(wrapper::org::webRtc::Level level) noexcept;
+
+          ZS_NO_DISCARD() static const char *toNative(wrapper::org::webRtc::Component component) noexcept;
 #if 0
 
           enum MediaType {

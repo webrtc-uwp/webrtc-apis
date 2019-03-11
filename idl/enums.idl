@@ -959,6 +959,69 @@ namespace org
       I010
     };
 
+    /// <summary>
+    /// The level represents the detail level used when logging.
+    /// </summary>
+    enum Level
+    {
+      /// <summary>
+      /// Do not log any log messages.
+      /// </summary>
+      none,
+      /// <summary>
+      /// Log only the most important logger information.
+      /// </summary>
+      basic,
+      /// <summary>
+      /// Log a few more details from the logger information.
+      /// </summary>
+      detail,
+      /// <summary>
+      /// Log a level appropriate to debug the engine.
+      /// </summary>
+      debug,
+      /// <summary>
+      /// Log a level to trace the code path within the engine.
+      /// </summary>
+      trace,
+      /// <summary>
+      /// Log every possible mundane detail possible.
+      /// </summary>
+      insane
+    };
+
+    /// <summary>
+    /// The component represents the area of code that is capable of
+    /// logging.
+    /// </summary>
+    enum Component
+    {
+      /// <summary>
+      /// All components.
+      /// </summary>
+      all,
+      /// <summary>
+      /// The low level socket, asynchronous eventing, and OS abstraction
+      /// library.
+      /// </summary>
+      zslib,
+      /// <summary>
+      /// The eventing services library (ETW).
+      /// </summary>
+      eventing,
+      /// <summary>
+      /// The socket abstraction library.
+      /// </summary>
+      socket,
+      /// <summary>
+      /// The webrtc libary.
+      /// </summary>
+      webrtc,
+      /// <summary>
+      /// The wrapper library
+      /// </summary>
+      wrapper
+    };
   }
 }
 

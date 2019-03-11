@@ -26,6 +26,7 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(Constraint);
         ZS_DECLARE_STRUCT_PTR(EventQueue);
         ZS_DECLARE_STRUCT_PTR(EventQueueMaker);
+        ZS_DECLARE_STRUCT_PTR(Logger);
         ZS_DECLARE_STRUCT_PTR(MediaConstraints);
         ZS_DECLARE_STRUCT_PTR(MediaElement);
         ZS_DECLARE_STRUCT_PTR(MediaElementMaker);
