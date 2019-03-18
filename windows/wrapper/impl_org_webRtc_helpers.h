@@ -9,19 +9,6 @@
 #define WRAPPER_DEPROXIFY_CLASS(xProxyClass, xDerivedClassType, xPtr) \
         ::wrapper::impl::org::webRtc::deproxifyClass<xDerivedClassType, xProxyClass##Proxy, xProxyClass##Interface>(xPtr)
 
-#ifdef WINUWP
-#if defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)
-#define WRAPPER_TO_CX(xCxType, xWinrtObject) \
-        ::wrapper::impl::org::webRtc::to_cx<xCxType>(xWinrtObject)
-#define WRAPPER_FROM_CX(xWinrtType, xCxObject) \
-        ::wrapper::impl::org::webRtc::from_cx<xWinrtType>(xCxObject)
-#else
-#define WRAPPER_TO_CX(xCxType, xWinrtObject) \
-        ERROR_USING_CONVERSION_ROUTING_TO_CX_WHEN_BOTH_CX_AND_CPPWINRT_ARE_NOT_AVAILABLE()
-#endif //defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)
-#endif //WINUWP
-
-
 namespace wrapper {
   namespace impl {
     namespace org {
@@ -50,32 +37,6 @@ namespace wrapper {
           } while (true);
           return possibleProxy;
         }
-
-#ifdef WINUWP
-#if defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)
-        // see: https://github.com/Microsoft/cppwinrt/blob/master/Docs/Interoperability%20Helper%20Functions.md
-        // from version: https://github.com/Microsoft/cppwinrt/blob/eaf572eafbc7506f977b9adcbdb7919751ef3e4b/Docs/Interoperability%20Helper%20Functions.md
-
-        //---------------------------------------------------------------------
-        template <typename T>
-        T^ to_cx(winrt::Windows::Foundation::IUnknown const& from)
-        {
-          return safe_cast<T^>(reinterpret_cast<Platform::Object^>(winrt::get_abi(from)));
-        }
-
-        //---------------------------------------------------------------------
-        template <typename T>
-        T from_cx(Platform::Object^ from)
-        {
-          T to{ nullptr };
-
-          winrt::check_hresult(reinterpret_cast<::IUnknown*>(from)->QueryInterface(winrt::guid_of<T>(),
-            reinterpret_cast<void**>(winrt::put_abi(to))));
-
-          return to;
-        }
-#endif //defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)
-#endif //WINUWP
 
         //---------------------------------------------------------------------
         //---------------------------------------------------------------------

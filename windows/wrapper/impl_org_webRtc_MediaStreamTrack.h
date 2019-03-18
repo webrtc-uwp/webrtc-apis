@@ -4,8 +4,6 @@
 #include "types.h"
 #include "generated/org_webRtc_MediaStreamTrack.h"
 
-#include "impl_org_webRtc_MediaSourceHelper_cx.h"
-#include "impl_org_webRtc_MediaStreamSource_cx.h"
 #include "impl_webrtc_IMediaStreamSource.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -39,9 +37,6 @@ namespace wrapper {
 #ifdef CPPWINRT_VERSION
           ZS_DECLARE_TYPEDEF_PTR(webrtc::IMediaStreamSource, UseMediaStreamSource);
           typedef UseMediaStreamSource::VideoFrameType UseVideoFrameType;
-#elif defined(__cplusplus_winrt)
-          typedef MediaStreamSource UseMediaStreamSource;
-          typedef VideoFrameType UseVideoFrameType;
 #endif // CPPWINRT_VERSION
 #endif //WINUWP
 
@@ -143,8 +138,6 @@ namespace wrapper {
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           UseMediaStreamSourcePtr mediaStreamSource_;
-#elif defined(__cplusplus_winrt)
-          UseMediaStreamSource^ mediaStreamSource_;
 #endif // CPPWINRT_VERSION
 #endif //WINUWP
           UseVideoFrameType currentFrameType_{};

@@ -3,10 +3,6 @@
 
 #ifdef WINUWP
 
-#ifdef __cplusplus_winrt
-#include <windows.media.core.h>
-#endif //__cplusplus_winrt
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.Media.Core.h>)
 #include <winrt/Windows.Media.Core.h>
@@ -192,20 +188,6 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
 
   // Setup for WinWUP...
 
-#if defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)
-
-#else
-
-#ifdef __cplusplus_winrt
-  // setup when ONLY WinUWP CX is defined...
-#endif // __cplusplus_winrt
-
-#ifdef CPPWINRT_VERSION
-  // setup when ONLY CppWinRT is defined...
-#endif //CPPWINRT_VERSION
-
-#endif //defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)
-
 #ifdef CPPWINRT_VERSION
   {
     // Setup if WinUWP CppWinRT is defined...
@@ -215,16 +197,6 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
     }
   }
 #endif //CPPWINRT_VERSION
-
-#ifdef __cplusplus_winrt
-  // Setup if WinUWP CX is defined...
-  {
-    auto nativeCx = UseEventQueue::toNative_cx(queue);
-    if ((nativeCx) && (!didSetupZsLib_.test_and_set())) {
-      UseHelper::setup(nativeCx);
-    }
-  }
-#endif //__cplusplus_winrt
 
 #else
 
@@ -241,27 +213,6 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
   if (!didSetupZsLib_.test_and_set()) {
     UseHelper::setup();
   }
-
-#ifdef WINUWP
-
-  // Setup for WinWUP...
-
-#if defined(__cplusplus_winrt)
-
-  Windows::UI::Core::CoreDispatcher^ dispatcher{};
-
-  dispatcher = UseEventQueue::toNative_cx(queue);
-
-  // on WinUWP a dispatcher is not optional
-  ZS_ASSERT(dispatcher);
-
-  ::webrtc::VideoCommonWinUWP::SetCoreDispatcher(dispatcher);
-
-#endif //(defined(__cplusplus_winrt) && defined(CPPWINRT_VERSION)) || defined(__cplusplus_winrt)
-
-#else //WINUWP
-
-#endif //WINUWP
 
   rtc::EnsureWinsockInit();
   rtc::InitializeSSL();

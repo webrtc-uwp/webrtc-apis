@@ -1,20 +1,11 @@
 
 #ifdef WINUWP
 
-#ifdef __cplusplus_winrt
-#include <windows.ui.xaml.controls.h>
-#endif //__cplusplus_winrt
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #include <winrt/Windows.UI.Xaml.Controls.h>
 #endif //__has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #endif //__has_include
-
-#else
-
-#ifdef _WIN32
-#endif //_WIN32
 
 #endif //WINUWP
 
@@ -104,17 +95,6 @@ static ::webrtc::VideoTrackInterface *unproxyVideoTrack(NativeType *native)
 }
 
 #ifdef WINUWP
-
-#ifdef __cplusplus_winrt
-//------------------------------------------------------------------------------
-static void notifyAboutNewMediaSource(WrapperImplType &wrapper, Windows::Media::Core::IMediaSource^ newSource)
-{
-  typedef WrapperImplType::UseMediaSourceImpl UseMediaSourceImpl;
-  auto source = UseMediaSourceImpl::toWrapper(newSource);
-  wrapper.notifySourceChanged(source);
-}
-#endif //__cplusplus_winrt
-
 #ifdef CPPWINRT_VERSION
 //------------------------------------------------------------------------------
 static void notifyAboutNewMediaSource(WrapperImplType &wrapper, winrt::Windows::Media::Core::IMediaSource const & newSource)
@@ -124,7 +104,6 @@ static void notifyAboutNewMediaSource(WrapperImplType &wrapper, winrt::Windows::
   wrapper.notifySourceChanged(source);
 }
 #endif //CPPWINRT_VERSION
-
 #endif //WINUWP
 
 //------------------------------------------------------------------------------
@@ -336,21 +315,6 @@ void WrapperImplType::autoAttachSourceToElement()
       ZS_MAYBE_USED() bool didAttachment = false;
       ZS_MAYBE_USED(didAttachment);
 
-#ifdef __cplusplus_winrt
-      if (!didAttachment) {
-        auto nativeElement = UseMediaElementImpl::toNative_cx(element);
-        if (nativeElement) {
-          auto nativeSource = UseMediaSourceImpl::toNative_cx(source);
-          if (nativeSource) {
-            nativeElement->SetMediaStreamSource(nativeSource);
-          } else {
-            nativeElement->Source = nullptr;
-          }
-          didAttachment = true;
-        }
-      }
-#endif //__cplusplus_winrt
-
 #ifdef CPPWINRT_VERSION
       if (!didAttachment) {
         auto nativeElement = UseMediaElementImpl::toNative_winrt(element);
@@ -410,9 +374,6 @@ void WrapperImplType::teardownObserver() noexcept
   }
 }
 
-#ifdef WINUWP
-#ifdef CPPWINRT_VERSION
-
 //------------------------------------------------------------------------------
 void WrapperImplType::notifyWebrtcObserverFrame(const ::webrtc::VideoFrame& frame) noexcept
 {
@@ -426,14 +387,22 @@ void WrapperImplType::notifyWebrtcObserverFrame(const ::webrtc::VideoFrame& fram
 
   switch (frameBuffer->type())
   {
-  case ::webrtc::VideoFrameBuffer::Type::kNative:
-  {
-    ::webrtc::NativeHandleBuffer *nativeBuffer = reinterpret_cast<::webrtc::NativeHandleBuffer *>(frameBuffer.get());
-    switch (nativeBuffer->fourCC())
+    case ::webrtc::VideoFrameBuffer::Type::kNative:
     {
-    case cricket::FourCC::FOURCC_H264:
-    {
-      frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_H264;
+      ::webrtc::NativeHandleBuffer *nativeBuffer = reinterpret_cast<::webrtc::NativeHandleBuffer *>(frameBuffer.get());
+      switch (nativeBuffer->fourCC())
+      {
+        case cricket::FourCC::FOURCC_H264:
+        {
+          frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_H264;
+          break;
+        }
+        default:
+        {
+          frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_I420;
+          break;
+        }
+      }
       break;
     }
     default:
@@ -441,14 +410,6 @@ void WrapperImplType::notifyWebrtcObserverFrame(const ::webrtc::VideoFrame& fram
       frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_I420;
       break;
     }
-    }
-    break;
-  }
-  default:
-  {
-    frameType = UseMediaStreamSource::VideoFrameType::VideoFrameType_I420;
-    break;
-  }
   }
 
   if (frameType != currentFrameType_ || !firstFrameReceived_) {
@@ -479,32 +440,6 @@ void WrapperImplType::notifyWebrtcObserverFrame(const ::webrtc::VideoFrame& fram
     pThis->onVideoFrame(wrapperEvent);
   });
 }
-
-#elif defined(__cplusplus_winrt)
-//------------------------------------------------------------------------------
-void WrapperImplType::notifyWebrtcObserverFrame(const ::webrtc::VideoFrame& frame) noexcept
-{
-  UseVideoFrameType frameType{};
-  if (frame.video_frame_buffer()->ToI420() != nullptr)
-    frameType = UseVideoFrameType::FrameTypeI420;
-  else
-    frameType = UseVideoFrameType::FrameTypeH264;
-  
-  if (frameType != currentFrameType_ || !firstFrameReceived_) {
-    {
-      zsLib::AutoLock lock(lock_);
-
-      firstFrameReceived_ = true;
-      currentFrameType_ = frameType;
-      mediaStreamSource_ = UseMediaStreamSource::CreateMediaSource(frameType, "");
-    }
-    Windows::Media::Core::IMediaSource^ source = mediaStreamSource_->GetMediaStreamSource();
-    notifyAboutNewMediaSource(*this, source);
-  }
-  mediaStreamSource_->RenderFrame(&frame);
-}
-#endif // CPPWINRT_VERSION
-#endif //WINUWP
 
 //------------------------------------------------------------------------------
 void WrapperImplType::notifyWebrtcObserverDiscardedFrame() noexcept

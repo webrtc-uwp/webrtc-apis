@@ -28,8 +28,6 @@ namespace wrapper {
 #ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_DECLARE_TYPEDEF_PTR(webrtc::IVideoCapturer, UseVideoCapturer);
-#elif defined(__cplusplus_winrt)
-          typedef VideoCapturer UseVideoCapturer;
 #endif // CPPWINRT_VERSION
 #endif //WINUWP
 
