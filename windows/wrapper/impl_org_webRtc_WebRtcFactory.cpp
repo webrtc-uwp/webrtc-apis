@@ -371,11 +371,11 @@ void WrapperImplType::setup() noexcept
     enableAudioProcessingEvents ? audioProcessing : nullptr
   );
 
-#ifdef WINUWP
+#ifdef _WIN32
   videoDeviceCaptureFactory_ = make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
 #else
 #error PLATFORM REQUIRES FACTORY
-#endif //WEBRTC
+#endif //_WIN32
 }
 
 //------------------------------------------------------------------------------

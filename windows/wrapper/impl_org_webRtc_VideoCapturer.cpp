@@ -1,15 +1,14 @@
 
-#ifdef WINUWP
-
+#ifdef _WIN32
+#include <WinSock2.h>
 #include <unknwn.h>
+#endif //_WIN32
 
 #ifdef __has_include
 #if __has_include(<winrt/Windows.Devices.Enumeration.h>)
 #include <winrt/Windows.Devices.Enumeration.h>
 #endif //__has_include(<winrt/Windows.Devices.Enumeration.h>)
 #endif //__has_include
-
-#endif //WINUWP
 
 #include "impl_org_webRtc_VideoCapturer.h"
 #include "impl_org_webRtc_VideoFormat.h"
@@ -21,9 +20,7 @@
 #include "impl_webrtc_VideoCapturer.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#ifdef WINUWP
 #include "media/engine/webrtcvideocapturer.h"
-#endif //WINUWP
 #include "api/rtcerror.h"
 #include "impl_org_webRtc_post_include.h"
 
@@ -132,8 +129,6 @@ shared_ptr< PromiseWithHolderPtr< shared_ptr< list< wrapper::org::webRtc::VideoD
 
   auto promise = ResultType::element_type::create(delegateQueue);
 
-#ifdef WINUWP
-
 #ifdef CPPWINRT_VERSION
   if (alwaysTrue()) {
     //auto results = winrt::Windows::Devices::Enumeration::DeviceInformation::FindAllAsync();
@@ -158,8 +153,6 @@ shared_ptr< PromiseWithHolderPtr< shared_ptr< list< wrapper::org::webRtc::VideoD
   }
 #endif // CPPWINRT_VERSION
   
-#endif //WINUWP
-
   UseError::rejectPromise(promise, ::webrtc::RTCError(::webrtc::RTCErrorType::RESOURCE_EXHAUSTED));
   return promise;
 }

@@ -29,15 +29,10 @@ namespace wrapper {
           // properties VideoDeviceInfo
           AnyPtr get_info() noexcept override;
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static wrapper::org::webRtc::VideoDeviceInfoPtr toWrapper(winrt::Windows::Devices::Enumeration::DeviceInformation const & info) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::Devices::Enumeration::DeviceInformation toNative_winrt(wrapper::org::webRtc::VideoDeviceInfoPtr info) noexcept;
 #endif // CPPWINRT_VERSION
-#else
-#ifdef _WIN32
-#endif //_WIN32
-#endif //WINUWP
 
         };
 

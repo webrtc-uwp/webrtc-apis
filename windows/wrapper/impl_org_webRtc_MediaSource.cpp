@@ -1,18 +1,9 @@
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.Media.Core.h>)
 #include <winrt/Windows.Media.Core.h>
 #endif //__has_include(<winrt/Windows.Media.Core.h>)
 #endif //__has_include
-
-#else
-
-#ifdef _WIN32
-#endif //_WIN32
-
-#endif //WINUWP
 
 #include "impl_org_webRtc_MediaSource.h"
 #include "impl_org_webRtc_helpers.h"
@@ -40,8 +31,6 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaSource::WrapperImplType,
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
 
-#ifdef WINUWP
-
 #ifdef CPPWINRT_VERSION
 
 namespace wrapper { namespace impl { namespace org { namespace webRtc {
@@ -55,7 +44,7 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
 
 #endif // CPPWINRT_VERSION
 
-#else
+#ifndef WINUWP
 
 
 namespace wrapper { namespace impl { namespace org { namespace webRtc {
@@ -67,7 +56,7 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
         };
 } } } }
 
-#endif //WINUWP
+#endif //ndef WINUWP
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::MediaSource::MediaSource() noexcept
@@ -102,7 +91,6 @@ AnyPtr wrapper::impl::org::webRtc::MediaSource::get_source() noexcept
 }
 
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 WrapperImplTypePtr wrapper::impl::org::webRtc::MediaSource::toWrapper(winrt::Windows::Media::Core::IMediaSource const & source) noexcept
@@ -128,11 +116,3 @@ winrt::Windows::Media::Core::IMediaSource wrapper::impl::org::webRtc::MediaSourc
 }
 
 #endif // CPPWINRT_VERSION
-
-#else
-
-#ifdef _WIN32
-#endif //_WIN32
-
-#endif //WINUWP
-

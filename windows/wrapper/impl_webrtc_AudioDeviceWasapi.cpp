@@ -1,7 +1,10 @@
 
+#ifdef _WIN32
+#include <WinSock2.h>
+#endif //_WIN32
+
 #include "impl_webrtc_AudioDeviceWasapi.h"
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 #include <winrt/Windows.Media.Devices.h>
@@ -4904,4 +4907,3 @@ namespace webrtc
 } // namespace webrtc
 
 #endif //CPPWINRT_VERSION
-#endif //WINUWP

@@ -3,7 +3,6 @@
 
 #include "impl_webrtc_VideoCaptureMediaSink.h"
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 #include <zsLib/String.h>
@@ -1655,4 +1654,3 @@ namespace webrtc
   }
 }
 #endif //CPPWINRT_VERSION
-#endif //WINUWP

@@ -1,13 +1,9 @@
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #include <winrt/Windows.UI.Xaml.Controls.h>
 #endif //__has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #endif //__has_include
-
-#endif //WINUWP
 
 #include "impl_org_webRtc_MediaStreamTrack.h"
 
@@ -94,7 +90,6 @@ static ::webrtc::VideoTrackInterface *unproxyVideoTrack(NativeType *native)
   return WRAPPER_DEPROXIFY_CLASS(::webrtc::VideoTrack, ::webrtc::VideoTrack, converted);
 }
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 //------------------------------------------------------------------------------
 static void notifyAboutNewMediaSource(WrapperImplType &wrapper, winrt::Windows::Media::Core::IMediaSource const & newSource)
@@ -104,7 +99,6 @@ static void notifyAboutNewMediaSource(WrapperImplType &wrapper, winrt::Windows::
   wrapper.notifySourceChanged(source);
 }
 #endif //CPPWINRT_VERSION
-#endif //WINUWP
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::MediaStreamTrack::MediaStreamTrack() noexcept :

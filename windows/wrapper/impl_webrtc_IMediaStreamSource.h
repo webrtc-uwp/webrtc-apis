@@ -1,8 +1,6 @@
 
 #pragma once
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/windows.media.core.h>)
 #include <winrt/windows.media.core.h>
@@ -109,4 +107,3 @@ ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onMediaStreamSourceFrameRateChanged, IMedi
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_END()
 
 #endif //CPPWINRT_VERSION
-#endif //WINUWP

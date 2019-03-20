@@ -32,15 +32,10 @@ namespace wrapper {
           // properties MediaSource
           AnyPtr get_source() noexcept override;
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(winrt::Windows::Media::Core::IMediaSource const & source) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::Media::Core::IMediaSource toNative_winrt(wrapper::org::webRtc::MediaSourcePtr source) noexcept;
 #endif // CPPWINRT_VERSION
-#else
-#ifdef _WIN32
-#endif //_WIN32
-#endif //WINUWP
 
         };
 

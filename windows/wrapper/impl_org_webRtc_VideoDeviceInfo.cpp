@@ -1,13 +1,9 @@
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.Devices.Enumeration.h>)
 #include <winrt/Windows.Devices.Enumeration.h>
 #endif //__has_include(<winrt/Windows.Devices.Enumeration.h>)
 #endif //__has_include
-
-#endif //WINUWP
 
 #include "impl_org_webRtc_VideoDeviceInfo.h"
 #include "impl_org_webRtc_helpers.h"
@@ -34,8 +30,6 @@ using ::std::map;
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoDeviceInfo::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
-#ifdef WINUWP
-
 #ifdef CPPWINRT_VERSION
 
 namespace wrapper { namespace impl { namespace org { namespace webRtc {
@@ -47,10 +41,7 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
         };
 } } } }
 
-#endif // CPPWINRT_VERSION
-
 #else
-
 
 namespace wrapper { namespace impl { namespace org { namespace webRtc {
         ZS_DECLARE_STRUCT_PTR(VideoDeviceInfoWrapperAny);
@@ -88,9 +79,6 @@ AnyPtr wrapper::impl::org::webRtc::VideoDeviceInfo::get_info() noexcept
   return info_;
 }
 
-
-
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 wrapper::org::webRtc::VideoDeviceInfoPtr wrapper::impl::org::webRtc::VideoDeviceInfo::toWrapper(winrt::Windows::Devices::Enumeration::DeviceInformation const & info) noexcept
@@ -115,10 +103,3 @@ winrt::Windows::Devices::Enumeration::DeviceInformation wrapper::impl::org::webR
 }
 
 #endif // CPPWINRT_VERSION
-
-#else
-
-#ifdef _WIN32
-#endif //_WIN32
-
-#endif //WINUWP

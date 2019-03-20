@@ -3,7 +3,6 @@
 
 #include "impl_webrtc_MediaStreamSource.h"
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 #include <zsLib/String.h>
@@ -669,4 +668,3 @@ IMediaStreamSourcePtr IMediaStreamSource::create(const CreationProperties &info)
 }
 
 #endif //CPPWINRT_VERSION
-#endif //WINUWP

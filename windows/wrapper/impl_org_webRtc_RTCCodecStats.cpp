@@ -118,7 +118,7 @@ Optional< uint8_t > wrapper::impl::org::webRtc::RTCCodecStats::get_payloadType()
 
   auto converted = cast();
   if (!converted.payload_type.is_defined()) return {};
-  return SafeInt<uint8_t>(*converted.payload_type);
+  return static_cast<uint8_t>(SafeInt<uint8_t>(*converted.payload_type));
 }
 
 //------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ Optional< unsigned long > wrapper::impl::org::webRtc::RTCCodecStats::get_channel
 
   auto converted = cast();
   if (!converted.channels.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.channels);
+  return static_cast<unsigned long>(SafeInt<unsigned long>(*converted.channels));
 }
 
 //------------------------------------------------------------------------------

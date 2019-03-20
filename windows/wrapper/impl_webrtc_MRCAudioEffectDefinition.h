@@ -2,7 +2,6 @@
 
 #include "impl_webrtc_MRCEffectTemplate.h"
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 // This class provides an IAudioEffectDefinition which can be used
@@ -69,4 +68,3 @@ namespace webrtc {
 }
 
 #endif //CPPWINRT_VERSION
-#endif //WINUWP

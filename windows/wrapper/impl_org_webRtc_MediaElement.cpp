@@ -1,19 +1,15 @@
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #include <winrt/Windows.UI.Xaml.Controls.h>
 #endif //__has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #endif //__has_include
 
-#else
-
+#ifndef WINUWP
 #ifdef _WIN32
 #include <Windows.h>
 #endif //_WIN32
-
-#endif //WINUWP
+#endif //ndef WINUWP
 
 #include "impl_org_webRtc_MediaElement.h"
 #include "impl_org_webRtc_helpers.h"
@@ -40,8 +36,6 @@ using ::std::map;
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaElement::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
-#ifdef WINUWP
-
 #ifdef CPPWINRT_VERSION
 
 namespace wrapper { namespace impl { namespace org { namespace webRtc {
@@ -55,8 +49,8 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
 
 #endif // CPPWINRT_VERSION
 
-#else
-
+#ifndef WINUWP
+#ifdef _WIN32
 
 namespace wrapper { namespace impl { namespace org { namespace webRtc {
         ZS_DECLARE_STRUCT_PTR(MediaElementWrapperAny);
@@ -67,6 +61,7 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
         };
 } } } }
 
+#endif //_WIN32
 #endif //WINUWP
 
 //------------------------------------------------------------------------------
@@ -102,7 +97,6 @@ AnyPtr wrapper::impl::org::webRtc::MediaElement::get_element() noexcept
 }
 
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 wrapper::org::webRtc::MediaElementPtr wrapper::impl::org::webRtc::MediaElement::toWrapper(winrt::Windows::UI::Xaml::Controls::MediaElement const & element) noexcept
@@ -129,7 +123,8 @@ winrt::Windows::UI::Xaml::Controls::MediaElement wrapper::impl::org::webRtc::Med
 
 #endif // CPPWINRT_VERSION
 
-#else
+#ifndef WINUWP
+#ifdef _WIN32
 
 wrapper::org::webRtc::MediaElementPtr wrapper::impl::org::webRtc::MediaElement::toWrapper(HWND element) noexcept
 {
@@ -150,5 +145,6 @@ HWND wrapper::impl::org::webRtc::MediaElement::toNative(wrapper::org::webRtc::Me
   return castedAny->element_;
 }
 
-#endif //WINUWP
+#endif //_WIN32
+#endif //ndef WINUWP
 

@@ -31,17 +31,17 @@ namespace wrapper {
           // properties MediaElement
           AnyPtr get_element() noexcept override;
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static wrapper::org::webRtc::MediaElementPtr toWrapper(winrt::Windows::UI::Xaml::Controls::MediaElement const & element) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::UI::Xaml::Controls::MediaElement toNative_winrt(wrapper::org::webRtc::MediaElementPtr element) noexcept;
 #endif // CPPWINRT_VERSION
-#else
+
+#ifndef WINUWP
 #ifdef _WIN32
           ZS_NO_DISCARD() static wrapper::org::webRtc::MediaElementPtr toWrapper(HWND element) noexcept;
-          ZS_NO_DISCARD() static element toNative(wrapper::org::webRtc::MediaElementPtr element) noexcept;
+          ZS_NO_DISCARD() static HWND toNative(wrapper::org::webRtc::MediaElementPtr element) noexcept;
 #endif //_WIN32
-#endif //WINUWP
+#endif //ndef WINUWP
 
         };
 

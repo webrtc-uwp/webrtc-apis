@@ -25,27 +25,22 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::MediaSample, UseMediaSample);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_DECLARE_TYPEDEF_PTR(webrtc::IVideoCapturer, UseVideoCapturer);
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
 
           ZS_DECLARE_STRUCT_PTR(WebrtcVideoObserver);
 
           struct WebrtcVideoObserver : public zsLib::MessageQueueAssociator
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
                                      , public ::webrtc::IVideoCapturerDelegate
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
           {
             WebrtcVideoObserver(
                                 WrapperImplTypePtr wrapper,
                                 IMessageQueuePtr queue
                                 ) noexcept : zsLib::MessageQueueAssociator(queue), outer_(wrapper) {}
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
             void onVideoFrameReceived(UseVideoFrameBufferEventPtr event) override
             {
@@ -54,7 +49,6 @@ namespace wrapper {
               outer->onWebrtcObserverVideoFrameReceived(event);
             }
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
 
           private:
             WrapperImplTypeWeakPtr outer_;

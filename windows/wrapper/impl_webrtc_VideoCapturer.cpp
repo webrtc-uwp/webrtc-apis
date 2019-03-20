@@ -1,5 +1,8 @@
 
+#ifdef _WIN32
+#include <WinSock2.h>
 #include <unknwn.h>
+#endif //_WIN32
 
 #include "impl_webrtc_VideoCapturer.h"
 #include "impl_org_webRtc_VideoFrameBufferEvent.h"
@@ -11,7 +14,6 @@
 #include "third_party/winuwp_h264/native_handle_buffer.h"
 #include "impl_org_webRtc_post_include.h"
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 #include <ppltasks.h>
@@ -1222,4 +1224,3 @@ namespace webrtc
 } // namespace webrtc
 
 #endif //CPPWINRT_VERSION
-#endif //WINUWP

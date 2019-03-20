@@ -11,8 +11,8 @@
 
 namespace cricket
 {
-  enum CaptureState;
-  enum MediaType;
+  enum CaptureState : int;
+  enum MediaType : int;
 
   struct VideoFormat;
 }
@@ -28,13 +28,13 @@ namespace rtc
 
   struct RSAParams;
 
-  enum ECCurve;
-  enum KeyType;
+  enum ECCurve : int;
+  enum KeyType : int;
 }
 
 namespace webrtc
 {
-  enum Band;
+  enum Band : int;
   enum class SdpSemantics;
   enum class SdpType;
   enum class RtpTransceiverDirection;
