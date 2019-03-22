@@ -7,6 +7,7 @@
 
 #ifndef WINUWP
 #ifdef _WIN32
+#include <WinSock2.h>
 #include <Windows.h>
 #endif //_WIN32
 #endif //WINUWP

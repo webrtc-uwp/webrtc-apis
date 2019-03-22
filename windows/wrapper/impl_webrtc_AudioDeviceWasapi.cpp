@@ -1,13 +1,12 @@
 
 #ifdef _WIN32
 #include <WinSock2.h>
+#include <Windows.h>
 #endif //_WIN32
 
 #include "impl_webrtc_AudioDeviceWasapi.h"
 
 #ifdef CPPWINRT_VERSION
-
-#include <winrt/Windows.Media.Devices.h>
 
 #pragma warning(disable: 4995)  // name was marked as #pragma deprecated
 
@@ -93,7 +92,7 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 #define AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY 0x08000000
 
 // Macro that calls a COM method returning HRESULT value.
-#define EXIT_ON_ERROR(hres)    do { if (FAILED(hres)) goto Exit; } while (0)
+#define EXIT_ON_ERROR(hres)         do { if (FAILED(hres)) goto Exit; } while (0)
 
 // Macro that continues to a COM error.
 #define CONTINUE_ON_ERROR(hres) do { if (FAILED(hres)) goto Next; } while (0)
@@ -918,7 +917,7 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   IAudioDeviceWasapiSubscriptionPtr AudioDeviceWasapi::subscribe(IAudioDeviceWasapiDelegatePtr originalDelegate) {
-    AutoRecursiveLock lock(lock_);
+    AutoRecursiveLock lock(subscriptionLock_);
     if (!originalDelegate) return defaultSubscription_;
 
     auto subscription = subscriptions_.subscribe(originalDelegate, zsLib::IMessageQueueThread::singletonUsingCurrentGUIThreadsMessageQueue());
@@ -1298,20 +1297,20 @@ namespace webrtc
   //  SpeakerVolumeIsAvailable
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::SpeakerVolumeIsAvailable(bool* available) {
+    HRESULT hr = S_OK;
+    ISimpleAudioVolume* pVolume = NULL;
+    float volume(0.0f);
+
     rtc::CritScope lock(&critSect_);
 
     if (ptrClientOut_ == nullptr) {
       return -1;
     }
 
-    HRESULT hr = S_OK;
-    ISimpleAudioVolume* pVolume = NULL;
-
     hr = ptrClientOut_->GetService(__uuidof(ISimpleAudioVolume),
       reinterpret_cast<void**>(&pVolume));
     EXIT_ON_ERROR(hr);
 
-    float volume(0.0f);
     hr = pVolume->GetMasterVolume(&volume);
     if (FAILED(hr)) {
       *available = false;
@@ -1469,6 +1468,11 @@ namespace webrtc
   //  SetSpeakerMute
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::SetSpeakerMute(bool enable) {
+
+    HRESULT hr = S_OK;
+    ISimpleAudioVolume* pVolume = NULL;
+    const BOOL mute {enable};
+
     rtc::CritScope lock(&critSect_);
 
     if (!speakerIsInitialized_) {
@@ -1478,16 +1482,12 @@ namespace webrtc
     if (ptrClientOut_ == NULL) {
       return -1;
     }
-
-    HRESULT hr = S_OK;
-    ISimpleAudioVolume* pVolume = NULL;
-
+    
     // Set the speaker system mute state.
     hr = ptrClientOut_->GetService(__uuidof(ISimpleAudioVolume),
       reinterpret_cast<void**>(&pVolume));
     EXIT_ON_ERROR(hr);
 
-    const BOOL mute(enable);
     hr = pVolume->SetMute(mute, NULL);
     EXIT_ON_ERROR(hr);
 
@@ -1574,6 +1574,10 @@ namespace webrtc
   //  SetMicrophoneMute
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::SetMicrophoneMute(bool enable) {
+    HRESULT hr = S_OK;
+    ISimpleAudioVolume* pVolume = NULL;
+    const BOOL mute {enable};
+
     if (!microphoneIsInitialized_) {
       return -1;
     }
@@ -1582,15 +1586,11 @@ namespace webrtc
         return -1;
     }
 
-    HRESULT hr = S_OK;
-    ISimpleAudioVolume* pVolume = NULL;
-
     // Set the microphone system mute state.
     hr = ptrClientIn_->GetService(__uuidof(ISimpleAudioVolume),
       reinterpret_cast<void**>(&pVolume));
     EXIT_ON_ERROR(hr);
 
-    const BOOL mute(enable);
     hr = pVolume->SetMute(mute, NULL);
     EXIT_ON_ERROR(hr);
 
@@ -1720,20 +1720,21 @@ namespace webrtc
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::MicrophoneVolumeIsAvailable(
     bool* available) {
+
+    HRESULT hr = S_OK;
+    ISimpleAudioVolume* pVolume = NULL;
+    float volume {0.0f};
+
     rtc::CritScope lock(&critSect_);
 
     if (ptrClientIn_ == NULL) {
       return -1;
     }
 
-    HRESULT hr = S_OK;
-    ISimpleAudioVolume* pVolume = NULL;
-
     hr = ptrClientIn_->GetService(__uuidof(ISimpleAudioVolume),
       reinterpret_cast<void**>(&pVolume));
     EXIT_ON_ERROR(hr);
 
-    float volume(0.0f);
     hr = pVolume->GetMasterVolume(&volume);
     if (FAILED(hr)) {
         *available = false;
@@ -3225,290 +3226,294 @@ namespace webrtc
   // ----------------------------------------------------------------------------
   //  DoRenderThread
   // ----------------------------------------------------------------------------
-  DWORD AudioDeviceWasapi::DoRenderThread() {
-    bool keepPlaying = true;
-    HANDLE waitArray[2] = { hShutdownRenderEvent_, hRenderSamplesReadyEvent_ };
-    HRESULT hr = S_OK;
-
-    LARGE_INTEGER t1;
-    LARGE_INTEGER t2;
-    int32_t time(0);
-
-    // Initialize COM as MTA in this thread.
-    ScopedCOMInitializer comInit(ScopedCOMInitializer::kMTA);
-    if (!comInit.succeeded()) {
-      WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-        "failed to initialize COM in render thread");
-      return 1;
-    }
-
-    SetThreadName(0, "webrtc_core_audio_render_thread");
-
-    Lock();
-
+  DWORD AudioDeviceWasapi::DoRenderThread()
+  {
     IAudioClock* clock = NULL;
+    HRESULT hr = S_OK;
+    bool keepPlaying = true;
 
-    // Get size of rendering buffer (length is expressed as the number of audio
-    // frames the buffer can hold).
-    // This value is fixed during the rendering session.
-    UINT32 bufferLength = 0;
-    hr = ptrClientOut_->GetBufferSize(&bufferLength);
-    EXIT_ON_ERROR(hr);
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[REND] size of buffer       : %u", bufferLength);
-
-    // Get maximum latency for the current stream (will not change for the
-    // lifetime of the IAudioClient object).
-    REFERENCE_TIME latency;
-    ptrClientOut_->GetStreamLatency(&latency);
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[REND] max stream latency   : %u (%3.2f ms)",
-      (DWORD)latency, (double)(latency/10000.0));
-
-    // Get the length of the periodic interval separating successive processing
-    // passes by the audio engine on the data in the endpoint buffer.
-    //
-    // The period between processing passes by the audio engine is fixed for a
-    // particular audio endpoint device and represents the smallest processing
-    // quantum for the audio engine. This period plus the stream latency between
-    // the buffer and endpoint device represents the minimum possible latency
-    // that an audio application can achieve. Typical value: 100000 <=> 0.01
-    // sec = 10ms.
-    REFERENCE_TIME devPeriod = 0;
-    REFERENCE_TIME devPeriodMin = 0;
-    ptrClientOut_->GetDevicePeriod(&devPeriod, &devPeriodMin);
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[REND] device period        : %u (%3.2f ms)", (DWORD)devPeriod,
-      static_cast<double>(devPeriod / 10000.0));
-
-    // Derive initial rendering delay.
-    // Example: 10*(960/480) + 15 = 20 + 15 = 35ms
-    int playout_delay = 10 * (bufferLength / playBlockSize_) +
-      static_cast<int>((latency + devPeriod) / 10000);
-    sndCardPlayDelay_ = playout_delay;
-    writtenSamples_ = 0;
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[REND] initial delay        : %u", playout_delay);
-
-    double endpointBufferSizeMS = 10.0 * (static_cast<double>(bufferLength) /
-      static_cast<double>(devicePlayBlockSize_));
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[REND] endpointBufferSizeMS : %3.2f", endpointBufferSizeMS);
-
-    BYTE *pData = NULL;
-    // Before starting the stream, fill the rendering buffer with silence.
+    // scope: do thread
     {
-      UINT32 initialPadding = 0;
-      hr = ptrClientOut_->GetCurrentPadding(&initialPadding);
+      HANDLE waitArray[2] = { hShutdownRenderEvent_, hRenderSamplesReadyEvent_ };
+
+      LARGE_INTEGER t1;
+      LARGE_INTEGER t2;
+      int32_t time(0);
+
+      // Initialize COM as MTA in this thread.
+      ScopedCOMInitializer comInit(ScopedCOMInitializer::kMTA);
+      if (!comInit.succeeded()) {
+        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+          "failed to initialize COM in render thread");
+        return 1;
+      }
+
+      SetThreadName(0, "webrtc_core_audio_render_thread");
+
+      Lock();
+
+      // Get size of rendering buffer (length is expressed as the number of audio
+      // frames the buffer can hold).
+      // This value is fixed during the rendering session.
+      UINT32 bufferLength = 0;
+      hr = ptrClientOut_->GetBufferSize(&bufferLength);
       EXIT_ON_ERROR(hr);
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[REND] size of buffer       : %u", bufferLength);
 
-      // Derive the amount of available space in the output buffer
-      // Is it possible to silence the padding as well?
-      uint32_t initialFramesAvailable = bufferLength - initialPadding;
+      // Get maximum latency for the current stream (will not change for the
+      // lifetime of the IAudioClient object).
+      REFERENCE_TIME latency;
+      ptrClientOut_->GetStreamLatency(&latency);
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[REND] max stream latency   : %u (%3.2f ms)",
+        (DWORD)latency, (double)(latency/10000.0));
 
-      hr = ptrRenderClient_->GetBuffer(initialFramesAvailable, &pData);
-      EXIT_ON_ERROR(hr);
+      // Get the length of the periodic interval separating successive processing
+      // passes by the audio engine on the data in the endpoint buffer.
+      //
+      // The period between processing passes by the audio engine is fixed for a
+      // particular audio endpoint device and represents the smallest processing
+      // quantum for the audio engine. This period plus the stream latency between
+      // the buffer and endpoint device represents the minimum possible latency
+      // that an audio application can achieve. Typical value: 100000 <=> 0.01
+      // sec = 10ms.
+      REFERENCE_TIME devPeriod = 0;
+      REFERENCE_TIME devPeriodMin = 0;
+      ptrClientOut_->GetDevicePeriod(&devPeriod, &devPeriodMin);
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[REND] device period        : %u (%3.2f ms)", (DWORD)devPeriod,
+        static_cast<double>(devPeriod / 10000.0));
 
-      hr = ptrRenderClient_->ReleaseBuffer(initialFramesAvailable,
-        AUDCLNT_BUFFERFLAGS_SILENT);
-      EXIT_ON_ERROR(hr);
-    }
+      // Derive initial rendering delay.
+      // Example: 10*(960/480) + 15 = 20 + 15 = 35ms
+      int playout_delay = 10 * (bufferLength / playBlockSize_) +
+        static_cast<int>((latency + devPeriod) / 10000);
+      sndCardPlayDelay_ = playout_delay;
+      writtenSamples_ = 0;
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[REND] initial delay        : %u", playout_delay);
 
-    writtenSamples_ += bufferLength;
+      double endpointBufferSizeMS = 10.0 * (static_cast<double>(bufferLength) /
+        static_cast<double>(devicePlayBlockSize_));
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[REND] endpointBufferSizeMS : %3.2f", endpointBufferSizeMS);
 
-    hr = ptrClientOut_->GetService(__uuidof(IAudioClock),
-      reinterpret_cast<void**>(&clock));
-    if (FAILED(hr)) {
-      WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
-        "failed to get IAudioClock interface from the IAudioClient");
-    }
+      BYTE *pData = NULL;
+      // Before starting the stream, fill the rendering buffer with silence.
+      {
+        UINT32 initialPadding = 0;
+        hr = ptrClientOut_->GetCurrentPadding(&initialPadding);
+        EXIT_ON_ERROR(hr);
 
-    // Start up the rendering audio stream.
-    hr = ptrClientOut_->Start();
-    if (FAILED(hr)) {
-      WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-        "failed to start rendering client, hr = 0x%08X", hr);
-      goto Exit;
-    }
+        // Derive the amount of available space in the output buffer
+        // Is it possible to silence the padding as well?
+        uint32_t initialFramesAvailable = bufferLength - initialPadding;
 
-    UnLock();
+        hr = ptrRenderClient_->GetBuffer(initialFramesAvailable, &pData);
+        EXIT_ON_ERROR(hr);
 
-    // Set event which will ensure that the calling thread modifies the playing
-    // state to true.
-    SetEvent(hRenderStartedEvent_);
-    // >> ------------------ THREAD LOOP ------------------
+        hr = ptrRenderClient_->ReleaseBuffer(initialFramesAvailable,
+          AUDCLNT_BUFFERFLAGS_SILENT);
+        EXIT_ON_ERROR(hr);
+      }
 
-    while (keepPlaying) {
-      // Wait for a render notification event or a shutdown event
-      DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, 500);
-      switch (waitResult) {
-      case WAIT_OBJECT_0 + 0:     // hShutdownRenderEvent_
-        keepPlaying = false;
-        break;
-      case WAIT_OBJECT_0 + 1:     // hRenderSamplesReadyEvent_
-        break;
-      case WAIT_TIMEOUT:          // timeout notification
+      writtenSamples_ += bufferLength;
+
+      hr = ptrClientOut_->GetService(__uuidof(IAudioClock),
+        reinterpret_cast<void**>(&clock));
+      if (FAILED(hr)) {
         WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
-          "render event timed out after 0.5 seconds");
-        goto Exit;
-      default:                    // unexpected error
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
-          "unknown wait termination on render side");
+          "failed to get IAudioClock interface from the IAudioClient");
+      }
+
+      // Start up the rendering audio stream.
+      hr = ptrClientOut_->Start();
+      if (FAILED(hr)) {
+        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+          "failed to start rendering client, hr = 0x%08X", hr);
         goto Exit;
       }
 
+      UnLock();
+
+      // Set event which will ensure that the calling thread modifies the playing
+      // state to true.
+      SetEvent(hRenderStartedEvent_);
+      // >> ------------------ THREAD LOOP ------------------
+
       while (keepPlaying) {
-        Lock();
-
-        // Sanity check to ensure that essential states are not modified
-        // during the unlocked period.
-        if (ptrRenderClient_ == NULL || ptrClientOut_ == NULL) {
-            UnLock();
-            WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
-              "output state has been modified during unlocked period");
-            goto Exit;
-        }
-
-        // Get the number of frames of padding (queued up to play) in the
-        // endpoint buffer.
-        UINT32 padding = 0;
-        hr = ptrClientOut_->GetCurrentPadding(&padding);
-        if (FAILED(hr)) {
-          WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-            "rendering loop failed (GetCurrentPadding), hr = 0x%08X", hr);
+        // Wait for a render notification event or a shutdown event
+        DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, 500);
+        switch (waitResult) {
+        case WAIT_OBJECT_0 + 0:     // hShutdownRenderEvent_
+          keepPlaying = false;
+          break;
+        case WAIT_OBJECT_0 + 1:     // hRenderSamplesReadyEvent_
+          break;
+        case WAIT_TIMEOUT:          // timeout notification
+          WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
+            "render event timed out after 0.5 seconds");
+          goto Exit;
+        default:                    // unexpected error
+          WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
+            "unknown wait termination on render side");
           goto Exit;
         }
 
-        // Derive the amount of available space in the output buffer
-        uint32_t framesAvailable = bufferLength - padding;
-        // WEBRTC_TRACE(kTraceStream, kTraceAudioDevice, id_,
-        //   "#avaliable audio frames = %u", framesAvailable);
+        while (keepPlaying) {
+          Lock();
 
-        // Do we have 10 ms available in the render buffer?
-        if (framesAvailable < playBlockSize_) {
-          // Not enough space in render buffer to store next render packet.
-          UnLock();
-          break;
-        }
-
-        // Write n*10ms buffers to the render buffer
-        const uint32_t n10msBuffers = (framesAvailable / playBlockSize_);
-        for (uint32_t n = 0; n < n10msBuffers; n++) {
-          // Get pointer (i.e., grab the buffer) to next space in the shared
-          // render buffer.
-          hr = ptrRenderClient_->GetBuffer(playBlockSize_, &pData);
-          if (FAILED(hr)) {
-            WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-              "rendering loop failed (GetBuffer), hr = 0x%08X", hr);
-            goto Exit;
-          }
-
-          QueryPerformanceCounter(&t1);    // measure time: START
-
-          if (ptrAudioBuffer_) {
-            // Request data to be played out (#bytes =
-            // playBlockSize_*_audioFrameSize)
-            UnLock();
-            int32_t nSamples =
-            ptrAudioBuffer_->RequestPlayoutData(playBlockSize_);
-            Lock();
-
-            if (nSamples == -1) {
-              UnLock();
-              WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
-                "failed to read data from render client");
-              goto Exit;
-            }
-
-            // Sanity check to ensure that essential states are not modified
-            // during the unlocked period
-            if (ptrRenderClient_ == NULL || ptrClientOut_ == NULL) {
+          // Sanity check to ensure that essential states are not modified
+          // during the unlocked period.
+          if (ptrRenderClient_ == NULL || ptrClientOut_ == NULL) {
               UnLock();
               WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
                 "output state has been modified during unlocked period");
               goto Exit;
-            }
-            if (nSamples != static_cast<int32_t>(playChannels_ * playBlockSize_)) {
-              WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
-                "nSamples(%d) != playBlockSize_(%d)", nSamples,
-                playChannels_ * playBlockSize_);
-            }
-
-            if (ShouldUpmix()) {
-              int size = playBlockSize_ * playAudioFrameSize_;
-              // Create temporary array for upmixing procedure
-              std::unique_ptr<BYTE> mediaEngineRenderData(new BYTE[size]);
-
-              // Get the actual (stored) data
-              nSamples = ptrAudioBuffer_->GetPlayoutData(
-                reinterpret_cast<int8_t*>(mediaEngineRenderData.get()));
-
-              if (mixFormatSurroundOut_->SubFormat == KSDATAFORMAT_SUBTYPE_PCM) {
-                // Do the upmixing. We are using 16-bit samples only at this point
-                Upmix(reinterpret_cast<int16_t*>(mediaEngineRenderData.get()),
-                  playBlockSize_,
-                  reinterpret_cast<int16_t*>(pData),
-                  playChannels_,
-                  mixFormatSurroundOut_->Format.nChannels);
-              } else if (mixFormatSurroundOut_->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
-                // Do the upmixing. We are using 32-bit samples only at this point
-                UpmixAndConvert(reinterpret_cast<int16_t*>(mediaEngineRenderData.get()),
-                  playBlockSize_,
-                  reinterpret_cast<float*>(pData),
-                  playChannels_,
-                  mixFormatSurroundOut_->Format.nChannels);
-              } else {
-                WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
-                  "audio data format type is not supported");
-                goto Exit;
-              }
-            } else {
-              // Get the actual (stored) data
-              nSamples = ptrAudioBuffer_->GetPlayoutData(
-                reinterpret_cast<int8_t*>(pData));
-            }
           }
 
-          QueryPerformanceCounter(&t2);    // measure time: STOP
-          time = static_cast<int>(t2.QuadPart - t1.QuadPart);
-          playAcc_ += time;
-
-          DWORD dwFlags(0);
-          hr = ptrRenderClient_->ReleaseBuffer(playBlockSize_, dwFlags);
-          // See http://msdn.microsoft.com/en-us/library/dd316605(VS.85).aspx
-          // for more details regarding AUDCLNT_E_DEVICE_INVALIDATED.
+          // Get the number of frames of padding (queued up to play) in the
+          // endpoint buffer.
+          UINT32 padding = 0;
+          hr = ptrClientOut_->GetCurrentPadding(&padding);
           if (FAILED(hr)) {
             WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-              "rendering loop failed (ReleaseBuffer), hr = 0x%08X", hr);
+              "rendering loop failed (GetCurrentPadding), hr = 0x%08X", hr);
             goto Exit;
           }
 
-          writtenSamples_ += playBlockSize_;
-        }
+          // Derive the amount of available space in the output buffer
+          uint32_t framesAvailable = bufferLength - padding;
+          // WEBRTC_TRACE(kTraceStream, kTraceAudioDevice, id_,
+          //   "#available audio frames = %u", framesAvailable);
 
-        // Check the current delay on the playout side.
-        if (clock) {
-          UINT64 pos = 0;
-          UINT64 freq = 1;
-          clock->GetPosition(&pos, NULL);
-          clock->GetFrequency(&freq);
-          playout_delay = ROUND((static_cast<double>(writtenSamples_) /
-            devicePlaySampleRate_ - static_cast<double>(pos) / freq) * 1000.0);
-          sndCardPlayDelay_ = playout_delay;
-        }
+          // Do we have 10 ms available in the render buffer?
+          if (framesAvailable < playBlockSize_) {
+            // Not enough space in render buffer to store next render packet.
+            UnLock();
+            break;
+          }
 
-        // Clear flag marking a successfull recovery.
-        if (playIsRecovering_) {
-          playIsRecovering_ = false;
+          // Write n*10ms buffers to the render buffer
+          const uint32_t n10msBuffers = (framesAvailable / playBlockSize_);
+          for (uint32_t n = 0; n < n10msBuffers; n++) {
+            // Get pointer (i.e., grab the buffer) to next space in the shared
+            // render buffer.
+            hr = ptrRenderClient_->GetBuffer(playBlockSize_, &pData);
+            if (FAILED(hr)) {
+              WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+                "rendering loop failed (GetBuffer), hr = 0x%08X", hr);
+              goto Exit;
+            }
+
+            QueryPerformanceCounter(&t1);    // measure time: START
+
+            if (ptrAudioBuffer_) {
+              // Request data to be played out (#bytes =
+              // playBlockSize_*_audioFrameSize)
+              UnLock();
+              int32_t nSamples =
+              ptrAudioBuffer_->RequestPlayoutData(playBlockSize_);
+              Lock();
+
+              if (nSamples == -1) {
+                UnLock();
+                WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
+                  "failed to read data from render client");
+                goto Exit;
+              }
+
+              // Sanity check to ensure that essential states are not modified
+              // during the unlocked period
+              if (ptrRenderClient_ == NULL || ptrClientOut_ == NULL) {
+                UnLock();
+                WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
+                  "output state has been modified during unlocked period");
+                goto Exit;
+              }
+              if (nSamples != static_cast<int32_t>(playChannels_ * playBlockSize_)) {
+                WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
+                  "nSamples(%d) != playBlockSize_(%d)", nSamples,
+                  playChannels_ * playBlockSize_);
+              }
+
+              if (ShouldUpmix()) {
+                int size = playBlockSize_ * playAudioFrameSize_;
+                // Create temporary array for up-mixing procedure
+                std::unique_ptr<BYTE> mediaEngineRenderData(new BYTE[size]);
+
+                // Get the actual (stored) data
+                nSamples = ptrAudioBuffer_->GetPlayoutData(
+                  reinterpret_cast<int8_t*>(mediaEngineRenderData.get()));
+
+                if (mixFormatSurroundOut_->SubFormat == KSDATAFORMAT_SUBTYPE_PCM) {
+                  // Do the up-mixing. We are using 16-bit samples only at this point
+                  Upmix(reinterpret_cast<int16_t*>(mediaEngineRenderData.get()),
+                    playBlockSize_,
+                    reinterpret_cast<int16_t*>(pData),
+                    playChannels_,
+                    mixFormatSurroundOut_->Format.nChannels);
+                } else if (mixFormatSurroundOut_->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
+                  // Do the up-mixing. We are using 32-bit samples only at this point
+                  UpmixAndConvert(reinterpret_cast<int16_t*>(mediaEngineRenderData.get()),
+                    playBlockSize_,
+                    reinterpret_cast<float*>(pData),
+                    playChannels_,
+                    mixFormatSurroundOut_->Format.nChannels);
+                } else {
+                  WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
+                    "audio data format type is not supported");
+                  goto Exit;
+                }
+              } else {
+                // Get the actual (stored) data
+                nSamples = ptrAudioBuffer_->GetPlayoutData(
+                  reinterpret_cast<int8_t*>(pData));
+              }
+            }
+
+            QueryPerformanceCounter(&t2);    // measure time: STOP
+            time = static_cast<int>(t2.QuadPart - t1.QuadPart);
+            playAcc_ += time;
+
+            DWORD dwFlags(0);
+            hr = ptrRenderClient_->ReleaseBuffer(playBlockSize_, dwFlags);
+            // See http://msdn.microsoft.com/en-us/library/dd316605(VS.85).aspx
+            // for more details regarding AUDCLNT_E_DEVICE_INVALIDATED.
+            if (FAILED(hr)) {
+              WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+                "rendering loop failed (ReleaseBuffer), hr = 0x%08X", hr);
+              goto Exit;
+            }
+
+            writtenSamples_ += playBlockSize_;
+          }
+
+          // Check the current delay on the playout side.
+          if (clock) {
+            UINT64 pos = 0;
+            UINT64 freq = 1;
+            clock->GetPosition(&pos, NULL);
+            clock->GetFrequency(&freq);
+            playout_delay = ROUND((static_cast<double>(writtenSamples_) /
+              devicePlaySampleRate_ - static_cast<double>(pos) / freq) * 1000.0);
+            sndCardPlayDelay_ = playout_delay;
+          }
+
+          // Clear flag marking a successful recovery.
+          if (playIsRecovering_) {
+            playIsRecovering_ = false;
+          }
+          UnLock();
         }
-        UnLock();
       }
+
+      // ------------------ THREAD LOOP ------------------ <<
+
+      SleepMs(static_cast<DWORD>(endpointBufferSizeMS+0.5));
+      hr = ptrClientOut_->Stop();
     }
-
-    // ------------------ THREAD LOOP ------------------ <<
-
-    SleepMs(static_cast<DWORD>(endpointBufferSizeMS+0.5));
-    hr = ptrClientOut_->Stop();
 
   Exit:
     SAFE_RELEASE(clock);
@@ -3547,18 +3552,18 @@ namespace webrtc
           // after a recovery, consider it as a failure and avoid another
           // recovery.
           WEBRTC_TRACE(kTraceError, kTraceUtility, id_, "kPlayoutError message "
-            "posted: rendering thread has ended pre-maturely after recovery");
+            "posted: rendering thread has ended prematurely after recovery");
           playIsRecovering_ = false;
           playError_ = 1;
         } else {
           WEBRTC_TRACE(kTraceWarning, kTraceUtility, id_,
-            "audio rendering thread has ended pre-maturely, restarting renderer...");
+            "audio rendering thread has ended prematurely, restarting renderer...");
           SetEvent(hRestartRenderEvent_);
         }
       } else {
         // Trigger callback from module process thread
         WEBRTC_TRACE(kTraceError, kTraceUtility, id_, "kPlayoutError message "
-          "posted: rendering thread has ended pre-maturely");
+          "posted: rendering thread has ended prematurely");
         playError_ = 1;
       }
     } else {
@@ -3589,274 +3594,279 @@ namespace webrtc
   //  DoCaptureThread
   // ----------------------------------------------------------------------------
   DWORD AudioDeviceWasapi::DoCaptureThread() {
-    bool keepRecording = true;
-    HANDLE waitArray[2] = {hShutdownCaptureEvent_, hCaptureSamplesReadyEvent_};
+
     HRESULT hr = S_OK;
-
-    LARGE_INTEGER t1;
-    LARGE_INTEGER t2;
-    int32_t time(0);
-
+    bool keepRecording = true;
     BYTE* syncBuffer = NULL;
-    UINT32 syncBufIndex = 0;
 
-    readSamples_ = 0;
+    // scope: do capture thread
+    {
+      HANDLE waitArray[2] = {hShutdownCaptureEvent_, hCaptureSamplesReadyEvent_};
 
-    // Initialize COM as MTA in this thread.
-    ScopedCOMInitializer comInit(ScopedCOMInitializer::kMTA);
-    if (!comInit.succeeded()) {
-      WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-        "failed to initialize COM in capture thread");
-      return 1;
-    }
+      LARGE_INTEGER t1;
+      LARGE_INTEGER t2;
+      int32_t time(0);
 
-    hr = InitCaptureThreadPriority();
-    if (FAILED(hr)) {
-      return hr;
-    }
+      UINT32 syncBufIndex = 0;
 
-    Lock();
+      readSamples_ = 0;
 
-    // Get size of capturing buffer (length is expressed as the number of audio
-    // frames the buffer can hold). This value is fixed during the capturing
-    // session.
-    UINT32 bufferLength = 0;
-    if (ptrClientIn_ == NULL) {
-      WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-        "input state has been modified before capture loop starts.");
-      return 1;
-    }
-    hr = ptrClientIn_->GetBufferSize(&bufferLength);
-    EXIT_ON_ERROR(hr);
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[CAPT] size of buffer       : %u", bufferLength);
-
-    // Allocate memory for sync buffer.
-    // It is used for compensation between native 44.1 and internal 44.0 and
-    // for cases when the capture buffer is larger than 10ms.
-    const UINT32 syncBufferSize = 2*(bufferLength * recAudioFrameSize_);
-    syncBuffer = new BYTE[syncBufferSize];
-    if (syncBuffer == NULL) {
-        return (DWORD)E_POINTER;
-    }
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[CAPT] size of sync buffer  : %u [bytes]", syncBufferSize);
-
-    // Get maximum latency for the current stream (will not change for the
-    // lifetime of the IAudioClient object).
-    REFERENCE_TIME latency;
-    ptrClientIn_->GetStreamLatency(&latency);
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[CAPT] max stream latency   : %u (%3.2f ms)", (DWORD)latency,
-      static_cast<double>(latency / 10000.0));
-
-    // Get the length of the periodic interval separating successive processing
-    // passes by the audio engine on the data in the endpoint buffer.
-    REFERENCE_TIME devPeriod = 0;
-    REFERENCE_TIME devPeriodMin = 0;
-    ptrClientIn_->GetDevicePeriod(&devPeriod, &devPeriodMin);
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[CAPT] device period        : %u (%3.2f ms)", (DWORD)devPeriod,
-      static_cast<double>(devPeriod / 10000.0));
-
-    double extraDelayMS = static_cast<double>((latency + devPeriod) / 10000.0);
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[CAPT] extraDelayMS         : %3.2f", extraDelayMS);
-
-    double endpointBufferSizeMS = 10.0 * (static_cast<double>(bufferLength) /
-      static_cast<double>(recBlockSize_));
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
-      "[CAPT] endpointBufferSizeMS : %3.2f", endpointBufferSizeMS);
-
-    // Start up the capturing stream.
-    hr = ptrClientIn_->Start();
-    if (FAILED(hr)) {
-      WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
-        "failed to start capture hr = %d", hr);
-      goto Exit;
-    }
-
-    UnLock();
-
-    // Set event which will ensure that the calling thread modifies the recording
-    // state to true.
-    SetEvent(hCaptureStartedEvent_);
-
-    // >> ---------------------------- THREAD LOOP ----------------------------
-
-    while (keepRecording) {
-      // Wait for a capture notification event or a shutdown event
-      DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, 500);
-      switch (waitResult) {
-      case WAIT_OBJECT_0 + 0:        // hShutdownCaptureEvent_
-          keepRecording = false;
-          break;
-      case WAIT_OBJECT_0 + 1:        // hCaptureSamplesReadyEvent_
-          break;
-      case WAIT_TIMEOUT:            // timeout notification
-          WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
-            "capture event timed out after 0.5 seconds");
-          goto Exit;
-      default:                    // unexpected error
-          WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
-            "unknown wait termination on capture side");
-          goto Exit;
+      // Initialize COM as MTA in this thread.
+      ScopedCOMInitializer comInit(ScopedCOMInitializer::kMTA);
+      if (!comInit.succeeded()) {
+        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+          "failed to initialize COM in capture thread");
+        return 1;
       }
 
+      hr = InitCaptureThreadPriority();
+      if (FAILED(hr)) {
+        return hr;
+      }
+
+      Lock();
+
+      // Get size of capturing buffer (length is expressed as the number of audio
+      // frames the buffer can hold). This value is fixed during the capturing
+      // session.
+      UINT32 bufferLength = 0;
+      if (ptrClientIn_ == NULL) {
+        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+          "input state has been modified before capture loop starts.");
+        return 1;
+      }
+      hr = ptrClientIn_->GetBufferSize(&bufferLength);
+      EXIT_ON_ERROR(hr);
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[CAPT] size of buffer       : %u", bufferLength);
+
+      // Allocate memory for sync buffer.
+      // It is used for compensation between native 44.1 and internal 44.0 and
+      // for cases when the capture buffer is larger than 10ms.
+      const UINT32 syncBufferSize = 2*(bufferLength * recAudioFrameSize_);
+      syncBuffer = new BYTE[syncBufferSize];
+      if (syncBuffer == NULL) {
+          return (DWORD)E_POINTER;
+      }
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[CAPT] size of sync buffer  : %u [bytes]", syncBufferSize);
+
+      // Get maximum latency for the current stream (will not change for the
+      // lifetime of the IAudioClient object).
+      REFERENCE_TIME latency;
+      ptrClientIn_->GetStreamLatency(&latency);
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[CAPT] max stream latency   : %u (%3.2f ms)", (DWORD)latency,
+        static_cast<double>(latency / 10000.0));
+
+      // Get the length of the periodic interval separating successive processing
+      // passes by the audio engine on the data in the endpoint buffer.
+      REFERENCE_TIME devPeriod = 0;
+      REFERENCE_TIME devPeriodMin = 0;
+      ptrClientIn_->GetDevicePeriod(&devPeriod, &devPeriodMin);
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[CAPT] device period        : %u (%3.2f ms)", (DWORD)devPeriod,
+        static_cast<double>(devPeriod / 10000.0));
+
+      double extraDelayMS = static_cast<double>((latency + devPeriod) / 10000.0);
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[CAPT] extraDelayMS         : %3.2f", extraDelayMS);
+
+      double endpointBufferSizeMS = 10.0 * (static_cast<double>(bufferLength) /
+        static_cast<double>(recBlockSize_));
+      WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_,
+        "[CAPT] endpointBufferSizeMS : %3.2f", endpointBufferSizeMS);
+
+      // Start up the capturing stream.
+      hr = ptrClientIn_->Start();
+      if (FAILED(hr)) {
+        WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
+          "failed to start capture hr = %d", hr);
+        goto Exit;
+      }
+
+      UnLock();
+
+      // Set event which will ensure that the calling thread modifies the recording
+      // state to true.
+      SetEvent(hCaptureStartedEvent_);
+
+      // >> ---------------------------- THREAD LOOP ----------------------------
+
       while (keepRecording) {
-        BYTE *pData = 0;
-        UINT32 framesAvailable = 0;
-        DWORD flags = 0;
-        UINT64 recTime = 0;
-        UINT64 recPos = 0;
-
-        Lock();
-
-        // Sanity check to ensure that essential states are not modified
-        // during the unlocked period.
-        if (ptrCaptureClient_ == NULL || ptrClientIn_ == NULL) {
-          UnLock();
-          WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
-            "input state has been modified during unlocked period");
-          goto Exit;
+        // Wait for a capture notification event or a shutdown event
+        DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, 500);
+        switch (waitResult) {
+        case WAIT_OBJECT_0 + 0:        // hShutdownCaptureEvent_
+            keepRecording = false;
+            break;
+        case WAIT_OBJECT_0 + 1:        // hCaptureSamplesReadyEvent_
+            break;
+        case WAIT_TIMEOUT:            // timeout notification
+            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
+              "capture event timed out after 0.5 seconds");
+            goto Exit;
+        default:                    // unexpected error
+            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
+              "unknown wait termination on capture side");
+            goto Exit;
         }
 
-        //  Find out how much capture data is available
-        hr = ptrCaptureClient_->GetBuffer(
-          &pData,            // packet which is ready to be read by used
-          &framesAvailable,  // #frames in the captured packet (can be zero)
-          &flags,            // support flags (check)
-          &recPos,           // device position of first audio frame in data
-                             // packet
-          &recTime);         // value of performance counter at the time of
-                             // recording the first audio frame
+        while (keepRecording) {
+          BYTE *pData = 0;
+          UINT32 framesAvailable = 0;
+          DWORD flags = 0;
+          UINT64 recTime = 0;
+          UINT64 recPos = 0;
 
-        if (SUCCEEDED(hr)) {
-          if (AUDCLNT_S_BUFFER_EMPTY == hr) {
-            // Buffer was empty => start waiting for a new capture notification
-            // event
+          Lock();
+
+          // Sanity check to ensure that essential states are not modified
+          // during the unlocked period.
+          if (ptrCaptureClient_ == NULL || ptrClientIn_ == NULL) {
             UnLock();
-            break;
-          }
-
-          if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
-            // Treat all of the data in the packet as silence and ignore the
-            // actual data values.
-            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
-              "AUDCLNT_BUFFERFLAGS_SILENT");
-            pData = NULL;
-          }
-
-          assert(framesAvailable != 0);
-
-          if (pData) {
-            CopyMemory(&syncBuffer[syncBufIndex*recAudioFrameSize_], pData,
-              framesAvailable*recAudioFrameSize_);
-          } else {
-            ZeroMemory(&syncBuffer[syncBufIndex*recAudioFrameSize_],
-              framesAvailable*recAudioFrameSize_);
-          }
-          assert(syncBufferSize >= (syncBufIndex*recAudioFrameSize_) +
-            framesAvailable * recAudioFrameSize_);
-
-          // Release the capture buffer
-          hr = ptrCaptureClient_->ReleaseBuffer(framesAvailable);
-          if (FAILED(hr)) {
             WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
-              "failed fo release capture buffer hr = %d", hr);
+              "input state has been modified during unlocked period");
             goto Exit;
           }
 
-          readSamples_ += framesAvailable;
-          syncBufIndex += framesAvailable;
+          //  Find out how much capture data is available
+          hr = ptrCaptureClient_->GetBuffer(
+            &pData,            // packet which is ready to be read by used
+            &framesAvailable,  // #frames in the captured packet (can be zero)
+            &flags,            // support flags (check)
+            &recPos,           // device position of first audio frame in data
+                               // packet
+            &recTime);         // value of performance counter at the time of
+                               // recording the first audio frame
 
-          QueryPerformanceCounter(&t1);
-
-          // Get the current recording and playout delay.
-          uint32_t sndCardRecDelay = (uint32_t)
-            (((((UINT64)t1.QuadPart * perfCounterFactor_) - recTime) /
-              10000) + (10 * syncBufIndex) / recBlockSize_ - 10);
-          uint32_t sndCardPlayDelay =
-            static_cast<uint32_t>(sndCardPlayDelay_);
-
-          sndCardRecDelay_ = sndCardRecDelay;
-
-          while (syncBufIndex >= recBlockSize_) {
-            if (ptrAudioBuffer_) {
-              ptrAudioBuffer_->SetRecordedBuffer((const int8_t*)syncBuffer,
-                recBlockSize_);
-
-              driftAccumulator_ += sampleDriftAt48kHz_;
-              const int32_t clockDrift =
-                static_cast<int32_t>(driftAccumulator_);
-              driftAccumulator_ -= clockDrift;
-
-              ptrAudioBuffer_->SetVQEData(sndCardPlayDelay,
-                                          sndCardRecDelay);
-
-              ptrAudioBuffer_->SetTypingStatus(KeyPressed());
-
-              QueryPerformanceCounter(&t1);    // measure time: START
-
-              UnLock();  // release lock while making the callback
-              ptrAudioBuffer_->DeliverRecordedData();
-              Lock();    // restore the lock
-
-              QueryPerformanceCounter(&t2);    // measure time: STOP
-
-              // Measure "average CPU load".
-              // Basically what we do here is to measure how many percent of
-              // our 10ms period is used for encoding and decoding. This
-              // value shuld be used as a warning indicator only and not seen
-              // as an absolute value. Running at ~100% will lead to bad QoS.
-              time = static_cast<int>(t2.QuadPart - t1.QuadPart);
-              avgCPULoad_ = static_cast<float>(avgCPULoad_*.99 +
-                (time + playAcc_) /
-                static_cast<double>(perfCounterFreq_.QuadPart));
-              playAcc_ = 0;
-
-              // Sanity check to ensure that essential states are not
-              // modified during the unlocked period
-              if (ptrCaptureClient_ == NULL || ptrClientIn_ == NULL) {
-                UnLock();
-                WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
-                  "input state has been modified during unlocked period");
-                goto Exit;
-              }
+          if (SUCCEEDED(hr)) {
+            if (AUDCLNT_S_BUFFER_EMPTY == hr) {
+              // Buffer was empty => start waiting for a new capture notification
+              // event
+              UnLock();
+              break;
             }
 
-            // store remaining data which was not able to deliver as 10ms segment
-            MoveMemory(&syncBuffer[0],
-              &syncBuffer[recBlockSize_*recAudioFrameSize_],
-              (syncBufIndex - recBlockSize_)*recAudioFrameSize_);
-            syncBufIndex -= recBlockSize_;
-            sndCardRecDelay -= 10;
+            if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
+              // Treat all of the data in the packet as silence and ignore the
+              // actual data values.
+              WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, id_,
+                "AUDCLNT_BUFFERFLAGS_SILENT");
+              pData = NULL;
+            }
+
+            assert(framesAvailable != 0);
+
+            if (pData) {
+              CopyMemory(&syncBuffer[syncBufIndex*recAudioFrameSize_], pData,
+                framesAvailable*recAudioFrameSize_);
+            } else {
+              ZeroMemory(&syncBuffer[syncBufIndex*recAudioFrameSize_],
+                framesAvailable*recAudioFrameSize_);
+            }
+            assert(syncBufferSize >= (syncBufIndex*recAudioFrameSize_) +
+              framesAvailable * recAudioFrameSize_);
+
+            // Release the capture buffer
+            hr = ptrCaptureClient_->ReleaseBuffer(framesAvailable);
+            if (FAILED(hr)) {
+              WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
+                "failed fo release capture buffer hr = %d", hr);
+              goto Exit;
+            }
+
+            readSamples_ += framesAvailable;
+            syncBufIndex += framesAvailable;
+
+            QueryPerformanceCounter(&t1);
+
+            // Get the current recording and playout delay.
+            uint32_t sndCardRecDelay = (uint32_t)
+              (((((UINT64)t1.QuadPart * perfCounterFactor_) - recTime) /
+                10000) + (10 * syncBufIndex) / recBlockSize_ - 10);
+            uint32_t sndCardPlayDelay =
+              static_cast<uint32_t>(sndCardPlayDelay_);
+
+            sndCardRecDelay_ = sndCardRecDelay;
+
+            while (syncBufIndex >= recBlockSize_) {
+              if (ptrAudioBuffer_) {
+                ptrAudioBuffer_->SetRecordedBuffer((const int8_t*)syncBuffer,
+                  recBlockSize_);
+
+                driftAccumulator_ += sampleDriftAt48kHz_;
+                const int32_t clockDrift =
+                  static_cast<int32_t>(driftAccumulator_);
+                driftAccumulator_ -= clockDrift;
+
+                ptrAudioBuffer_->SetVQEData(sndCardPlayDelay,
+                                            sndCardRecDelay);
+
+                ptrAudioBuffer_->SetTypingStatus(KeyPressed());
+
+                QueryPerformanceCounter(&t1);    // measure time: START
+
+                UnLock();  // release lock while making the callback
+                ptrAudioBuffer_->DeliverRecordedData();
+                Lock();    // restore the lock
+
+                QueryPerformanceCounter(&t2);    // measure time: STOP
+
+                // Measure "average CPU load".
+                // Basically what we do here is to measure how many percent of
+                // our 10ms period is used for encoding and decoding. This
+                // value should be used as a warning indicator only and not seen
+                // as an absolute value. Running at ~100% will lead to bad QoS.
+                time = static_cast<int>(t2.QuadPart - t1.QuadPart);
+                avgCPULoad_ = static_cast<float>(avgCPULoad_*.99 +
+                  (time + playAcc_) /
+                  static_cast<double>(perfCounterFreq_.QuadPart));
+                playAcc_ = 0;
+
+                // Sanity check to ensure that essential states are not
+                // modified during the unlocked period
+                if (ptrCaptureClient_ == NULL || ptrClientIn_ == NULL) {
+                  UnLock();
+                  WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, id_,
+                    "input state has been modified during unlocked period");
+                  goto Exit;
+                }
+              }
+
+              // store remaining data which was not able to deliver as 10ms segment
+              MoveMemory(&syncBuffer[0],
+                &syncBuffer[recBlockSize_*recAudioFrameSize_],
+                (syncBufIndex - recBlockSize_)*recAudioFrameSize_);
+              syncBufIndex -= recBlockSize_;
+              sndCardRecDelay -= 10;
+            }
+          } else {
+            // If GetBuffer returns AUDCLNT_E_BUFFER_ERROR, the thread consuming
+            // the audio samples must wait for the next processing pass. The client
+            // might benefit from keeping a count of the failed GetBuffer calls.
+            // If GetBuffer returns this error repeatedly, the client can start a
+            // new processing loop after shutting down the current client by
+            // calling IAudioClient::Stop, IAudioClient::Reset, and releasing the
+            // audio client.
+            WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+              R"(IAudioCaptureClient::GetBuffer returned hr = 0x%08X)",
+              hr);
+            goto Exit;
           }
-        } else {
-          // If GetBuffer returns AUDCLNT_E_BUFFER_ERROR, the thread consuming
-          // the audio samples must wait for the next processing pass. The client
-          // might benefit from keeping a count of the failed GetBuffer calls.
-          // If GetBuffer returns this error repeatedly, the client can start a
-          // new processing loop after shutting down the current client by
-          // calling IAudioClient::Stop, IAudioClient::Reset, and releasing the
-          // audio client.
-          WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
-            R"(IAudioCaptureClient::GetBuffer returned hr = 0x%08X)",
-            hr);
-          goto Exit;
+          // Clear flag marking a successful recovery.
+          if (recIsRecovering_) {
+            recIsRecovering_ = false;
+          }
+          UnLock();
         }
-        // Clear flag marking a successfull recovery.
-        if (recIsRecovering_) {
-          recIsRecovering_ = false;
-        }
-        UnLock();
       }
-    }
 
-    // ---------------------------- THREAD LOOP ---------------------------- <<
+      // ---------------------------- THREAD LOOP ---------------------------- <<
 
-    if (ptrClientIn_) {
-      hr = ptrClientIn_->Stop();
+      if (ptrClientIn_) {
+        hr = ptrClientIn_->Stop();
+      }
     }
 
   Exit:
@@ -3896,17 +3906,17 @@ namespace webrtc
           // after a recovery, consider it as a failure and avoid another
           // recovery.
           WEBRTC_TRACE(kTraceError, kTraceUtility, id_, "kRecordingError message "
-            "posted: capturing thread has ended pre-maturely after recovery");
+            "posted: capturing thread has ended prematurely after recovery");
           recIsRecovering_ = false;
           recError_ = 1;
         } else {
           WEBRTC_TRACE(kTraceWarning, kTraceUtility, id_, "capturing thread has "
-            "ended pre-maturely, restarting capturer...");
+            "ended prematurely, restarting capturer...");
           SetEvent(hRestartCaptureEvent_);
         }
       } else {
         WEBRTC_TRACE(kTraceError, kTraceUtility, id_, "kRecordingError message "
-          "posted: capturing thread has ended pre-maturely");
+          "posted: capturing thread has ended prematurely");
         // Trigger callback from module process thread
         recError_ = 1;
       }

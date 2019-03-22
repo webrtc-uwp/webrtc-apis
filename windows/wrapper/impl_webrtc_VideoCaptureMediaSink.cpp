@@ -1,5 +1,9 @@
 
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <Windows.h>
 #include <unknwn.h>
+#endif //_WIN32
 
 #include "impl_webrtc_VideoCaptureMediaSink.h"
 

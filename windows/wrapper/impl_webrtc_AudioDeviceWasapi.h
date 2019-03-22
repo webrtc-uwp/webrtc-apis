@@ -24,7 +24,7 @@
 #include <vector>
 #include <queue>
 
-#if (_MSC_VER >= 1400) && defined(WINUWP)  // only include for VS 2005 and higher
+#if (_MSC_VER >= 1400)  // only include for VS 2005 and higher
 
 #include <wmcodecdsp.h>      // CLSID_CWMAudioAEC
                              // (must be before audioclient.h)
@@ -126,7 +126,7 @@ namespace webrtc {
       Initialize(COINIT_MULTITHREADED);
     }
 
-    ScopedCOMInitializer::~ScopedCOMInitializer() {
+    ~ScopedCOMInitializer() {
       if (SUCCEEDED(hr_))
         CoUninitialize();
     }
@@ -162,7 +162,7 @@ namespace webrtc {
     STDMETHODIMP ActivateCompleted(
       IActivateAudioInterfaceAsyncOperation *pAsyncOp);
 		static winrt::Windows::Foundation::IAsyncAction
-      AudioInterfaceActivator::ActivateAudioClientAsync(LPCWCHAR deviceId,
+      ActivateAudioClientAsync(LPCWCHAR deviceId,
         ActivatorDeviceType deviceType, winrt::com_ptr<AudioInterfaceActivator> pActivator,
         winrt::com_ptr<IActivateAudioInterfaceAsyncOperation> pAsyncOp);
     static void SetAudioDevice(AudioDeviceWasapi* device);
@@ -391,7 +391,7 @@ namespace webrtc {
 
    private:
      AudioDeviceWasapiWeakPtr thisWeak_;
-     mutable zsLib::RecursiveLock lock_;
+     mutable zsLib::RecursiveLock subscriptionLock_;
 
      IAudioDeviceWasapiDelegateSubscriptions subscriptions_;
      IAudioDeviceWasapiSubscriptionPtr defaultSubscription_;

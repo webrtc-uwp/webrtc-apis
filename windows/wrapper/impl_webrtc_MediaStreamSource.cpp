@@ -1,5 +1,9 @@
 
+#ifdef _WIN32
+#include <WinSock2.h>
 #include <unknwn.h>
+#include <Windows.h>
+#endif //_WIN32
 
 #include "impl_webrtc_MediaStreamSource.h"
 

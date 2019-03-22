@@ -45,7 +45,7 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
 #endif // CPPWINRT_VERSION
 
 #ifndef WINUWP
-
+#ifdef _WIN32
 
 namespace wrapper { namespace impl { namespace org { namespace webRtc {
         ZS_DECLARE_STRUCT_PTR(MediaSourceWrapperAny);
@@ -56,6 +56,7 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
         };
 } } } }
 
+#endif //_WIN32
 #endif //ndef WINUWP
 
 //------------------------------------------------------------------------------

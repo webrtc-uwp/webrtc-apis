@@ -7,6 +7,7 @@
 
 #ifndef WINUWP
 #ifdef _WIN32
+#include <WinSock2.h>
 #include <Windows.h>
 #endif //_WIN32
 #endif //ndef WINUWP
@@ -62,7 +63,7 @@ namespace wrapper { namespace impl { namespace org { namespace webRtc {
 } } } }
 
 #endif //_WIN32
-#endif //WINUWP
+#endif //ndef WINUWP
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::MediaElement::MediaElement() noexcept
