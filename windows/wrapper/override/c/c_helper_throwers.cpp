@@ -16,6 +16,13 @@ using namespace wrapper::impl::org::webRtc;
 namespace wrapper
 {
   //----------------------------------------------------------------------------
+  Throwers &Throwers::singleton() noexcept
+  {
+    static Throwers global;
+    return global;
+  }
+
+  //----------------------------------------------------------------------------
   void Throwers::customThrow_set_Exception(exception_handle_t handle, const wrapper::org::webRtc::RTCErrorPtr &error) noexcept
   {
     try {
