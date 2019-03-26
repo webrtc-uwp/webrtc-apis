@@ -65,12 +65,12 @@ namespace winrt {
           /// Gets or sets the video 8 bit color space data. <summary>
           /// </summary>
           /// </summary>
-          Windows::Foundation::Collections::IVectorView< uint8_t > Data8bit();
+          Windows::Foundation::IMemoryBuffer Data8bit();
           /// <summary>
           /// Gets or sets the video 16 bit color space data. <summary>
           /// </summary>
           /// </summary>
-          Windows::Foundation::Collections::IVectorView< uint16_t > Data16bit();
+          Windows::Foundation::IMemoryBuffer Data16bit();
 
         };
 
