@@ -10,26 +10,23 @@
 #include "../org_webRtc_MediaElementMaker.h"
 #include "c_org_webRtc_MediaElement.h"
 
+#include <wrapper/impl_org_webRtc_MediaElement.h>
+
+
 using namespace wrapper;
 
 //------------------------------------------------------------------------------
-org_webRtc_MediaElement_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_MediaElementMaker_bind(zs_Any_t element)
+org_webRtc_MediaElement_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_MediaElementMaker_bind(uintptr_t element)
 {
-  return {};
-  //return wrapper::org_webRtc_MediaElement_wrapperToHandle(wrapper::org::webRtc::MediaElementMaker::bind(wrapper::zs_Any_wrapperFromHandle(element)));
-#define WARNING_TODO 1
-#define WARNING_TODO 2
+  return wrapper::org_webRtc_MediaElement_wrapperToHandle(wrapper::impl::org::webRtc::MediaElement::toWrapper((HWND)element));
 }
 
 //------------------------------------------------------------------------------
-zs_Any_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_MediaElementMaker_extract(org_webRtc_MediaElement_t element)
+uintptr_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_MediaElementMaker_extract(org_webRtc_MediaElement_t element)
 {
-  //return wrapper::zs_Any_wrapperToHandle(wrapper::org::webRtc::MediaElementMaker::extract(wrapper::org_webRtc_MediaElement_wrapperFromHandle(element)));
-  return {};
-#define WARNING_TODO 1
-#define WARNING_TODO 2
+  auto result = wrapper::impl::org::webRtc::MediaElement::toNative(wrapper::org_webRtc_MediaElement_wrapperFromHandle(element));
+  return ((uintptr_t)result);
 }
-
 
 namespace wrapper
 {

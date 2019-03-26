@@ -12,24 +12,6 @@
 
 using namespace wrapper;
 
-//------------------------------------------------------------------------------
-org_webRtc_EventQueue_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_EventQueueMaker_bind(zs_Any_t queue)
-{
-//  return wrapper::org_webRtc_EventQueue_wrapperToHandle(wrapper::org::webRtc::EventQueueMaker::bind(wrapper::zs_Any_wrapperFromHandle(queue)));
-  return {};
-#define WARNING_TODO 1
-#define WARNING_TODO 2
-}
-
-//------------------------------------------------------------------------------
-zs_Any_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_EventQueueMaker_extract(org_webRtc_EventQueue_t queue)
-{
-//  return wrapper::zs_Any_wrapperToHandle(wrapper::org::webRtc::EventQueueMaker::extract(wrapper::org_webRtc_EventQueue_wrapperFromHandle(queue)));
-#define WARNING_TODO 1
-#define WARNING_TODO 2
-  return {};
-}
-
 
 namespace wrapper
 {

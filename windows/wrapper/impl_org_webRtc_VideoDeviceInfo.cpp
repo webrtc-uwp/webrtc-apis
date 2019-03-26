@@ -74,32 +74,78 @@ wrapper::impl::org::webRtc::VideoDeviceInfo::~VideoDeviceInfo() noexcept
 }
 
 //------------------------------------------------------------------------------
-AnyPtr wrapper::impl::org::webRtc::VideoDeviceInfo::get_info() noexcept
+String wrapper::impl::org::webRtc::VideoDeviceInfo::get_id() noexcept
 {
-  return info_;
+#ifdef CPPWINRT_VERSION
+  if (!info_)
+    return {};
+  return String(info_.Id().c_str());
+#else
+  return {};
+#endif //CPPWINRT_VERSION
 }
+
+//------------------------------------------------------------------------------
+String wrapper::impl::org::webRtc::VideoDeviceInfo::get_name() noexcept
+{
+#ifdef CPPWINRT_VERSION
+  if (!info_)
+    return {};
+  return String(info_.Name().c_str());
+#else
+  return {};
+#endif //CPPWINRT_VERSION
+}
+
+//------------------------------------------------------------------------------
+bool wrapper::impl::org::webRtc::VideoDeviceInfo::get_isDefault() noexcept
+{
+#ifdef CPPWINRT_VERSION
+  if (!info_)
+    return {};
+  return info_.IsDefault();
+#else
+  return {};
+#endif //CPPWINRT_VERSION
+}
+
+//------------------------------------------------------------------------------
+bool wrapper::impl::org::webRtc::VideoDeviceInfo::get_isEnabled() noexcept
+{
+#ifdef CPPWINRT_VERSION
+  if (!info_)
+    return {};
+  return info_.IsEnabled();
+#else
+  return {};
+#endif //CPPWINRT_VERSION
+}
+
 
 #ifdef CPPWINRT_VERSION
 
 wrapper::org::webRtc::VideoDeviceInfoPtr wrapper::impl::org::webRtc::VideoDeviceInfo::toWrapper(winrt::Windows::Devices::Enumeration::DeviceInformation const & info) noexcept
 {
-  auto any{ make_shared<wrapper::impl::org::webRtc::VideoDeviceInfoWrapperAnyWinrt>() };
-  any->info_ = info;
-  auto result = make_shared<WrapperImplType>();
+  if (!info)
+    return {};
+
+  auto result = std::make_shared< WrapperImplType>();
   result->thisWeak_ = result;
-  result->info_ = any;
+  result->info_ = info;
   return result;
 }
 
-winrt::Windows::Devices::Enumeration::DeviceInformation wrapper::impl::org::webRtc::VideoDeviceInfo::toNative_winrt(wrapper::org::webRtc::VideoDeviceInfoPtr info) noexcept
+winrt::Windows::Devices::Enumeration::DeviceInformation wrapper::impl::org::webRtc::VideoDeviceInfo::toNative_winrt(wrapper::org::webRtc::VideoDeviceInfoPtr wrapper) noexcept
 {
-  if (!info) return nullptr;
-  AnyPtr any = info->get_info();
-  if (!any) return nullptr;
-  auto castedAny = ZS_DYNAMIC_PTR_CAST(wrapper::impl::org::webRtc::VideoDeviceInfoWrapperAnyWinrt, any);
-  if (!castedAny)
+  if (!wrapper)
     return {nullptr};
-  return castedAny->info_;
+
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
+  ZS_ASSERT(converted);
+  if (!converted)
+    return {nullptr};
+
+  return converted->info_;
 }
 
 #endif // CPPWINRT_VERSION

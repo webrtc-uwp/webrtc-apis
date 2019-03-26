@@ -63,23 +63,54 @@ bool_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_get_readOnly
 }
 
 //------------------------------------------------------------------------------
-std_list_int16_t_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_get_data(org_webRtc_AudioData_t wrapperThisHandle)
+void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_get_data(
+  org_webRtc_AudioData_t wrapperThisHandle,
+  uintptr_t buffer,
+  binary_size_t size)
 {
   auto wrapperThis = wrapper::org_webRtc_AudioData_wrapperFromHandle(wrapperThisHandle);
-  return {}; // wrapper::std_list_int16_t_wrapperToHandle(wrapperThis->get_data());
 
-#define WARNING_TODO 1
-#define WARNING_TODO 2
+  auto data = wrapperThis->data();
+  auto actualSize = wrapperThis->size();
+  size = size > actualSize ? actualSize : size;
+
+  if (!data)
+    return;
+
+  auto ptr = reinterpret_cast<int16_t *>(buffer);
+  if (!ptr)
+    return;
+
+  memcpy(ptr, data, sizeof(int16_t)*size);
 }
 
 //------------------------------------------------------------------------------
-void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_set_data(org_webRtc_AudioData_t wrapperThisHandle, std_list_int16_t_t value)
+void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_set_data(
+  org_webRtc_AudioData_t wrapperThisHandle,
+  uintptr_t buffer,
+  binary_size_t size)
 {
   auto wrapperThis = wrapper::org_webRtc_AudioData_wrapperFromHandle(wrapperThisHandle);
-  //wrapperThis->set_data(wrapper::std_list_int16_t_wrapperFromHandle(value));
 
-#define WARNING_TODO 1
-#define WARNING_TODO 2
+  auto data = wrapperThis->mutableData();
+  auto actualSize = wrapperThis->size();
+  size = size > actualSize ? actualSize : size;
+
+  if (!data)
+    return;
+
+  auto ptr = reinterpret_cast<int16_t *>(buffer);
+  if (!ptr)
+    return;
+
+  memcpy(data, ptr, sizeof(int16_t)*size);
+}
+
+//------------------------------------------------------------------------------
+binary_size_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_size(org_webRtc_AudioData_t wrapperThisHandle)
+{
+  auto wrapperThis = wrapper::org_webRtc_AudioData_wrapperFromHandle(wrapperThisHandle);
+  return wrapperThis->size();
 }
 
 

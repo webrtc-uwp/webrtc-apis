@@ -38,21 +38,6 @@ instance_id_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_MediaSource_wra
   return reinterpret_cast<instance_id_t>((*reinterpret_cast<WrapperTypePtrRawPtr>(handle)).get());
 }
 
-//------------------------------------------------------------------------------
-org_webRtc_MediaSource_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_MediaSource_wrapperCreate_MediaSourceWithNativeSource(zs_Any_t source)
-{
-  auto wrapperThis = wrapper::org::webRtc::MediaSource::wrapper_create();
-  wrapperThis->wrapper_init_org_webRtc_MediaSource(wrapper::zs_Any_wrapperFromHandle(source));
-  return wrapper::org_webRtc_MediaSource_wrapperToHandle(wrapperThis);
-}
-
-//------------------------------------------------------------------------------
-zs_Any_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_MediaSource_get_source(org_webRtc_MediaSource_t wrapperThisHandle)
-{
-  auto wrapperThis = wrapper::org_webRtc_MediaSource_wrapperFromHandle(wrapperThisHandle);
-  return wrapper::zs_Any_wrapperToHandle(wrapperThis->get_source());
-}
-
 
 namespace wrapper
 {

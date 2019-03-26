@@ -14,12 +14,12 @@ namespace Org
         {
 
             /// <summary>
-            /// Gets if the data is read-only. <summary> </summary>
+            /// Gets if the data is read-only.
             /// </summary>
             Boolean ReadOnly { get; };
 
             /// <summary>
-            /// Gets or sets the audio samples data. <summary> </summary>
+            /// Gets or sets the audio samples data.
             /// </summary>
             Windows.Foundation.Collections.IVectorView< Int16 > Data { get; set; };
         };
@@ -28,7 +28,7 @@ namespace Org
         {
 
             /// <summary>
-            /// Constructs a new audio data object. <summary> </summary>
+            /// Constructs a new audio data object.
             /// </summary>
             [default_overload]
             AudioData();

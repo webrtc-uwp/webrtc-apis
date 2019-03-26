@@ -37,34 +37,6 @@ using ::std::map;
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaElement::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
-#ifdef CPPWINRT_VERSION
-
-namespace wrapper { namespace impl { namespace org { namespace webRtc {
-        ZS_DECLARE_STRUCT_PTR(MediaElementWrapperAnyCx);
-
-        struct MediaElementWrapperAnyWinrt : Any
-        {
-          winrt::Windows::UI::Xaml::Controls::MediaElement element_ {nullptr};
-        };
-} } } }
-
-#endif // CPPWINRT_VERSION
-
-#ifndef WINUWP
-#ifdef _WIN32
-
-namespace wrapper { namespace impl { namespace org { namespace webRtc {
-        ZS_DECLARE_STRUCT_PTR(MediaElementWrapperAny);
-
-        struct MediaElementWrapperAny : Any
-        {
-          HWND element_ {};
-        };
-} } } }
-
-#endif //_WIN32
-#endif //ndef WINUWP
-
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::MediaElement::MediaElement() noexcept
 {
@@ -84,42 +56,24 @@ wrapper::impl::org::webRtc::MediaElement::~MediaElement() noexcept
   thisWeak_.reset();
 }
 
-//------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::MediaElement::wrapper_init_org_webRtc_MediaElement(AnyPtr element) noexcept
-{
-  ZS_ASSERT(element);
-  element_ = element;
-}
-
-//------------------------------------------------------------------------------
-AnyPtr wrapper::impl::org::webRtc::MediaElement::get_element() noexcept
-{
-  return element_;
-}
-
 
 #ifdef CPPWINRT_VERSION
 
 wrapper::org::webRtc::MediaElementPtr wrapper::impl::org::webRtc::MediaElement::toWrapper(winrt::Windows::UI::Xaml::Controls::MediaElement const & element) noexcept
 {
-  auto any{ make_shared<wrapper::impl::org::webRtc::MediaElementWrapperAnyWinrt>() };
-  any->element_ = element;
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->element_ = any;
+  result->elementXaml_ = element;
   return result;
 }
 
-winrt::Windows::UI::Xaml::Controls::MediaElement wrapper::impl::org::webRtc::MediaElement::toNative_winrt(wrapper::org::webRtc::MediaElementPtr element) noexcept
+winrt::Windows::UI::Xaml::Controls::MediaElement wrapper::impl::org::webRtc::MediaElement::toNative_winrt(wrapper::org::webRtc::MediaElementPtr wrapper) noexcept
 {
-  if (!element)
-    return {nullptr};
-  AnyPtr any = element->get_element();
-  if (!any) return nullptr;
-  auto castedAny = ZS_DYNAMIC_PTR_CAST(wrapper::impl::org::webRtc::MediaElementWrapperAnyWinrt, any);
-  if (!castedAny)
-    return {nullptr};
-  return castedAny->element_;
+  if (!wrapper) return {nullptr};
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
+  ZS_ASSERT(converted);
+  if (!converted) return {nullptr};
+  return converted->elementXaml_;
 }
 
 #endif // CPPWINRT_VERSION
@@ -129,21 +83,20 @@ winrt::Windows::UI::Xaml::Controls::MediaElement wrapper::impl::org::webRtc::Med
 
 wrapper::org::webRtc::MediaElementPtr wrapper::impl::org::webRtc::MediaElement::toWrapper(HWND element) noexcept
 {
-  auto any{ make_shared<wrapper::impl::org::webRtc::MediaElementWrapperAny>() };
-  any->element_ = element;
-  auto result = wrapper::org::webRtc::MediaElement::wrapper_create();
-  any->element_ = element;
+  if (NULL == element) return {};
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->elementHwnd_ = element;
   return result;
 }
 
-HWND wrapper::impl::org::webRtc::MediaElement::toNative(wrapper::org::webRtc::MediaElementPtr element) noexcept
+HWND wrapper::impl::org::webRtc::MediaElement::toNative(wrapper::org::webRtc::MediaElementPtr wrapper) noexcept
 {
-  if (!element) return nullptr;
-  AnyPtr any = element->get_element();
-  if (!any) return nullptr;
-  auto castedAny = ZS_DYNAMIC_PTR_CAST(wrapper::impl::org::webRtc::MediaElementWrapperAny, any);
-  if (!castedAny) return nullptr;
-  return castedAny->element_;
+  if (!wrapper) return {};
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
+  ZS_ASSERT(converted);
+  if (!converted) return {};
+  return converted->elementHwnd_;
 }
 
 #endif //_WIN32

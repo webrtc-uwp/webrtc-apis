@@ -62,23 +62,54 @@ bool_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_is16BitC
 }
 
 //------------------------------------------------------------------------------
-std_list_uint8_t_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data8bit(org_webRtc_VideoData_t wrapperThisHandle)
+binary_size_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_size(org_webRtc_VideoData_t wrapperThisHandle)
 {
   auto wrapperThis = wrapper::org_webRtc_VideoData_wrapperFromHandle(wrapperThisHandle);
-#define WARNING_TODO 1
-#define WARNING_TODO 2
-  //return wrapper::std_list_uint8_t_wrapperToHandle(wrapperThis->get_data8bit());
-  return {};
+  return wrapperThis->get_size();
 }
 
 //------------------------------------------------------------------------------
-std_list_uint16_t_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data16bit(org_webRtc_VideoData_t wrapperThisHandle)
+void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data8bit(
+  org_webRtc_VideoData_t wrapperThisHandle,
+  uintptr_t buffer,
+  binary_size_t size)
 {
   auto wrapperThis = wrapper::org_webRtc_VideoData_wrapperFromHandle(wrapperThisHandle);
-  //return wrapper::std_list_uint16_t_wrapperToHandle(wrapperThis->get_data16bit());
-#define WARNING_TODO 1
-#define WARNING_TODO 2
-  return {};
+
+  auto data = wrapperThis->get_data8bit();
+  auto actualSize = wrapperThis->get_size();
+  size = size > actualSize ? actualSize : size;
+
+  if (!data)
+    return;
+
+  auto ptr = reinterpret_cast<uint8_t *>(buffer);
+  if (!ptr)
+    return;
+
+  memcpy(ptr, data, sizeof(uint8_t)*size);
+}
+
+//------------------------------------------------------------------------------
+void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data16bit(
+  org_webRtc_VideoData_t wrapperThisHandle,
+  uintptr_t buffer,
+  binary_size_t size)
+{
+  auto wrapperThis = wrapper::org_webRtc_VideoData_wrapperFromHandle(wrapperThisHandle);
+
+  auto data = wrapperThis->get_data16bit();
+  auto actualSize = wrapperThis->get_size();
+  size = size > actualSize ? actualSize : size;
+
+  if (!data)
+    return;
+
+  auto ptr = reinterpret_cast<uint16_t *>(buffer);
+  if (!ptr)
+    return;
+
+  memcpy(ptr, data, sizeof(uint16_t)*size);
 }
 
 

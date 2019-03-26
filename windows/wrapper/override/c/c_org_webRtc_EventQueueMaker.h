@@ -11,9 +11,6 @@ ORG_WEBRTC_WRAPPER_C_PLUS_PLUS_BEGIN_GUARD
 
 /* org_webRtc_EventQueueMaker*/
 
-ORG_WEBRTC_WRAPPER_C_EXPORT_API org_webRtc_EventQueue_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_EventQueueMaker_bind(zs_Any_t queue);
-ORG_WEBRTC_WRAPPER_C_EXPORT_API zs_Any_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_EventQueueMaker_extract(org_webRtc_EventQueue_t queue);
-
 
 ORG_WEBRTC_WRAPPER_C_PLUS_PLUS_END_GUARD
 

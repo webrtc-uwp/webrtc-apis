@@ -39,10 +39,31 @@ instance_id_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoDeviceInfo
 }
 
 //------------------------------------------------------------------------------
-zs_Any_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoDeviceInfo_get_info(org_webRtc_VideoDeviceInfo_t wrapperThisHandle)
+string_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoDeviceInfo_get_id(org_webRtc_VideoDeviceInfo_t wrapperThisHandle)
 {
   auto wrapperThis = wrapper::org_webRtc_VideoDeviceInfo_wrapperFromHandle(wrapperThisHandle);
-  return wrapper::zs_Any_wrapperToHandle(wrapperThis->get_info());
+  return wrapper::string_t_wrapperToHandle(wrapperThis->get_id());
+}
+
+//------------------------------------------------------------------------------
+string_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoDeviceInfo_get_name(org_webRtc_VideoDeviceInfo_t wrapperThisHandle)
+{
+  auto wrapperThis = wrapper::org_webRtc_VideoDeviceInfo_wrapperFromHandle(wrapperThisHandle);
+  return wrapper::string_t_wrapperToHandle(wrapperThis->get_name());
+}
+
+//------------------------------------------------------------------------------
+bool_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoDeviceInfo_get_isDefault(org_webRtc_VideoDeviceInfo_t wrapperThisHandle)
+{
+  auto wrapperThis = wrapper::org_webRtc_VideoDeviceInfo_wrapperFromHandle(wrapperThisHandle);
+  return (wrapperThis->get_isDefault());
+}
+
+//------------------------------------------------------------------------------
+bool_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoDeviceInfo_get_isEnabled(org_webRtc_VideoDeviceInfo_t wrapperThisHandle)
+{
+  auto wrapperThis = wrapper::org_webRtc_VideoDeviceInfo_wrapperFromHandle(wrapperThisHandle);
+  return (wrapperThis->get_isEnabled());
 }
 
 
