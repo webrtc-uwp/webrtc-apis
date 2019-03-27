@@ -17,6 +17,11 @@ namespace Org
 
             Boolean Is16BitColorSpace { get; };
 
+            UInt64 Length{ get; };
+
+            UInt64 GetData8bit(out UInt8[] values);
+            UInt64 GetData16bit(out UInt16[] values);
+
             /// <summary>
             /// Gets or sets the video 8 bit color space data.
             /// </summary>

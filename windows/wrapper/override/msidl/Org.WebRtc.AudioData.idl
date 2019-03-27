@@ -19,9 +19,14 @@ namespace Org
             Boolean ReadOnly { get; };
 
             /// <summary>
-            /// Gets or sets the audio samples data.
+            /// Gets or sets the audio samples data (int16s encoded in little endian 2 byte pairs).
             /// </summary>
-            Windows.Foundation.Collections.IVectorView< Int16 > Data { get; set; };
+            Windows.Foundation.IMemoryBuffer Data{ get; set; };
+
+            UInt64 Length{ get; };
+
+            UInt64 GetData(out Int16[] values);
+            UInt64 SetData(Int16[] values);
         };
 
         runtimeclass AudioData : [default] IAudioData, Windows.Foundation.IClosable

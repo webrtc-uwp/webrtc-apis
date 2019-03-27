@@ -27,6 +27,8 @@
 #include "RTCRtpTransceiver.h"
 #include "RTCRtpSender.h"
 
+#include <zsLib/SafeInt.h>
+
 using namespace winrt;
 
 struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
@@ -176,6 +178,62 @@ bool Org::WebRtc::implementation::VideoData::Is16BitColorSpace()
 {
   if (!native_) {throw hresult_error(E_POINTER);}
   return ::Internal::Helper::ToCppWinrt_Bool(native_->get_is16BitColorSpace());
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::Length()
+{
+  if (!native_)
+    return 0;
+
+  return SafeInt<uint64_t>(native_->get_size());
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(com_array<uint8_t>& values)
+{
+  if (!native_)
+    return 0;
+
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
+
+  uint64_t size = native_->get_size();
+
+  size = inSize < size ? inSize : size;
+
+  auto dest = values.data();
+  auto source = native_->get_data8bit();
+
+  if ((!dest) ||
+    (!source))
+    return 0;
+
+  memcpy(dest, source, sizeof(uint8_t)*size);
+
+  return size;
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(com_array<uint16_t>& values)
+{
+  if (!native_)
+    return 0;
+
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
+  uint64_t size = native_->get_size();
+
+  size = inSize < size ? inSize : size;
+
+  auto dest = values.data();
+  auto source = native_->get_data16bit();
+
+  if ((!dest) ||
+      (!source))
+    return 0;
+
+  memcpy(dest, source, sizeof(uint16_t)*size);
+
+  return size;
 }
 
 //------------------------------------------------------------------------------
