@@ -77,7 +77,7 @@ namespace winrt {
           void Data(Windows::Foundation::IMemoryBuffer const& value);
 
           uint64_t Length();
-          uint64_t GetData(com_array<int16_t>& values);
+          uint64_t GetData(array_view<int16_t> values);
           uint64_t SetData(array_view<int16_t const> values);
         };
 

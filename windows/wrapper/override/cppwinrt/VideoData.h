@@ -60,8 +60,8 @@ namespace winrt {
           bool Is16BitColorSpace();
 
           uint64_t Length();
-          uint64_t GetData8bit(com_array<uint8_t>& values);
-          uint64_t GetData16bit(com_array<uint16_t>& values);
+          uint64_t GetData8bit(array_view<uint8_t> values);
+          uint64_t GetData16bit(array_view<uint16_t> values);
 
           /// <summary>
           /// Gets or sets the video 8 bit color space data. <summary>

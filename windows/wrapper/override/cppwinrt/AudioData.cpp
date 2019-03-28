@@ -362,7 +362,7 @@ uint64_t Org::WebRtc::implementation::AudioData::Length()
 }
 
 //------------------------------------------------------------------------------
-uint64_t Org::WebRtc::implementation::AudioData::GetData(com_array<int16_t>& values)
+uint64_t Org::WebRtc::implementation::AudioData::GetData(array_view<int16_t> values)
 {
   if (!native_)
     return 0;

@@ -25,7 +25,7 @@ namespace Org
 
             UInt64 Length{ get; };
 
-            UInt64 GetData(out Int16[] values);
+            UInt64 GetData(ref Int16[] values);
             UInt64 SetData(Int16[] values);
         };
 

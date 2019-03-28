@@ -190,7 +190,7 @@ uint64_t Org::WebRtc::implementation::VideoData::Length()
 }
 
 //------------------------------------------------------------------------------
-uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(com_array<uint8_t>& values)
+uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(array_view<uint8_t> values)
 {
   if (!native_)
     return 0;
@@ -214,7 +214,7 @@ uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(com_array<uint8_t>&
 }
 
 //------------------------------------------------------------------------------
-uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(com_array<uint16_t>& values)
+uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_t> values)
 {
   if (!native_)
     return 0;
