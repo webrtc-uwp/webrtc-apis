@@ -107,6 +107,7 @@ namespace org
       VideoFrameNativeBuffer nativeFrame;
     };
 
+    [disposable]
     interface VideoFramePlanarYuvBuffer : VideoFrameBuffer
     {
       [constructor, default, delete]
@@ -155,6 +156,7 @@ namespace org
       VideoData v;
     };
 
+    [disposable]
     interface VideoFramePlanarYuvaBuffer : VideoFramePlanarYuvBuffer
     {
       [constructor, default, delete]
@@ -171,6 +173,7 @@ namespace org
       VideoData a;
     };
 
+    [disposable]
     interface VideoFrameNativeBuffer : VideoFrameBuffer
     {
       [constructor, default, delete]
