@@ -33,7 +33,7 @@ namespace Org
             Windows.Foundation.IMemoryBuffer Data16bit { get; };
         };
 
-        runtimeclass VideoData : [default] IVideoData
+        runtimeclass VideoData : [default] IVideoData, Windows.Foundation.IClosable
         {
 
             /// <summary>
