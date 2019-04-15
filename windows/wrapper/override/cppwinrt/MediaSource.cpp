@@ -135,14 +135,8 @@ Org::WebRtc::MediaSource Org::WebRtc::implementation::MediaSource::Cast(Org::Web
 
 //------------------------------------------------------------------------------
 Org::WebRtc::implementation::MediaSource::MediaSource(Windows::Media::Core::IMediaSource const & source)
- : native_(wrapper::org::webRtc::MediaSource::wrapper_create())
+ : native_(wrapper::impl::org::webRtc::MediaSource::toWrapper(source))
 {
-  ZS_ASSERT(source);
-  if (!native_) { throw hresult_error(E_POINTER); }
-  auto wrapperSource = wrapper::impl::org::webRtc::MediaSource::toWrapper(source);
-  ZS_ASSERT(wrapperSource);
-
-  native_->wrapper_init_org_webRtc_MediaSource(wrapperSource->source_);
 }
 
 //------------------------------------------------------------------------------

@@ -157,7 +157,7 @@ Optional< wrapper::org::webRtc::VideoTrackSourceStatsPtr > wrapper::impl::org::w
 
   if (!native_->GetStats(&stats)) return result;
 
-  return VideoTrackSourceStats::toWrapper(stats);
+  return Optional< wrapper::org::webRtc::VideoTrackSourceStatsPtr >(VideoTrackSourceStats::toWrapper(stats));
 }
 
 //------------------------------------------------------------------------------

@@ -1,16 +1,11 @@
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/windows.ui.core.h>)
 #include <winrt/windows.ui.core.h>
 #endif //__has_include(<winrt/windows.ui.core.h>)
 #endif //__has_include
 
-#else
-
 #include <zsLib/IMessageQueue.h>
-#endif //WINUWP
 
 #include "impl_org_webRtc_EventQueue.h"
 #include "impl_org_webRtc_helpers.h"
@@ -92,7 +87,6 @@ wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::getDefault
   return result;
 }
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 
 wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWrapper(winrt::Windows::UI::Core::CoreDispatcher queue) noexcept
@@ -117,8 +111,6 @@ winrt::Windows::UI::Core::CoreDispatcher wrapper::impl::org::webRtc::EventQueue:
 
 #endif // CPPWINRT_VERSION
 
-#endif //WINUWP
-
 wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWrapper(::zsLib::IMessageQueuePtr queue) noexcept
 {
   if (!queue)
@@ -136,7 +128,9 @@ wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWr
   auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, queue);
   if (!converted)
     return {};
+#ifdef CPPWINRT_VERSION
   if (converted->dispatcher_)
     return zsLib::IMessageQueueDispatcher::create(converted->dispatcher_);
+#endif //CPPWINRT_VERSION
   return converted->queue_;
 }

@@ -18,29 +18,21 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::MediaSource, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaSource, WrapperImplType);
 
-          AnyPtr source_{};
-
           MediaSourceWeakPtr thisWeak_;
+#ifdef CPPWINRT_VERSION
+          winrt::Windows::Media::Core::IMediaSource source_ {nullptr};
+#endif // CPPWINRT_VERSION
 
           MediaSource() noexcept;
           virtual ~MediaSource() noexcept;
 
 
           // methods MediaSource
-          void wrapper_init_org_webRtc_MediaSource(AnyPtr source) noexcept override;
 
-          // properties MediaSource
-          AnyPtr get_source() noexcept override;
-
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(winrt::Windows::Media::Core::IMediaSource const & source) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::Media::Core::IMediaSource toNative_winrt(wrapper::org::webRtc::MediaSourcePtr source) noexcept;
 #endif // CPPWINRT_VERSION
-#else
-#ifdef _WIN32
-#endif //_WIN32
-#endif //WINUWP
 
         };
 

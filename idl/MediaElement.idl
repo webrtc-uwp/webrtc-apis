@@ -38,26 +38,13 @@ namespace org
     /// <summary>
     /// MediaSource represents an object holder for a platform specific media element.
     /// </summary>
-    [special]
-    struct MediaElement
+    interface MediaElement
     {
       /// <summary>
       /// Constructs a media element object.
       /// </summary>
       [constructor, delete]
       void MediaElement();
-
-      /// <summary>
-      /// Constructs a media element object from a native media element type.
-      /// </summary>
-      [constructor, default, altname(MediaElementWithNativeQueue)]
-      void MediaElement(Any element);
-
-      /// <summary>
-      /// Gets the platform specific media element.
-      /// </summary>
-      [getter]
-      Any element;
     };
 
 

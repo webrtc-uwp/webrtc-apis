@@ -13,7 +13,11 @@ namespace wrapper {
         static VideoDeviceInfoPtr wrapper_create() noexcept;
         virtual ~VideoDeviceInfo() noexcept {}
 
-        virtual AnyPtr get_info() noexcept = 0;
+        virtual String get_id() noexcept = 0;
+        virtual String get_name() noexcept = 0;
+        virtual bool get_isDefault() noexcept = 0;
+        virtual bool get_isEnabled() noexcept = 0;
+
       };
 
     } // webRtc

@@ -21,27 +21,30 @@ namespace wrapper {
           AnyPtr element_{};
           MediaElementWeakPtr thisWeak_;
 
+#ifdef CPPWINRT_VERSION
+          winrt::Windows::UI::Xaml::Controls::MediaElement elementXaml_ {nullptr};
+#endif // CPPWINRT_VERSION
+
+#ifndef WINUWP
+#ifdef _WIN32
+          HWND elementHwnd_{};
+#endif //_WIN32
+#endif //ndef WINUWP
+
           MediaElement() noexcept;
           virtual ~MediaElement() noexcept;
 
-
-          // methods MediaElement
-          void wrapper_init_org_webRtc_MediaElement(AnyPtr element) noexcept override;
-
-          // properties MediaElement
-          AnyPtr get_element() noexcept override;
-
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static wrapper::org::webRtc::MediaElementPtr toWrapper(winrt::Windows::UI::Xaml::Controls::MediaElement const & element) noexcept;
-          ZS_NO_DISCARD() static winrt::Windows::UI::Xaml::Controls::MediaElement toNative_winrt(wrapper::org::webRtc::MediaElementPtr element) noexcept;
+          ZS_NO_DISCARD() static winrt::Windows::UI::Xaml::Controls::MediaElement toNative_winrt(wrapper::org::webRtc::MediaElementPtr wrapper) noexcept;
 #endif // CPPWINRT_VERSION
-#else
+
+#ifndef WINUWP
 #ifdef _WIN32
           ZS_NO_DISCARD() static wrapper::org::webRtc::MediaElementPtr toWrapper(HWND element) noexcept;
-          ZS_NO_DISCARD() static element toNative(wrapper::org::webRtc::MediaElementPtr element) noexcept;
+          ZS_NO_DISCARD() static HWND toNative(wrapper::org::webRtc::MediaElementPtr wrapper) noexcept;
 #endif //_WIN32
-#endif //WINUWP
+#endif //ndef WINUWP
 
         };
 

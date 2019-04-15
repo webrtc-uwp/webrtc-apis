@@ -189,7 +189,7 @@ Optional< uint16_t > wrapper::impl::org::webRtc::RTCIceCandidate::get_port() noe
   ::zsLib::AutoLock lock(lock_);
   auto port = native_->address().port();
   if (port < 1) return Optional< uint16_t >();
-  return SafeInt<uint16_t>(port);
+  return static_cast<uint16_t>(SafeInt<uint16_t>(port));
 }
 
 //------------------------------------------------------------------------------
@@ -241,7 +241,7 @@ Optional< uint16_t > wrapper::impl::org::webRtc::RTCIceCandidate::get_relatedPor
   ::zsLib::AutoLock lock(lock_);
   auto port = native_->related_address().port();
   if (port < 1) return Optional< uint16_t >();
-  return SafeInt<uint16_t>(port);
+  return static_cast<uint16_t>(SafeInt<uint16_t>(port));
 }
 
 //------------------------------------------------------------------------------

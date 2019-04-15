@@ -1,14 +1,12 @@
 
 #pragma once
 
-#ifdef WINUWP
-
 #ifdef __has_include
-#if __has_include(<winrt/windows.media.core.h>)
-#include <winrt/windows.media.core.h>
+#if __has_include(<winrt/Windows.Media.Core.h>)
+#include <winrt/Windows.Media.Core.h>
 #endif //__has_include(<winrt/windows.media.core.h>)
-#if __has_include(<winrt/windows.media.devices.h>)
-#include <winrt/windows.media.devices.h>
+#if __has_include(<winrt/Windows.Media.Devices.h>)
+#include <winrt/Windows.Media.Devices.h>
 #endif //__has_include(<winrt/windows.media.devices.h>)
 #if __has_include(<winrt/windows.devices.enumeration.h>)
 #include <winrt/windows.devices.enumeration.h>
@@ -88,4 +86,3 @@ ZS_DECLARE_PROXY_SUBSCRIPTIONS_METHOD(onDefaultAudioRendereDeviceChanged)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_END()
 
 #endif //CPPWINRT_VERSION
-#endif //WINUWP

@@ -47,9 +47,6 @@ namespace winrt {
           static wrapper::org::webRtc::VideoDataPtr FromCppWinrt(Org::WebRtc::VideoData const & value);
           static wrapper::org::webRtc::VideoDataPtr FromCppWinrt(Org::WebRtc::IVideoData const & value);
 
-
-
-
         public:
           /// <summary>
           /// Cast from Org::WebRtc::IVideoData to VideoData
@@ -61,17 +58,21 @@ namespace winrt {
 
           bool Is8BitColorSpace();
           bool Is16BitColorSpace();
+
+          uint64_t Length();
+          uint64_t GetData8bit(array_view<uint8_t> values);
+          uint64_t GetData16bit(array_view<uint16_t> values);
+
           /// <summary>
           /// Gets or sets the video 8 bit color space data. <summary>
           /// </summary>
           /// </summary>
-          Windows::Foundation::Collections::IVectorView< uint8_t > Data8bit();
+          Windows::Foundation::IMemoryBuffer Data8bit();
           /// <summary>
           /// Gets or sets the video 16 bit color space data. <summary>
           /// </summary>
           /// </summary>
-          Windows::Foundation::Collections::IVectorView< uint16_t > Data16bit();
-
+          Windows::Foundation::IMemoryBuffer Data16bit();
         };
 
       } // namespace implementation

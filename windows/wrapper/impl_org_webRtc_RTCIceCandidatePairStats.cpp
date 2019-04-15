@@ -281,7 +281,7 @@ Optional< double > wrapper::impl::org::webRtc::RTCIceCandidatePairStats::get_ava
 
   auto converted = cast();
   if (!converted.available_outgoing_bitrate.is_defined()) return {};
-  return SafeInt<unsigned long long>(*converted.available_outgoing_bitrate);
+  return (double)SafeInt<unsigned long long>(*converted.available_outgoing_bitrate);
 }
 
 //------------------------------------------------------------------------------
@@ -292,7 +292,7 @@ Optional< double > wrapper::impl::org::webRtc::RTCIceCandidatePairStats::get_ava
 
   auto converted = cast();
   if (!converted.available_outgoing_bitrate.is_defined()) return {};
-  return SafeInt<unsigned long long>(*converted.available_incoming_bitrate);
+  return (double)SafeInt<unsigned long long>(*converted.available_incoming_bitrate);
 }
 
 //------------------------------------------------------------------------------

@@ -27,61 +27,14 @@
 #include "RTCRtpTransceiver.h"
 #include "RTCRtpSender.h"
 
+#include <zsLib/SafeInt.h>
+
 using namespace winrt;
 
-template <typename TValueType>
-struct VideoDataVectorView : implements<
-  VideoDataVectorView<TValueType>,
-  Windows::Foundation::Collections::IVectorView<TValueType>,
-  Windows::Foundation::Collections::IIterable<TValueType>>,
-  winrt::vector_view_base<VideoDataVectorView<TValueType>, TValueType>
+struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
 {
-  VideoDataVectorView(
-    const TValueType * const data,
-    size_t size
-  ) : container_(data, size)
-  {}
-
-  auto& get_container() const noexcept
-  {
-    return container_;
-  }
-
-  auto& get_container() noexcept
-  {
-    return container_;
-  }
-
-private:
-
-  struct Container
-  {
-    Container(
-      const TValueType * const data,
-      size_t size) :
-      first_(data),
-      last_(data + size)
-    {}
-
-    TValueType const* const first_;
-    TValueType const* const last_;
-
-    auto begin() const noexcept
-    {
-      return first_;
-    }
-
-    auto end() const noexcept
-    {
-      return last_;
-    }
-  };
-
-  Container container_;
+  virtual HRESULT __stdcall GetBuffer(uint8_t** value, uint32_t* capacity) = 0;
 };
-
-typedef VideoDataVectorView<uint8_t> VideoData8BitVectorView;
-typedef VideoDataVectorView<uint16_t> VideoData16BitVectorView;
 
 //------------------------------------------------------------------------------
 winrt::com_ptr< Org::WebRtc::implementation::VideoData > Org::WebRtc::implementation::VideoData::ToCppWinrtImpl(wrapper::org::webRtc::VideoDataPtr value)
@@ -228,26 +181,113 @@ bool Org::WebRtc::implementation::VideoData::Is16BitColorSpace()
 }
 
 //------------------------------------------------------------------------------
-Windows::Foundation::Collections::IVectorView< uint8_t > Org::WebRtc::implementation::VideoData::Data8bit()
+uint64_t Org::WebRtc::implementation::VideoData::Length()
 {
-  if (!native_) { throw hresult_error(E_POINTER); }
+  if (!native_)
+    return 0;
 
-  auto data = native_->get_data8bit();
-  auto size = native_->get_size();
-
-  return winrt::make<VideoData8BitVectorView>(data, size);
+  return SafeInt<uint64_t>(native_->get_size());
 }
 
 //------------------------------------------------------------------------------
-Windows::Foundation::Collections::IVectorView< uint16_t > Org::WebRtc::implementation::VideoData::Data16bit()
+uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(array_view<uint8_t> values)
 {
-  if (!native_) { throw hresult_error(E_POINTER); }
+  if (!native_)
+    return 0;
 
-  auto data = native_->get_data16bit();
-  auto size = native_->get_size();
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
 
-  return winrt::make<VideoData16BitVectorView>(data, size);
+  uint64_t size = native_->get_size();
+
+  size = inSize < size ? inSize : size;
+
+  auto dest = values.data();
+  auto source = native_->get_data8bit();
+
+  if ((!dest) ||
+    (!source))
+    return 0;
+
+  memcpy(dest, source, sizeof(uint8_t)*size);
+
+  return size;
 }
 
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_t> values)
+{
+  if (!native_)
+    return 0;
+
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
+  uint64_t size = native_->get_size();
+
+  size = inSize < size ? inSize : size;
+
+  auto dest = values.data();
+  auto source = native_->get_data16bit();
+
+  if ((!dest) ||
+      (!source))
+    return 0;
+
+  memcpy(dest, source, sizeof(uint16_t)*size);
+
+  return size;
+}
+
+//------------------------------------------------------------------------------
+winrt::Windows::Foundation::IMemoryBuffer Org::WebRtc::implementation::VideoData::Data8bit()
+{
+  if (!native_)
+    return {nullptr};
+
+  Windows::Foundation::MemoryBuffer memBuffer{ static_cast<uint32_t>(sizeof(uint8_t)*native_->get_size()) };
+
+  auto ref = memBuffer.CreateReference();
+
+  auto byteAccess = ref.as<IMemoryBufferByteAccess>();
+  if (!byteAccess)
+    return {nullptr};
+
+  uint8_t* dest{};
+  uint32_t destSize {};
+  if (FAILED(byteAccess->GetBuffer(&dest, &destSize)))
+    return {nullptr};
+
+  if (destSize != (sizeof(uint8_t)*native_->get_size()))
+    return {nullptr};
+
+  memcpy(dest, native_->get_data8bit(), destSize);
+
+  return memBuffer;
+}
+
+//------------------------------------------------------------------------------
+winrt::Windows::Foundation::IMemoryBuffer Org::WebRtc::implementation::VideoData::Data16bit()
+{
+  if (!native_)
+    return {nullptr};
+
+  Windows::Foundation::MemoryBuffer memBuffer{ static_cast<uint32_t>(sizeof(uint16_t)*native_->get_size()) };
+
+  auto ref = memBuffer.CreateReference();
+
+  auto byteAccess = ref.as<IMemoryBufferByteAccess>();
+  if (!byteAccess)
+    return {nullptr};
+
+  uint8_t* dest{};
+  uint32_t destSize {};
+  if (FAILED(byteAccess->GetBuffer(&dest, &destSize)))
+    return {nullptr};
+
+  if (destSize != (sizeof(uint16_t)*native_->get_size()))
+    return {nullptr};
+
+  memcpy(dest, native_->get_data16bit(), destSize);
+
+  return memBuffer;
+}
 
 #endif //ifndef CPPWINRT_USE_GENERATED_ORG_WEBRTC_VIDEODATA

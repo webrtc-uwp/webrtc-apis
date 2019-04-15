@@ -231,8 +231,8 @@ static void apply(const WrapperImplType &from, NativeType &to) noexcept
   to.audio_jitter_buffer_max_packets = SafeInt<decltype(to.audio_jitter_buffer_max_packets)>(from.audioJitterBufferMaxPackets);
   to.audio_jitter_buffer_fast_accelerate = from.audioJitterBufferFastAccelerate;
 
-  to.ice_connection_receiving_timeout = (Milliseconds() == from.iceConnectionReceivingTimeout ? NativeType::kUndefined : SafeInt<decltype(to.ice_connection_receiving_timeout)>(from.iceConnectionReceivingTimeout.count()));
-  to.ice_backup_candidate_pair_ping_interval = (Milliseconds() == from.iceBackupCandidatePairPingInterval ? NativeType::kUndefined : SafeInt<decltype(to.ice_connection_receiving_timeout)>(from.iceBackupCandidatePairPingInterval.count()));
+  to.ice_connection_receiving_timeout = (Milliseconds() == from.iceConnectionReceivingTimeout ? NativeType::kUndefined : static_cast<decltype(to.ice_connection_receiving_timeout)>(SafeInt<decltype(to.ice_connection_receiving_timeout)>(from.iceConnectionReceivingTimeout.count())));
+  to.ice_backup_candidate_pair_ping_interval = (Milliseconds() == from.iceBackupCandidatePairPingInterval ? NativeType::kUndefined : static_cast<decltype(to.ice_connection_receiving_timeout)>(SafeInt<decltype(to.ice_connection_receiving_timeout)>(from.iceBackupCandidatePairPingInterval.count())));
 
   to.continual_gathering_policy = UseEnum::toNative(from.continualGatheringPolicy);
   to.prioritize_most_likely_ice_candidate_pairs = from.prioritizeMostLikelyIceCandidatePairs;

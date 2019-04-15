@@ -14,21 +14,26 @@ namespace Org
         {
 
             /// <summary>
-            /// Gets if the data is read-only. <summary> </summary>
+            /// Gets if the data is read-only.
             /// </summary>
             Boolean ReadOnly { get; };
 
             /// <summary>
-            /// Gets or sets the audio samples data. <summary> </summary>
+            /// Gets or sets the audio samples data (int16s encoded in little endian 2 byte pairs).
             /// </summary>
-            Windows.Foundation.Collections.IVectorView< Int16 > Data { get; set; };
+            Windows.Foundation.IMemoryBuffer Data{ get; set; };
+
+            UInt64 Length{ get; };
+
+            UInt64 GetData(ref Int16[] values);
+            UInt64 SetData(Int16[] values);
         };
 
         runtimeclass AudioData : [default] IAudioData, Windows.Foundation.IClosable
         {
 
             /// <summary>
-            /// Constructs a new audio data object. <summary> </summary>
+            /// Constructs a new audio data object.
             /// </summary>
             [default_overload]
             AudioData();

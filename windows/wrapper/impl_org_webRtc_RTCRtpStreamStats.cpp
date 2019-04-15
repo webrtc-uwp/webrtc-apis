@@ -217,7 +217,7 @@ Optional< uint32_t > WrapperImplType::get_ssrc(const NativeStats *native) noexce
   if (!native) return {};
 
   if (!native->ssrc.is_defined()) return {};
-  return SafeInt<uint32_t>(*native->ssrc);
+  return static_cast<uint32_t>(SafeInt<uint32_t>(*native->ssrc));
 }
 
 //------------------------------------------------------------------------------

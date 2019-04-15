@@ -1,18 +1,15 @@
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/base.h>)
 #include <winrt/base.h>
 #endif //__has_include(<winrt/base.h>)
 #endif //__has_include
 
-#else
-
+#ifndef WINUWP
 #ifdef _WIN32
+#include <WinSock2.h>
 #include <Windows.h>
 #endif //_WIN32
-
 #endif //WINUWP
 
 #include "impl_org_webRtc_MediaSample.h"
@@ -59,7 +56,6 @@ wrapper::impl::org::webRtc::MediaSample::~MediaSample() noexcept
   thisWeak_.reset();
 }
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 //------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::MediaSample::wrapper_dispose() noexcept
@@ -87,5 +83,3 @@ winrt::com_ptr<IMFSample> wrapper::impl::org::webRtc::MediaSample::toNative(wrap
 }
 
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
-

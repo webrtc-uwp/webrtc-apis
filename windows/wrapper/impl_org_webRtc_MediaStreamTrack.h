@@ -33,12 +33,10 @@ namespace wrapper {
           typedef rtc::scoped_refptr<AudioNativeType> AudioNativeTypeScopedPtr;
           typedef rtc::scoped_refptr<VideoNativeType> VideoNativeTypeScopedPtr;
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_DECLARE_TYPEDEF_PTR(webrtc::IMediaStreamSource, UseMediaStreamSource);
           typedef UseMediaStreamSource::VideoFrameType UseVideoFrameType;
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
 
 
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::MediaElement, UseMediaElement);
@@ -50,11 +48,9 @@ namespace wrapper {
           ZS_DECLARE_STRUCT_PTR(WebrtcVideoObserver);
 
           struct WebrtcVideoObserver : public rtc::VideoSinkInterface<::webrtc::VideoFrame>
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
                                        , public ::webrtc::IMediaStreamSourceDelegate
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
           {
             WebrtcVideoObserver(
                                 WrapperImplTypePtr wrapper,
@@ -77,7 +73,6 @@ namespace wrapper {
               outer->notifyWebrtcObserverDiscardedFrame(); // NOTE: intentionally called synchronously
             }
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
             void onMediaStreamSourceResolutionChanged(
                                                       UseMediaStreamSourcePtr source,
@@ -117,7 +112,6 @@ namespace wrapper {
               });
             }
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
 
           private:
             WrapperImplTypeWeakPtr outer_;
@@ -135,11 +129,10 @@ namespace wrapper {
           std::atomic_bool hasVideoFrameObservers_;
           zsLib::IMessageQueuePtr videoFrameProcessingQueue_;
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           UseMediaStreamSourcePtr mediaStreamSource_;
 #endif // CPPWINRT_VERSION
-#endif //WINUWP
+
           UseVideoFrameType currentFrameType_{};
           bool firstFrameReceived_ { false };
 

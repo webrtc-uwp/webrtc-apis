@@ -18,26 +18,25 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoDeviceInfo, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoDeviceInfo, WrapperImplType);
 
-          AnyPtr info_ {};
-
           VideoDeviceInfoWeakPtr thisWeak_;
+#ifdef CPPWINRT_VERSION
+          winrt::Windows::Devices::Enumeration::DeviceInformation info_ {nullptr};
+#endif // CPPWINRT_VERSION
 
           VideoDeviceInfo() noexcept;
           virtual ~VideoDeviceInfo() noexcept;
 
 
           // properties VideoDeviceInfo
-          AnyPtr get_info() noexcept override;
+          String get_id() noexcept override;
+          String get_name() noexcept override;
+          bool get_isDefault() noexcept override;
+          bool get_isEnabled() noexcept override;
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
           ZS_NO_DISCARD() static wrapper::org::webRtc::VideoDeviceInfoPtr toWrapper(winrt::Windows::Devices::Enumeration::DeviceInformation const & info) noexcept;
           ZS_NO_DISCARD() static winrt::Windows::Devices::Enumeration::DeviceInformation toNative_winrt(wrapper::org::webRtc::VideoDeviceInfoPtr info) noexcept;
 #endif // CPPWINRT_VERSION
-#else
-#ifdef _WIN32
-#endif //_WIN32
-#endif //WINUWP
 
         };
 

@@ -17,20 +17,23 @@ namespace Org
 
             Boolean Is16BitColorSpace { get; };
 
-            /// <summary>
-            /// Gets or sets the video 8 bit color space data. <summary>
-            /// </summary>
-            /// </summary>
-            Windows.Foundation.Collections.IVectorView< UInt8 > Data8bit { get; };
+            UInt64 Length{ get; };
+
+            UInt64 GetData8bit(ref UInt8[] values);
+            UInt64 GetData16bit(ref UInt16[] values);
 
             /// <summary>
-            /// Gets or sets the video 16 bit color space data. <summary>
+            /// Gets or sets the video 8 bit color space data.
             /// </summary>
+            Windows.Foundation.IMemoryBuffer Data8bit { get; };
+
+            /// <summary>
+            /// Gets or sets the video 16 bit color space data (as 8 bit / 2 byte little endian).
             /// </summary>
-            Windows.Foundation.Collections.IVectorView< UInt16 > Data16bit { get; };
+            Windows.Foundation.IMemoryBuffer Data16bit { get; };
         };
 
-        runtimeclass VideoData : [default] IVideoData
+        runtimeclass VideoData : [default] IVideoData, Windows.Foundation.IClosable
         {
 
             /// <summary>

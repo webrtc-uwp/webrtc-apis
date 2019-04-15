@@ -30,6 +30,12 @@
 
 using namespace winrt;
 
+
+struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
+{
+  virtual HRESULT __stdcall GetBuffer(uint8_t** value, uint32_t* capacity) = 0;
+};
+
 struct AudioDataVectorView : implements<
   AudioDataVectorView,
   Windows::Foundation::Collections::IVectorView<int16_t>,
@@ -279,18 +285,34 @@ bool Org::WebRtc::implementation::AudioData::ReadOnly()
 }
 
 //------------------------------------------------------------------------------
-Windows::Foundation::Collections::IVectorView< int16_t > Org::WebRtc::implementation::AudioData::Data()
+Windows::Foundation::IMemoryBuffer Org::WebRtc::implementation::AudioData::Data()
 {
-  if (!native_) { throw hresult_error(E_POINTER); }
+  if (!native_)
+    return {nullptr};
 
-  auto data = native_->data();
-  auto size = native_->size();
+  Windows::Foundation::MemoryBuffer memBuffer{ static_cast<uint32_t>(sizeof(int16_t)*native_->size()) };
 
-  return winrt::make<AudioDataVectorView>(data, size);
+  auto ref = memBuffer.CreateReference();
+
+  auto byteAccess = ref.as<IMemoryBufferByteAccess>();
+  if (!byteAccess)
+    return {nullptr};
+
+  uint8_t* dest{};
+  uint32_t destSize {};
+  if (FAILED(byteAccess->GetBuffer(&dest, &destSize)))
+    return {nullptr};
+
+  if (destSize != (sizeof(int16_t)*native_->size()))
+    return {nullptr};
+
+  memcpy(dest, native_->data(), destSize);
+
+  return memBuffer;
 }
 
 //------------------------------------------------------------------------------
-void Org::WebRtc::implementation::AudioData::Data(Windows::Foundation::Collections::IVectorView< int16_t > const & value)
+void Org::WebRtc::implementation::AudioData::Data(Windows::Foundation::IMemoryBuffer const& value)
 {
   if (!native_)
     throw hresult_error(E_POINTER);
@@ -300,15 +322,25 @@ void Org::WebRtc::implementation::AudioData::Data(Windows::Foundation::Collectio
     return;
   }
 
-  auto data = native_->data();
-  if (!data) {
-    native_->wrapper_init_org_webRtc_AudioData(SafeInt<size_t>(value.Size()));
+  auto ref = value.CreateReference();
+
+  auto byteAccess = ref.as<IMemoryBufferByteAccess>();
+  if (!byteAccess) {
+    native_->wrapper_init_org_webRtc_AudioData();
+    return;
+  }
+
+  uint8_t* source{};
+  uint32_t sourceSize{};
+  if (FAILED(byteAccess->GetBuffer(&source, &sourceSize))) {
+    native_->wrapper_init_org_webRtc_AudioData();
+    return;
   }
 
   ZS_ASSERT(!native_->readOnly());
 
   auto bufferSize = native_->size();
-  decltype(bufferSize) passedSize = SafeInt<decltype(bufferSize)>(value.Size());
+  uint64_t passedSize = sourceSize / sizeof(int16_t);;
 
   ZS_ASSERT(passedSize <= bufferSize);
 
@@ -316,14 +348,65 @@ void Org::WebRtc::implementation::AudioData::Data(Windows::Foundation::Collectio
     passedSize = bufferSize;
 
   int16_t * const firstData = native_->mutableData();
-  int16_t * const lastData = firstData + passedSize;
 
-  if (!firstData)
-    throw hresult_error(E_UNEXPECTED);
-
-  winrt::array_view<int16_t> view(firstData, lastData);
-  value.GetMany(0, view);
+  memcpy(firstData, source, sizeof(int16_t)*passedSize);
 }
 
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::AudioData::Length()
+{
+  if (!native_)
+    return {};
+
+  return SafeInt<uint64_t>(native_->size());
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::AudioData::GetData(array_view<int16_t> values)
+{
+  if (!native_)
+    return 0;
+
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
+
+  uint64_t size = native_->size();
+
+  size = inSize < size ? inSize : size;
+
+  auto dest = values.data();
+  auto source = native_->data();
+
+  if ((!dest) ||
+      (!source))
+    return 0;
+
+  memcpy(dest, source, sizeof(int16_t)*size);
+
+  return size;
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::AudioData::SetData(array_view<int16_t const> values)
+{
+  if (!native_)
+    return 0;
+
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
+
+  uint64_t size = native_->size();
+
+  size = inSize < size ? inSize : size;
+
+  auto source = values.data();
+  auto dest = native_->mutableData();
+
+  if ((!dest) ||
+     (!source))
+    return 0;
+
+  memcpy(dest, source, sizeof(int16_t)*size);
+
+  return size;
+}
 
 #endif //ifndef CPPWINRT_USE_GENERATED_ORG_WEBRTC_AUDIODATA

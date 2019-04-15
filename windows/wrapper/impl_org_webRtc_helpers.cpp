@@ -1,19 +1,10 @@
 
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #include <winrt/Windows.UI.Xaml.Controls.h>
 #endif //__has_include(<winrt/Windows.UI.Xaml.Controls.h>)
 #endif //__has_include
-
-#else
-
-#ifdef _WIN32
-#endif //_WIN32
-
-#endif //WINUWP
 
 #include "impl_org_webRtc_helpers.h"
 

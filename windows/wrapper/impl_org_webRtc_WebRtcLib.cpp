@@ -1,20 +1,11 @@
 
 #define ZS_DECLARE_TEMPLATE_GENERATE_IMPLEMENTATION
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/Windows.Media.Core.h>)
 #include <winrt/Windows.Media.Core.h>
 #endif //__has_include(<winrt/Windows.Media.Core.h>)
 #endif //__has_include
-
-#else
-
-#ifdef _WIN32
-#endif //_WIN32
-
-#endif //WINUWP
 
 #include "impl_org_webRtc_WebRtcLib.h"
 #include "impl_org_webRtc_WebRtcLibConfiguration.h"
@@ -66,7 +57,6 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::EventQueue, UseEventQueue);
 
 ZS_DECLARE_TYPEDEF_PTR(zsLib::eventing::IHelper, UseHelper);
 
-#ifdef WINUWP
 #ifdef CPPWINRT_VERSION
 ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IMediaStreamSourceDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IMediaStreamSourceDelegate, webrtc::IMediaStreamSourceSubscription)
@@ -77,7 +67,6 @@ ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IVideoCaptureMediaSinkDelegate,
 ZS_DECLARE_PROXY_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate)
 ZS_DECLARE_PROXY_SUBSCRIPTIONS_IMPLEMENT(webrtc::IAudioDeviceWasapiDelegate, webrtc::IAudioDeviceWasapiSubscription)
 #endif  // CPPWINRT_VERSION
-#endif //WINUWP
 
 //------------------------------------------------------------------------------
 WrapperImplType::WebRtcLib() noexcept
@@ -184,11 +173,10 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
   wrapper::org::webRtc::EventQueuePtr audioRenderFrameProcessingQueue = configuration ? configuration->audioRenderFrameProcessingQueue : nullptr;
   wrapper::org::webRtc::EventQueuePtr videoFrameProcessingQueue = configuration ? configuration->videoFrameProcessingQueue : nullptr;
 
-#ifdef WINUWP
-
   // Setup for WinWUP...
 
 #ifdef CPPWINRT_VERSION
+
   {
     // Setup if WinUWP CppWinRT is defined...
     auto nativeCppWinrt = UseEventQueue::toNative_winrt(queue);
@@ -196,19 +184,8 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
       UseHelper::setup(nativeCppWinrt);
     }
   }
+
 #endif //CPPWINRT_VERSION
-
-#else
-
-  // setup for non WinWUP targets...
-
-#ifdef _WIN32
-
-  // setup specific to Win32...
-
-#endif //_WIN32
-
-#endif //WINUWP
 
   if (!didSetupZsLib_.test_and_set()) {
     UseHelper::setup();

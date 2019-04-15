@@ -321,7 +321,7 @@ Optional< unsigned long > wrapper::impl::org::webRtc::RTCInboundRtpStreamStats::
 
   auto converted = cast();
   if (!converted.frames_decoded.is_defined()) return {};
-  return SafeInt<unsigned long>(*converted.frames_decoded);
+  return static_cast<unsigned long>(SafeInt<unsigned long>(*converted.frames_decoded));
 }
 
 //------------------------------------------------------------------------------

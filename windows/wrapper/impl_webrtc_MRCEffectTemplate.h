@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef WINUWP
-
 #ifdef __has_include
 #if __has_include(<winrt/windows.media.effects.h>)
 #include <winrt/windows.media.effects.h>
@@ -29,4 +27,3 @@ namespace webrtc {
 }
 
 #endif //CPPWINRT_VERSION
-#endif //WINUWP
