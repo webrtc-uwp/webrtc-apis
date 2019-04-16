@@ -208,7 +208,7 @@ uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(array_view<uint8_t>
     (!source))
     return 0;
 
-  memcpy(dest, source, sizeof(uint8_t)*size);
+  memcpy(dest, source, SafeInt<size_t>(sizeof(uint8_t) * size));
 
   return size;
 }
@@ -231,7 +231,7 @@ uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_
       (!source))
     return 0;
 
-  memcpy(dest, source, sizeof(uint16_t)*size);
+  memcpy(dest, source, SafeInt<size_t>(sizeof(uint16_t) * size));
 
   return size;
 }

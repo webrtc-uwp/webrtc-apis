@@ -349,7 +349,7 @@ void Org::WebRtc::implementation::AudioData::Data(Windows::Foundation::IMemoryBu
 
   int16_t * const firstData = native_->mutableData();
 
-  memcpy(firstData, source, sizeof(int16_t)*passedSize);
+  memcpy(firstData, source, SafeInt<size_t>(sizeof(int16_t) * passedSize));
 }
 
 //------------------------------------------------------------------------------
@@ -380,7 +380,7 @@ uint64_t Org::WebRtc::implementation::AudioData::GetData(array_view<int16_t> val
       (!source))
     return 0;
 
-  memcpy(dest, source, sizeof(int16_t)*size);
+  memcpy(dest, source, SafeInt<size_t>(sizeof(int16_t) * size));
 
   return size;
 }
@@ -404,7 +404,7 @@ uint64_t Org::WebRtc::implementation::AudioData::SetData(array_view<int16_t cons
      (!source))
     return 0;
 
-  memcpy(dest, source, sizeof(int16_t)*size);
+  memcpy(dest, source, SafeInt<size_t>(sizeof(int16_t) * size));
 
   return size;
 }
