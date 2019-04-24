@@ -61,6 +61,8 @@ WrapperImplTypePtr WrapperImplType::clone(WrapperTypePtr wrapper) noexcept
   auto result = std::make_shared<WrapperImplType>();
   result->audioCapturingEnabled = converted->audioCapturingEnabled;
   result->audioRenderingEnabled = converted->audioRenderingEnabled;
+  result->audioCaptureDeviceId = converted->audioCaptureDeviceId;
+  result->audioRenderDeviceId = converted->audioRenderDeviceId;
   result->enableAudioBufferEvents = converted->enableAudioBufferEvents;
   return result;
 }

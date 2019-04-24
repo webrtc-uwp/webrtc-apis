@@ -108,6 +108,16 @@ namespace org
       /// Gets or sets if audio rendering is enabled.
       /// </summary>
       bool audioRenderingEnabled = true;
+	  
+      /// <summary>
+      /// Gets or sets Device ID of used audio capture device.
+      /// </summary>
+	  string audioCaptureDeviceId;
+	  
+      /// <summary>
+      /// Gets or sets Device ID of used audio render device.
+      /// </summary>
+	  string audioRenderDeviceId;
 
       /// <summary>
       /// Gets or sets if audio post-capture and pre-render events should be
