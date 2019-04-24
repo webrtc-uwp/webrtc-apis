@@ -355,8 +355,8 @@ void WrapperImplType::setup() noexcept
 
   if (audioCaptureDeviceId.size() != 0) {
     int deviceCount = audioDeviceModule->RecordingDevices();
-    char deviceName[256];
-    char deviceId[256];
+    char deviceName[::webrtc::kAdmMaxDeviceNameSize];
+    char deviceId[::webrtc::kAdmMaxGuidSize];
     uint16_t deviceIndex = USHRT_MAX;
     for (uint16_t i = 0; i < deviceCount; i++) {
       audioDeviceModule->RecordingDeviceName(i, deviceName, deviceId);
@@ -371,8 +371,8 @@ void WrapperImplType::setup() noexcept
 
   if (audioRenderDeviceId.size() != 0) {
     int deviceCount = audioDeviceModule->PlayoutDevices();
-    char deviceName[256];
-    char deviceId[256];
+    char deviceName[::webrtc::kAdmMaxDeviceNameSize];
+    char deviceId[::webrtc::kAdmMaxGuidSize];
     uint16_t deviceIndex = USHRT_MAX;
     for (uint16_t i = 0; i < deviceCount; i++) {
       audioDeviceModule->PlayoutDeviceName(i, deviceName, deviceId);
