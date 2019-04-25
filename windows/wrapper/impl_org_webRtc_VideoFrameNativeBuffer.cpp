@@ -83,7 +83,7 @@ wrapper::org::webRtc::VideoFrameBufferType wrapper::impl::org::webRtc::VideoFram
 {
   ZS_ASSERT(native_);
   if (!native_)
-    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_native;
   return UseEnum::toWrapper(native_->type());
 }
 

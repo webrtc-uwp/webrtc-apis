@@ -1291,12 +1291,12 @@ wrapper::org::webRtc::VadActivity UseEnum::toWrapper(::webrtc::AudioFrame::VADAc
 {
   switch (value)
   {
-    case ::webrtc::AudioFrame::VADActivity::kVadActive:   return wrapper::org::webRtc::VadActivity::VadActivity_Active;
-    case ::webrtc::AudioFrame::VADActivity::kVadPassive:  return wrapper::org::webRtc::VadActivity::VadActivity_Passive;
-    case ::webrtc::AudioFrame::VADActivity::kVadUnknown:  return wrapper::org::webRtc::VadActivity::VadActivity_Unknown;
+    case ::webrtc::AudioFrame::VADActivity::kVadActive:   return wrapper::org::webRtc::VadActivity::VadActivity_active;
+    case ::webrtc::AudioFrame::VADActivity::kVadPassive:  return wrapper::org::webRtc::VadActivity::VadActivity_passive;
+    case ::webrtc::AudioFrame::VADActivity::kVadUnknown:  return wrapper::org::webRtc::VadActivity::VadActivity_unknown;
   }
   ZS_ASSERT_FAIL("unknown activity");
-  return wrapper::org::webRtc::VadActivity::VadActivity_Unknown;
+  return wrapper::org::webRtc::VadActivity::VadActivity_unknown;
 }
 
 //-----------------------------------------------------------------------------
@@ -1304,9 +1304,9 @@ wrapper::org::webRtc::VadActivity UseEnum::toWrapper(::webrtc::AudioFrame::VADAc
 {
   switch (value)
   {
-    case wrapper::org::webRtc::VadActivity::VadActivity_Active: return ::webrtc::AudioFrame::VADActivity::kVadActive;
-    case wrapper::org::webRtc::VadActivity::VadActivity_Passive: return ::webrtc::AudioFrame::VADActivity::kVadPassive;
-    case wrapper::org::webRtc::VadActivity::VadActivity_Unknown: return ::webrtc::AudioFrame::VADActivity::kVadUnknown;
+    case wrapper::org::webRtc::VadActivity::VadActivity_active: return ::webrtc::AudioFrame::VADActivity::kVadActive;
+    case wrapper::org::webRtc::VadActivity::VadActivity_passive: return ::webrtc::AudioFrame::VADActivity::kVadPassive;
+    case wrapper::org::webRtc::VadActivity::VadActivity_unknown: return ::webrtc::AudioFrame::VADActivity::kVadUnknown;
   }
   ZS_ASSERT_FAIL("unknown activity");
   return ::webrtc::AudioFrame::VADActivity::kVadUnknown;
@@ -1317,12 +1317,12 @@ wrapper::org::webRtc::Band UseEnum::toWrapper(::webrtc::Band value) noexcept
 {
   switch (value)
   {
-    case ::webrtc::Band::kBand0To8kHz:    return wrapper::org::webRtc::Band::Band_Band0To8kHz;
-    case ::webrtc::Band::kBand8To16kHz:   return wrapper::org::webRtc::Band::Band_Band8To16kHz;
-    case ::webrtc::Band::kBand16To24kHz:  return wrapper::org::webRtc::Band::Band_Band16To24kHz;
+    case ::webrtc::Band::kBand0To8kHz:    return wrapper::org::webRtc::Band::Band_band0To8kHz;
+    case ::webrtc::Band::kBand8To16kHz:   return wrapper::org::webRtc::Band::Band_band8To16kHz;
+    case ::webrtc::Band::kBand16To24kHz:  return wrapper::org::webRtc::Band::Band_band16To24kHz;
   }
   ZS_ASSERT_FAIL("unknown band");
-  return wrapper::org::webRtc::Band::Band_Band16To24kHz;
+  return wrapper::org::webRtc::Band::Band_band16To24kHz;
 }
 
 //-----------------------------------------------------------------------------
@@ -1330,9 +1330,9 @@ wrapper::org::webRtc::Band UseEnum::toWrapper(::webrtc::Band value) noexcept
 {
   switch (value)
   {
-    case wrapper::org::webRtc::Band::Band_Band0To8kHz:    return ::webrtc::Band::kBand0To8kHz;
-    case wrapper::org::webRtc::Band::Band_Band8To16kHz:   return ::webrtc::Band::kBand8To16kHz;
-    case wrapper::org::webRtc::Band::Band_Band16To24kHz:  return ::webrtc::Band::kBand16To24kHz;
+    case wrapper::org::webRtc::Band::Band_band0To8kHz:    return ::webrtc::Band::kBand0To8kHz;
+    case wrapper::org::webRtc::Band::Band_band8To16kHz:   return ::webrtc::Band::kBand8To16kHz;
+    case wrapper::org::webRtc::Band::Band_band16To24kHz:  return ::webrtc::Band::kBand16To24kHz;
   }
   ZS_ASSERT_FAIL("unknown band");
   return ::webrtc::Band::kBand0To8kHz;
@@ -1344,12 +1344,12 @@ wrapper::org::webRtc::RuntimeSetting UseEnum::toWrapper(::webrtc::AudioProcessin
 {
   switch (value)
   {
-    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified:                          return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_NotSpecified;
-    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kCapturePreGain:                        return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CapturePreGain;
-    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kCustomRenderProcessingRuntimeSetting:  return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CustomRenderProcessingRuntimeSetting;
+    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified:                          return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_notSpecified;
+    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kCapturePreGain:                        return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_capturePreGain;
+    case ::webrtc::AudioProcessing::RuntimeSetting::Type::kCustomRenderProcessingRuntimeSetting:  return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_customRenderProcessingRuntimeSetting;
   }
   ZS_ASSERT_FAIL("unknown type");
-  return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_NotSpecified;
+  return wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_notSpecified;
 }
 
 //-----------------------------------------------------------------------------
@@ -1357,9 +1357,9 @@ wrapper::org::webRtc::RuntimeSetting UseEnum::toWrapper(::webrtc::AudioProcessin
 {
   switch (value)
   {
-    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_NotSpecified:                         return ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified;
-    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CapturePreGain:                       return ::webrtc::AudioProcessing::RuntimeSetting::Type::kCapturePreGain;
-    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_CustomRenderProcessingRuntimeSetting: return ::webrtc::AudioProcessing::RuntimeSetting::Type::kCustomRenderProcessingRuntimeSetting;
+    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_notSpecified:                         return ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified;
+    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_capturePreGain:                       return ::webrtc::AudioProcessing::RuntimeSetting::Type::kCapturePreGain;
+    case wrapper::org::webRtc::RuntimeSetting::RuntimeSetting_customRenderProcessingRuntimeSetting: return ::webrtc::AudioProcessing::RuntimeSetting::Type::kCustomRenderProcessingRuntimeSetting;
   }
   ZS_ASSERT_FAIL("unknown type");
   return ::webrtc::AudioProcessing::RuntimeSetting::Type::kNotSpecified;
@@ -1370,12 +1370,12 @@ wrapper::org::webRtc::VideoFrameBufferType UseEnum::toWrapper(::webrtc::VideoFra
 {
   switch (value)
   {
-    case ::webrtc::VideoFrameBuffer::Type::kNative:   return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
-    case ::webrtc::VideoFrameBuffer::Type::kI420:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I420;
-    case ::webrtc::VideoFrameBuffer::Type::kI420A:    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I420A;
-    case ::webrtc::VideoFrameBuffer::Type::kI444:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I444;
-    case ::webrtc::VideoFrameBuffer::Type::kI010:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_I010;
+    case ::webrtc::VideoFrameBuffer::Type::kNative:   return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_native;
+    case ::webrtc::VideoFrameBuffer::Type::kI420:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_i420;
+    case ::webrtc::VideoFrameBuffer::Type::kI420A:    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_i420A;
+    case ::webrtc::VideoFrameBuffer::Type::kI444:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_i444;
+    case ::webrtc::VideoFrameBuffer::Type::kI010:     return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_i010;
   }
   ZS_ASSERT_FAIL("unknown type");
-  return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+  return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_native;
 }

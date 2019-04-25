@@ -50,6 +50,8 @@ namespace org
 
     struct AudioBufferConfiguration;
     struct AudioFrame;
+    struct CustomAudioPlayoutDeviceInfo;
+    struct CustomAudioRecordingDeviceInfo;
     struct VideoFormat;
     struct RTCOAuthCredential;
     struct RTCIceServer;
@@ -125,6 +127,8 @@ namespace org
     typedef std::list<RTCRtpReceiver> RTCRtpReceivers;
     typedef std::list<RTCRtpTransceiver> RTCRtpTransceivers;
     typedef std::list<RTCIceCandidate> RTCIceCandidates;
+    typedef std::list<CustomAudioPlayoutDeviceInfo> CustomAudioPlayoutDeviceInfoList;
+    typedef std::list<CustomAudioRecordingDeviceInfo> CustomAudioRecordingDeviceInfoList;
 
 
     [dictionary]

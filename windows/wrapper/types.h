@@ -24,6 +24,17 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(AudioProcessingRuntimeSettingEvent);
         ZS_DECLARE_STRUCT_PTR(AudioTrackSource);
         ZS_DECLARE_STRUCT_PTR(Constraint);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioDevice);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceParameters);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceRequestStateEvent);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceSelectEvent);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestMute);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestSettings);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestStateEvent);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestStereo);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestVolume);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioPlayoutDeviceInfo);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioRecordingDeviceInfo);
         ZS_DECLARE_STRUCT_PTR(EventQueue);
         ZS_DECLARE_STRUCT_PTR(EventQueueMaker);
         ZS_DECLARE_STRUCT_PTR(MediaConstraints);
