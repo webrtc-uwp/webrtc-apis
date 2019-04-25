@@ -35,6 +35,10 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestVolume);
         ZS_DECLARE_STRUCT_PTR(CustomAudioPlayoutDeviceInfo);
         ZS_DECLARE_STRUCT_PTR(CustomAudioRecordingDeviceInfo);
+        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturer);
+        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerAttachmentEvent);
+        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerParameters);
+        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerStartEvent);
         ZS_DECLARE_STRUCT_PTR(EventQueue);
         ZS_DECLARE_STRUCT_PTR(EventQueueMaker);
         ZS_DECLARE_STRUCT_PTR(MediaConstraints);
