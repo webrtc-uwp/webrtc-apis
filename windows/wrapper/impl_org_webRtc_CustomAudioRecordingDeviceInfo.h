@@ -20,6 +20,8 @@ namespace wrapper {
           virtual ~CustomAudioRecordingDeviceInfo() noexcept;
 
           void wrapper_init_org_webRtc_CustomAudioRecordingDeviceInfo() noexcept override;
+
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(WrapperTypePtr wrapper) noexcept;
         };
 
       } // webRtc

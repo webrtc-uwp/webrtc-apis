@@ -14,7 +14,12 @@ namespace wrapper {
         {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::CustomAudioDeviceSelectEvent, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::CustomAudioDeviceSelectEvent, WrapperImplType);
+
           CustomAudioDeviceSelectEventWeakPtr thisWeak_;
+          uint16_t id_ {};
+          bool isRecordingDevice_ {};
+          bool isPlayoutDevice_ {};
+
 
           CustomAudioDeviceSelectEvent() noexcept;
           virtual ~CustomAudioDeviceSelectEvent() noexcept;
@@ -25,6 +30,11 @@ namespace wrapper {
           uint16_t get_deviceId() noexcept override;
           bool get_isRecordingDevice() noexcept override;
           bool get_isPlayoutDevice() noexcept override;
+
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(
+            uint16_t id,
+            bool isRecording,
+            bool isPlayout) noexcept;
         };
 
       } // webRtc

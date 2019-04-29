@@ -47,4 +47,13 @@ void wrapper::impl::org::webRtc::CustomAudioPlayoutDeviceInfo::wrapper_init_org_
 {
 }
 
-
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(WrapperTypePtr wrapper) noexcept
+{
+  if (!wrapper)
+    return {};
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  ((WrapperType &)(*result)) = *wrapper;
+  return result;
+}

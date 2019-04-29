@@ -50,22 +50,31 @@ void wrapper::impl::org::webRtc::CustomAudioMixerRequestStateEvent::wrapper_disp
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::CustomAudioMixerRequestStateEvent::get_isSpeaker() noexcept
 {
-  bool result {};
-  return result;
+  return isSpeaker_;
 }
 
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::CustomAudioMixerRequestStateEvent::get_isMicrophone() noexcept
 {
-  bool result {};
-  return result;
+  return isMicrophone_;
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::CustomAudioMixerRequestStateEventPtr wrapper::impl::org::webRtc::CustomAudioMixerRequestStateEvent::get_requestedState() noexcept
+wrapper::org::webRtc::CustomAudioRequestState wrapper::impl::org::webRtc::CustomAudioMixerRequestStateEvent::get_requestedState() noexcept
 {
-  wrapper::org::webRtc::CustomAudioMixerRequestStateEventPtr result {};
-  return result;
+  return state_;
 }
 
-
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  bool isSpeaker,
+  bool isMicrophone,
+  wrapper::org::webRtc::CustomAudioRequestState state) noexcept
+{
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->isSpeaker_ = isSpeaker;
+  result->isMicrophone_ = isMicrophone;
+  result->state_ = state;
+  return result;
+}

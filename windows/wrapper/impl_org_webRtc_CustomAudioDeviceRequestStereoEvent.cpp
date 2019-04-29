@@ -1,5 +1,5 @@
 
-#include "impl_org_webRtc_CustomAudioDeviceRequestStateEvent.h"
+#include "impl_org_webRtc_CustomAudioDeviceRequestStereoEvent.h"
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -20,61 +20,61 @@ using ::std::set;
 using ::std::map;
 
 // borrow definitions from class
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent::WrapperImplType, WrapperImplType);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent::CustomAudioDeviceRequestStateEvent() noexcept
+wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent::CustomAudioDeviceRequestStereoEvent() noexcept
 {
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::CustomAudioDeviceRequestStateEventPtr wrapper::org::webRtc::CustomAudioDeviceRequestStateEvent::wrapper_create() noexcept
+wrapper::org::webRtc::CustomAudioDeviceRequestStereoEventPtr wrapper::org::webRtc::CustomAudioDeviceRequestStereoEvent::wrapper_create() noexcept
 {
-  auto pThis = make_shared<wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent>();
+  auto pThis = make_shared<wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent>();
   pThis->thisWeak_ = pThis;
   return pThis;
 }
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent::~CustomAudioDeviceRequestStateEvent() noexcept
+wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent::~CustomAudioDeviceRequestStereoEvent() noexcept
 {
   thisWeak_.reset();
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent::wrapper_dispose() noexcept
+void wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent::wrapper_dispose() noexcept
 {
 }
 
 //------------------------------------------------------------------------------
-bool wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent::get_isRecordingDevice() noexcept
+bool wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent::get_isRecordingDevice() noexcept
 {
   return isRecordingDevice_;
 }
 
 //------------------------------------------------------------------------------
-bool wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent::get_isPlayoutDevice() noexcept
+bool wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent::get_isPlayoutDevice() noexcept
 {
   return isPlayoutDevice_;
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::CustomAudioRequestState wrapper::impl::org::webRtc::CustomAudioDeviceRequestStateEvent::get_requestedState() noexcept
+bool wrapper::impl::org::webRtc::CustomAudioDeviceRequestStereoEvent::get_stereo() noexcept
 {
-  return state_;
+  return stereo_;
 }
 
 //------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::toWrapper(
   bool isRecordingDevice,
   bool isPlayoutDevice,
-  wrapper::org::webRtc::CustomAudioRequestState state) noexcept
+  bool stereo) noexcept
 {
   auto result = std::make_shared<WrapperImplType>();
   result->thisWeak_ = result;
   result->isRecordingDevice_ = isRecordingDevice;
   result->isPlayoutDevice_ = isPlayoutDevice;
-  result->state_ = state;
+  result->stereo_ = stereo;
   return result;
 }

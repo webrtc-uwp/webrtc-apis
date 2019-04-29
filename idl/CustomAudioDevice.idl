@@ -37,7 +37,6 @@ namespace org
     [dictionary]
     struct CustomAudioPlayoutDeviceInfo
     {
-      uint16 id;
       string name;
       string guid;
 
@@ -55,7 +54,6 @@ namespace org
     [dictionary]
     struct CustomAudioRecordingDeviceInfo
     {
-      uint16 id;
       string name;
       string guid;
 
@@ -158,17 +156,17 @@ namespace org
       /// Gets the requested state for the audio mixer.
       /// <summary>
       [getter]
-      CustomAudioMixerRequestStateEvent requestedState;
+      CustomAudioRequestState requestedState;
     };
 
     /// <summary>
     /// This event is called to update the custom mixer state.
     /// <summary>
     [disposable]
-    interface CustomAudioMixerRequestVolume
+    interface CustomAudioMixerRequestVolumeEvent
     {
       [constructor, delete, default]
-      void CustomAudioMixerRequestVolume();
+      void CustomAudioMixerRequestVolumeEvent();
 
       /// <summary>
       /// Gets if the requested mixer is a speaker mixer.
@@ -193,10 +191,10 @@ namespace org
     /// This event is called to update the custom mixer state.
     /// <summary>
     [disposable]
-    interface CustomAudioMixerRequestMute
+    interface CustomAudioMixerRequestMuteEvent
     {
       [constructor, delete, default]
-      void CustomAudioMixerRequestMute();
+      void CustomAudioMixerRequestMuteEvent();
 
       /// <summary>
       /// Gets if the requested mixer is a speaker mixer.
@@ -218,25 +216,25 @@ namespace org
     };
 
     /// <summary>
-    /// This event is called to update the custom mixer state.
+    /// This event is called to update the custom device state.
     /// <summary>
     [disposable]
-    interface CustomAudioMixerRequestStereo
+    interface CustomAudioDeviceRequestStereoEvent
     {
       [constructor, delete, default]
-      void CustomAudioMixerRequestStereo();
+      void CustomAudioDeviceRequestStereoEvent();
 
       /// <summary>
-      /// Gets if the requested mixer is a speaker mixer.
+      /// Gets if the requested device is a recording device.
       /// <summary>
       [getter]
-      bool isSpeaker;
+      bool isRecordingDevice;
 
       /// <summary>
-      /// Gets if the requested mixer is a microphone mixer.
+      /// Gets if the requested device is a playout device.
       /// <summary>
       [getter]
-      bool isMicrophone;
+      bool isPlayoutDevice;
 
       /// <summary>
       /// Gets the requested stereo state for the audio mixer.
@@ -249,10 +247,10 @@ namespace org
     /// This event is called to update the custom mixer state.
     /// <summary>
     [disposable]
-    interface CustomAudioMixerRequestSettings
+    interface CustomAudioMixerRequestSettingsEvent
     {
       [constructor, delete, default]
-      void CustomAudioMixerRequestSettings();
+      void CustomAudioMixerRequestSettingsEvent();
 
       /// <summary>
       /// Gets if the requested mixer is a speaker mixer.
@@ -304,7 +302,7 @@ namespace org
       /// Gets or sets the current state of the custom recording audio device.
       /// </summary>
       [getter, setter]
-      CustomAudioState recurdingCurrentState;
+      CustomAudioState recordingCurrentState;
 
       /// <summary>
       /// Gets or sets the current state of the custom speaker audio mixer.
@@ -333,7 +331,7 @@ namespace org
       [getter, setter]
       int32 recordingChannels;
 
-      void updateCurrentPlayoutDelay(int16 delayMs);
+      void updateCurrentPlayoutDelay(uint16 delayMs);
 
       void setRecordedBuffer(AudioBuffer buffer);
 
@@ -361,19 +359,19 @@ namespace org
       void onRequestDeviceState(CustomAudioDeviceRequestStateEvent evt);
 
       [event]
+      void onRequestDeviceStereo(CustomAudioDeviceRequestStereoEvent evt);
+      
+      [event]
       void onRequestMixerState(CustomAudioMixerRequestStateEvent evt);
 
       [event]
-      void onRequestMixerVolume(CustomAudioMixerRequestVolume evt);
+      void onRequestMixerVolume(CustomAudioMixerRequestVolumeEvent evt);
 
       [event]
-      void onRequestMixerMute(CustomAudioMixerRequestMute evt);
+      void onRequestMixerMute(CustomAudioMixerRequestMuteEvent evt);
 
       [event]
-      void onRequestMixerStereo(CustomAudioMixerRequestStereo evt);
-      
-      [event]
-      void onRequestMixerSettings(CustomAudioMixerRequestSettings evt);
+      void onRequestMixerSettings(CustomAudioMixerRequestSettingsEvent evt);
 
     };
   }

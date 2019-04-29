@@ -969,6 +969,7 @@ namespace org
 
     enum CustomAudioState
     {
+      unprepared,
       initialized,
       started,
       stopped,

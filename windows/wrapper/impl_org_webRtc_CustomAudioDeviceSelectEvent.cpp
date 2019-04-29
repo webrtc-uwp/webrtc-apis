@@ -50,22 +50,31 @@ void wrapper::impl::org::webRtc::CustomAudioDeviceSelectEvent::wrapper_dispose()
 //------------------------------------------------------------------------------
 uint16_t wrapper::impl::org::webRtc::CustomAudioDeviceSelectEvent::get_deviceId() noexcept
 {
-  uint16_t result {};
-  return result;
+  return id_;
 }
 
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::CustomAudioDeviceSelectEvent::get_isRecordingDevice() noexcept
 {
-  bool result {};
-  return result;
+  return isRecordingDevice_;
 }
 
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::CustomAudioDeviceSelectEvent::get_isPlayoutDevice() noexcept
 {
-  bool result {};
-  return result;
+  return isPlayoutDevice_;
 }
 
-
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  uint16_t id,
+  bool isRecording,
+  bool isPlayout) noexcept
+{
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->id_ = id;
+  result->isRecordingDevice_ = isRecording;
+  result->isPlayoutDevice_ = isPlayout;
+  return result;
+}
