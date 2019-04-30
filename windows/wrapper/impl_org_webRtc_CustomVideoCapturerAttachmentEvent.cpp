@@ -50,8 +50,15 @@ void wrapper::impl::org::webRtc::CustomVideoCapturerAttachmentEvent::wrapper_dis
 //------------------------------------------------------------------------------
 uint64_t wrapper::impl::org::webRtc::CustomVideoCapturerAttachmentEvent::get_id() noexcept
 {
-  uint64_t result {};
-  return result;
+  return id_;
 }
 
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(uint64_t id) noexcept
+{
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->id_ = id;
+  return result;
+}
 

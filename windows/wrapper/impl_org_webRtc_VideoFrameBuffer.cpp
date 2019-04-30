@@ -163,6 +163,29 @@ wrapper::org::webRtc::VideoFrameNativeBufferPtr wrapper::impl::org::webRtc::Vide
 }
 
 //------------------------------------------------------------------------------
+WrapperImplType::NativeTypeScopedRefPtr WrapperImplType::toNative(WrapperType &type) noexcept
+{
+  auto wrapper = dynamic_cast<WrapperImplType &>(type);
+  return wrapper.native_;
+}
+
+//------------------------------------------------------------------------------
+WrapperImplType::NativeTypeScopedRefPtr WrapperImplType::toNative(WrapperType *type) noexcept
+{
+  if (!type)
+    return {};
+  return toNative(*type);
+}
+
+//------------------------------------------------------------------------------
+WrapperImplType::NativeTypeScopedRefPtr WrapperImplType::toNative(WrapperTypePtr type) noexcept
+{
+  if (!type)
+    return {};
+  return toNative(*type);
+}
+
+//------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::toWrapper(NativeType *native) noexcept
 {
   auto result = make_shared<WrapperImplType>();

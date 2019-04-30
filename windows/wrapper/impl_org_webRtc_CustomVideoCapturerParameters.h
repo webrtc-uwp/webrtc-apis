@@ -20,6 +20,10 @@ namespace wrapper {
           virtual ~CustomVideoCapturerParameters() noexcept;
 
           void wrapper_init_org_webRtc_CustomVideoCapturerParameters() noexcept override;
+
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(const WrapperType &base) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(const WrapperType *base) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(WrapperTypePtr base) noexcept;
         };
 
       } // webRtc

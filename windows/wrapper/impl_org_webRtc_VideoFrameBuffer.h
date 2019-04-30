@@ -39,11 +39,16 @@ namespace wrapper {
           wrapper::org::webRtc::VideoFrameBufferType get_type() noexcept override;
           int get_width() noexcept override;
           int get_height() noexcept override;
-          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeType *native) noexcept;
-          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeTypeScopedRefPtr native) noexcept;
+
           wrapper::org::webRtc::VideoFramePlanarYuvBufferPtr get_yuvFrame() noexcept override;
           wrapper::org::webRtc::VideoFramePlanarYuvaBufferPtr get_yuvaFrame() noexcept override;
           wrapper::org::webRtc::VideoFrameNativeBufferPtr get_nativeFrame() noexcept override;
+
+          ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperType &type) noexcept;
+          ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperType *type) noexcept;
+          ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperTypePtr type) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeType *native) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeTypeScopedRefPtr native) noexcept;
         };
 
       } // webRtc

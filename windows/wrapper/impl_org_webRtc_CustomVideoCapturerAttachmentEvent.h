@@ -14,7 +14,9 @@ namespace wrapper {
         {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::CustomVideoCapturerAttachmentEvent, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::CustomVideoCapturerAttachmentEvent, WrapperImplType);
+
           CustomVideoCapturerAttachmentEventWeakPtr thisWeak_;
+          uint64_t id_ {};
 
           CustomVideoCapturerAttachmentEvent() noexcept;
           virtual ~CustomVideoCapturerAttachmentEvent() noexcept;
@@ -23,6 +25,8 @@ namespace wrapper {
 
           // properties CustomVideoCapturerAttachmentEvent
           uint64_t get_id() noexcept override;
+
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(uint64_t id) noexcept;
         };
 
       } // webRtc

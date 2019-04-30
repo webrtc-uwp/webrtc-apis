@@ -1379,3 +1379,16 @@ wrapper::org::webRtc::VideoFrameBufferType UseEnum::toWrapper(::webrtc::VideoFra
   ZS_ASSERT_FAIL("unknown type");
   return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_native;
 }
+
+//-----------------------------------------------------------------------------
+::webrtc::VideoRotation UseEnum::toNative(wrapper::org::webRtc::VideoRotation value) noexcept
+{
+  switch (value)
+  {
+    case wrapper::org::webRtc::VideoRotation::VideoRotation_rotation0: return ::webrtc::VideoRotation::kVideoRotation_0;
+    case wrapper::org::webRtc::VideoRotation::VideoRotation_rotation90: return ::webrtc::VideoRotation::kVideoRotation_90;
+    case wrapper::org::webRtc::VideoRotation::VideoRotation_rotation180: return ::webrtc::VideoRotation::kVideoRotation_180;
+    case wrapper::org::webRtc::VideoRotation::VideoRotation_rotation270: return ::webrtc::VideoRotation::kVideoRotation_270;
+  }
+  return ::webrtc::VideoRotation::kVideoRotation_0;
+}

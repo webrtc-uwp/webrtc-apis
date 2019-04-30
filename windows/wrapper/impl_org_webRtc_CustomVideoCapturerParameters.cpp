@@ -1,5 +1,6 @@
 
 #include "impl_org_webRtc_CustomVideoCapturerParameters.h"
+#include "impl_org_webRtc_VideoFormat.h"
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -47,4 +48,41 @@ void wrapper::impl::org::webRtc::CustomVideoCapturerParameters::wrapper_init_org
 {
 }
 
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(const WrapperType &base) noexcept
+{
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  ((WrapperType &)*result) = base;
 
+  result->supportedFormats = {};
+  if (base.supportedFormats) {
+    result->supportedFormats = std::make_shared< list< wrapper::org::webRtc::VideoFormatPtr > >();
+    for (auto iter = base.supportedFormats->begin(); iter != base.supportedFormats->end(); ++iter) {
+      auto &format = (*iter);
+      if (!format)
+        continue;
+      auto newFormat = VideoFormat::toWrapper(VideoFormat::toNative(format).get());
+      if (!newFormat)
+        continue;
+      result->supportedFormats->push_back(newFormat);
+    }
+  }
+  return result;
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(const WrapperType *base) noexcept
+{
+  if (!base)
+    return {};
+  return clone(*base);
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(WrapperTypePtr base) noexcept
+{
+  if (!base)
+    return {};
+  return clone(base.get());
+}

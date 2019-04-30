@@ -1,5 +1,6 @@
 
 #include "impl_org_webRtc_CustomVideoCapturerStartEvent.h"
+#include "impl_org_webRtc_VideoFormat.h"
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -50,8 +51,14 @@ void wrapper::impl::org::webRtc::CustomVideoCapturerStartEvent::wrapper_dispose(
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::VideoFormatPtr wrapper::impl::org::webRtc::CustomVideoCapturerStartEvent::get_format() noexcept
 {
-  wrapper::org::webRtc::VideoFormatPtr result {};
-  return result;
+  return format_;
 }
 
-
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(const ::cricket::VideoFormat &format) noexcept
+{
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->format_ = UseFormat::toWrapper(format);
+  return result;
+}

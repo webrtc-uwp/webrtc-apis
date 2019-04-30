@@ -38,6 +38,7 @@ namespace org
     struct CustomVideoCapturerParameters
     {
       string id;
+      bool isScreencast;
       VideoFormats supportedFormats;
     };
 
@@ -93,7 +94,13 @@ namespace org
       /// VideoFrame. The origWidth and origHeight are used only to produce
       /// stats.
       /// </summary>
-      void notifyFrame(VideoFrameBuffer frame, int origWidth, int origHeight);
+      void notifyFrame(
+        VideoFrameBuffer frame,
+        int64 timestamp,
+        VideoRotation rotation,
+        int origWidth,
+        int origHeight
+        );
 
       [event]
       void onAttached(CustomVideoCapturerAttachmentEvent evt);
@@ -102,7 +109,7 @@ namespace org
       void onDetached(CustomVideoCapturerAttachmentEvent evt);
 
       [event]
-      void onStart();
+      void onStart(CustomVideoCapturerStartEvent evt);
 
       [event]
       void onStop();
