@@ -333,24 +333,16 @@ namespace org
 
       void updateCurrentPlayoutDelay(uint16 delayMs);
 
-      void setRecordedBuffer(AudioBuffer buffer);
+      void setRecordedBuffer(AudioData buffer);
 
       bool deliverRecordedData();
       bool notifyNewMicrophoneLevel();
 
       bool setTypingStatus(bool isTyping);
 
-      AudioBuffer requestPlayoutData();
+      AudioData requestPlayoutData(size_t samplesPerChannel);
 
       void updateVqeData(int playDelayMs, int recordDelayMs);
-
-
-      /// <summary>
-      /// Call this method when a frame has been captured and converted to a
-      /// AudioFrame. The origWidth and origHeight are used only to produce
-      /// stats.
-      /// </summary>
-      void notifyFrame(AudioBuffer frame, int origWidth, int origHeight);
 
       [event]
       void onSelectDevice(CustomAudioDeviceSelectEvent evt);

@@ -105,7 +105,7 @@ namespace wrapper {
           list< wrapper::org::webRtc::CustomAudioPlayoutDeviceInfoPtr > playoutDevices_;
           list< wrapper::org::webRtc::CustomAudioRecordingDeviceInfoPtr > recordingDevices_;
 
-          NativeAudioDeviceBufferUniPtr buffer_;
+          NativeAudioDeviceBufferPtr buffer_;
           ::webrtc::AudioTransport* audioCallback_ {};
 
           wrapper::org::webRtc::CustomAudioState playoutState_ {};
@@ -115,8 +115,10 @@ namespace wrapper {
 
           uint32_t playbackHzRate_ {};
           uint32_t recordingHzRate_ {};
-          uint32_t playbackChannels_ {};
-          uint32_t recordingChannels_ {};
+          int32_t playbackChannels_ {};
+          int32_t recordingChannels_ {};
+          int playDelayMs_ {};
+          int recordDelayMs_ {};
 
           wrapper::org::webRtc::CustomAudioPlayoutDeviceInfoPtr currentPlayoutDevice_;
           wrapper::org::webRtc::CustomAudioRecordingDeviceInfoPtr currentRecordingDevice_;
@@ -136,19 +138,14 @@ namespace wrapper {
           // methods CustomAudioDevice
           void updateDevices(wrapper::org::webRtc::CustomAudioDeviceParametersPtr params) noexcept override;
           void updateCurrentPlayoutDelay(uint16_t delayMs) noexcept override;
-          void setRecordedBuffer(wrapper::org::webRtc::AudioBufferPtr buffer) noexcept override;
+          void setRecordedBuffer(wrapper::org::webRtc::AudioDataPtr buffer) noexcept override;
           bool deliverRecordedData() noexcept override;
           bool notifyNewMicrophoneLevel() noexcept override;
           bool setTypingStatus(bool isTyping) noexcept override;
-          wrapper::org::webRtc::AudioBufferPtr requestPlayoutData() noexcept override;
+          wrapper::org::webRtc::AudioDataPtr requestPlayoutData(uint64_t samplesPerChannel) noexcept override;
           void updateVqeData(
             int playDelayMs,
             int recordDelayMs
-            ) noexcept override;
-          void notifyFrame(
-            wrapper::org::webRtc::AudioBufferPtr frame,
-            int origWidth,
-            int origHeight
             ) noexcept override;
 
           // properties CustomAudioDevice

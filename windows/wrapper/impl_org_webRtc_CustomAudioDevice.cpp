@@ -10,6 +10,7 @@
 #include "impl_org_webRtc_CustomAudioMixerRequestMuteEvent.h"
 #include "impl_org_webRtc_CustomAudioMixerRequestVolumeEvent.h"
 #include "impl_org_webRtc_CustomAudioMixerRequestSettingsEvent.h"
+#include "impl_org_webRtc_AudioData.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #include "modules/audio_device/audio_device_buffer.h"
@@ -132,15 +133,37 @@ void wrapper::impl::org::webRtc::CustomAudioDevice::updateCurrentPlayoutDelay(ui
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::CustomAudioDevice::setRecordedBuffer(wrapper::org::webRtc::AudioBufferPtr buffer) noexcept
+void wrapper::impl::org::webRtc::CustomAudioDevice::setRecordedBuffer(wrapper::org::webRtc::AudioDataPtr buffer) noexcept
 {
+  if (!buffer)
+    return;
+
+  AutoRecursiveLock lock(lock_);
+
+  if (!buffer_)
+    return;
+
+  auto data = buffer->data();
+  if (!data)
+    return;
+
+  buffer_->SetRecordedBuffer(data, buffer->size());
 }
 
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::CustomAudioDevice::deliverRecordedData() noexcept
 {
-  bool result {};
-  return result;
+  NativeAudioDeviceBufferPtr buffer;
+
+  {
+    AutoRecursiveLock lock(lock_);
+
+    if (!buffer_)
+      return false;
+    buffer = buffer_;
+  }
+
+  return 0 == buffer->DeliverRecordedData();
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +173,8 @@ bool wrapper::impl::org::webRtc::CustomAudioDevice::notifyNewMicrophoneLevel() n
   if (!buffer_)
     return false;
 
-  return 0 == buffer_->NewMicLevel();
+  //return 0 == buffer_->NewMicLevel();
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -164,10 +188,36 @@ bool wrapper::impl::org::webRtc::CustomAudioDevice::setTypingStatus(bool isTypin
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::AudioBufferPtr wrapper::impl::org::webRtc::CustomAudioDevice::requestPlayoutData() noexcept
+wrapper::org::webRtc::AudioDataPtr wrapper::impl::org::webRtc::CustomAudioDevice::requestPlayoutData(uint64_t samplesPerChannel) noexcept
 {
-  wrapper::org::webRtc::AudioBufferPtr result {};
-  return result;
+  NativeAudioDeviceBufferPtr buffer;
+  int32_t channels {};
+
+  {
+    AutoRecursiveLock lock(lock_);
+    if (!buffer_)
+      return {};
+
+    buffer = buffer_;
+    channels = playbackChannels_ < 1 ? 1 : playbackChannels_;
+  }
+
+  auto size = buffer->RequestPlayoutData(SafeInt<size_t>(samplesPerChannel));
+  if (size < 1)
+    return {};
+
+  auto data = AudioData::toWrapper(samplesPerChannel * SafeInt<size_t>(channels));
+  if (!data)
+    return {};
+
+  auto mutableData = data->mutableData();
+
+  {
+    AutoRecursiveLock lock(lock_);
+    buffer_->GetPlayoutData(mutableData);
+  }
+
+  return data;
 }
 
 //------------------------------------------------------------------------------
@@ -176,15 +226,12 @@ void wrapper::impl::org::webRtc::CustomAudioDevice::updateVqeData(
   int recordDelayMs
   ) noexcept
 {
-}
-
-//------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::CustomAudioDevice::notifyFrame(
-  wrapper::org::webRtc::AudioBufferPtr frame,
-  int origWidth,
-  int origHeight
-  ) noexcept
-{
+  AutoRecursiveLock lock(lock_);
+  playDelayMs_ = playDelayMs;
+  recordDelayMs_ = recordDelayMs;
+  if (buffer_) {
+    buffer_->SetVQEData(playDelayMs_, recordDelayMs_);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -342,6 +389,7 @@ int32_t WrapperImplType::RegisterAudioCallback(::webrtc::AudioTransport* audioCa
   if (buffer_) {
     buffer_->RegisterAudioCallback(audioCallback_);
   }
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -349,6 +397,7 @@ int32_t WrapperImplType::Init()
 {
   AutoRecursiveLock lock(lock_);
   prepareBuffer();
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -356,6 +405,7 @@ int32_t WrapperImplType::Terminate()
 {
   AutoRecursiveLock lock(lock_);
   buffer_.reset();
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -394,6 +444,7 @@ int32_t WrapperImplType::PlayoutDeviceName(uint16_t index,
   auto &value = (*iter);
   strncpy_s(name, sizeof(name), value->name.c_str(), value->name.length());
   strncpy_s(guid, sizeof(guid), value->guid.c_str(), value->guid.length());
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -411,6 +462,7 @@ int32_t WrapperImplType::RecordingDeviceName(uint16_t index,
   auto &value = (*iter);
   strncpy_s(name, sizeof(name), value->name.c_str(), value->name.length());
   strncpy_s(guid, sizeof(guid), value->guid.c_str(), value->guid.length());
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -429,6 +481,7 @@ int32_t WrapperImplType::SetPlayoutDevice(uint16_t index)
     currentPlayoutDevice_ = value;
   }
   onSelectDevice(event);
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -481,6 +534,7 @@ int32_t WrapperImplType::SetRecordingDevice(uint16_t index)
     currentRecordingDevice_ = value;
   }
   onSelectDevice(event);
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -620,6 +674,7 @@ int32_t WrapperImplType::InitSpeaker()
 {
   auto event = CustomAudioMixerRequestStateEvent::toWrapper(true, false, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_initialize);
   onRequestMixerState(event);
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1028,5 +1083,7 @@ void WrapperImplType::resetBuffer() noexcept
   buffer_->SetRecordingSampleRate(recordingHzRate_);
   buffer_->SetRecordingChannels(playbackChannels_);
   buffer_->SetPlayoutChannels(recordingChannels_);
-
+  if ((0 != playDelayMs_) || (0 != recordDelayMs_)) {
+    buffer_->SetVQEData(playDelayMs_, recordDelayMs_);
+  }
 }

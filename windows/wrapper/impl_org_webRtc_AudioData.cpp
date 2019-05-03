@@ -136,3 +136,12 @@ WrapperImplTypePtr WrapperImplType::toWrapper(WrapperTypePtr wrapper) noexcept
   auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
   return converted;
 }
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(size_t sampleCount) noexcept
+{
+  auto result = make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->wrapper_init_org_webRtc_AudioData(sampleCount);
+  return result;
+}

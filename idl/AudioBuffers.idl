@@ -44,6 +44,12 @@ namespace org
       void AudioData();
 
       /// <summary>
+      /// Contructs an audio frame.
+      /// <summary>
+      [constructor, default, altname(AudioDataWithSize)]
+      void AudioData(size_t size);
+
+      /// <summary>
       /// Gets if the data is read-only.
       /// <summary>
       [getter]
