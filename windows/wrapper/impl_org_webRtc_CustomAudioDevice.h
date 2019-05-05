@@ -100,6 +100,7 @@ namespace wrapper {
           };
 
           CustomAudioDeviceWeakPtr thisWeak_;
+          ::zsLib::IMessageQueuePtr queue_;
 
           mutable zsLib::RecursiveLock lock_;
           list< wrapper::org::webRtc::CustomAudioPlayoutDeviceInfoPtr > playoutDevices_;

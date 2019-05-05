@@ -114,6 +114,16 @@ namespace org
       /// enabled.
       /// </summary>
       bool enableAudioBufferEvents = false;
+
+      /// <summary>
+      /// Gets or sets if a custom factory should be used for capturering.
+      /// </summary>
+      CustomAudioDevice customAudioDevice_;
+
+      /// <summary>
+      /// Gets or sets if a custom factory should be used for capturering.
+      /// </summary>
+      CustomVideoCapturerFactory customVideoFactory_;
     };
 
     /// <summary>

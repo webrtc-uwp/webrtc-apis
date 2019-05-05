@@ -4,6 +4,7 @@
 #include "impl_org_webRtc_CustomVideoCapturerStartEvent.h"
 #include "impl_org_webRtc_VideoFormat.h"
 #include "impl_org_webRtc_VideoFrameBuffer.h"
+#include "impl_org_webRtc_WebRtcLib.h"
 #include "impl_org_webRtc_enums.h"
 
 using ::zsLib::String;
@@ -31,18 +32,9 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 
-
 //------------------------------------------------------------------------------
-std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::Factory::Create(const ::cricket::Device& device)
-{
-  auto wrapper = std::make_shared<WrapperImplType>();
-  wrapper->thisWeak_ = wrapper;
-
-  return std::make_unique<WrapperImplType::Proxy>(wrapper);
-}
-
-//------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::CustomVideoCapturer::CustomVideoCapturer() noexcept
+wrapper::impl::org::webRtc::CustomVideoCapturer::CustomVideoCapturer() noexcept :
+  queue_(WebRtcLib::customVideoQueue())
 {
 }
 
@@ -125,6 +117,7 @@ void wrapper::impl::org::webRtc::CustomVideoCapturer::wrapper_onObserverCountCha
     AutoRecursiveLock lock(lock_);
 
     auto event = CustomVideoCapturerStartEvent::toWrapper(capture_format);
+    auto pThis = thisWeak_.lock();
 
     switch (state_) {
       case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed:   result = ::cricket::CaptureState::CS_FAILED; break;
@@ -132,6 +125,10 @@ void wrapper::impl::org::webRtc::CustomVideoCapturer::wrapper_onObserverCountCha
       case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_running:  result = ::cricket::CaptureState::CS_RUNNING; break;
       case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_stopped:  result = ::cricket::CaptureState::CS_STARTING; break;
     }
+
+    queue_->postClosure([event, pThis]() {
+      pThis->onStart(event);
+    });
   }
   return result;
 }
@@ -139,7 +136,11 @@ void wrapper::impl::org::webRtc::CustomVideoCapturer::wrapper_onObserverCountCha
 //------------------------------------------------------------------------------
 void WrapperImplType::Stop()
 {
-  onStop();
+  auto pThis = thisWeak_.lock();
+
+  queue_->postClosure([pThis]() {
+    pThis->onStop();
+  });
 }
 
 //------------------------------------------------------------------------------
@@ -176,4 +177,35 @@ bool WrapperImplType::GetPreferredFourccs(std::vector<uint32_t>* fourccs)
     (*fourccs).push_back(value->get_fourcc());
   }
   return true;
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::create() noexcept
+{
+  auto result = std::make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  return result;
+}
+
+//------------------------------------------------------------------------------
+std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(WrapperType &wrapperType) noexcept
+{
+  auto result = std::make_unique<Proxy>(dynamic_cast<WrapperImplType &>(wrapperType).thisWeak_.lock());
+  return std::move(result);
+}
+
+//------------------------------------------------------------------------------
+std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(WrapperType *wrapperType) noexcept
+{
+  if (!wrapperType)
+    return {};
+  return toNative(*wrapperType);
+}
+
+//------------------------------------------------------------------------------
+std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(WrapperTypePtr wrapperType) noexcept
+{
+  if (!wrapperType)
+    return {};
+  return toNative(wrapperType.get());
 }

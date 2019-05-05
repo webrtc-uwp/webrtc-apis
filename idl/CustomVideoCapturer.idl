@@ -46,22 +46,6 @@ namespace org
     /// This event is called to update the start the video engine.
     /// <summary>
     [disposable]
-    interface CustomVideoCapturerAttachmentEvent
-    {
-      [constructor, delete, default]
-      void CustomVideoCapturerAttachmentEvent();
-
-      /// <summary>
-      /// Gets the format expected for the start of video.
-      /// <summary>
-      [getter]
-      puid id;
-    };
-
-    /// <summary>
-    /// This event is called to update the start the video engine.
-    /// <summary>
-    [disposable]
     interface CustomVideoCapturerStartEvent
     {
       [constructor, delete, default]
@@ -103,16 +87,49 @@ namespace org
         );
 
       [event]
-      void onAttached(CustomVideoCapturerAttachmentEvent evt);
-
-      [event]
-      void onDetached(CustomVideoCapturerAttachmentEvent evt);
-
-      [event]
       void onStart(CustomVideoCapturerStartEvent evt);
 
       [event]
       void onStop();
     };
+
+    /// <summary>
+    /// This event is called to create the video capturer.
+    /// <summary>
+    [disposable]
+    interface CustomVideoCapturerCreateEvent
+    {
+      [constructor, delete, default]
+      void CustomVideoCapturerCreateEvent();
+
+      /// <summary>
+      /// Gets the device id to create.
+      /// <summary>
+      [getter]
+      string deviceId;
+
+      /// <summary>
+      /// Gets the device name to create.
+      /// <summary>
+      [getter]
+      string deviceName;
+
+      [getter, setter]
+      CustomVideoCapturer createdCapturer;
+    };
+   
+    [disposable]
+    interface CustomVideoCapturerFactory
+    {
+      [constructor, default, delete]
+      void CustomVideoCapturerFactory();
+
+      [static]
+      CustomVideoCapturerFactory create();
+
+      [event]
+      void onCreateCustomVideoCapturer(CustomVideoCapturerCreateEvent evt);
+    };
+ 
   }
 }

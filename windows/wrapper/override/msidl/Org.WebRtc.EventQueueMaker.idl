@@ -29,12 +29,25 @@ namespace Org
             /// <summary>
             /// Creates an event queue object from a native queue type.
             /// </summary>
+            [default_overload]
+            [method_name("BindWithCoreDispatcher")]
             static Org.WebRtc.IEventQueue Bind(Windows.UI.Core.CoreDispatcher Queue);
 
             /// <summary>
             /// Extracts a native queue from an event queue object.
             /// </summary>
-            static Windows.UI.Core.CoreDispatcher Extract(Org.WebRtc.IEventQueue Queue);
+            static Windows.UI.Core.CoreDispatcher ExtractCoreDispatcher(Org.WebRtc.IEventQueue Queue);
+
+            /// <summary>
+            /// Creates an event queue object from a native queue type.
+            /// </summary>
+            [method_name("BindWithDispatcherQueue")]
+            static Org.WebRtc.IEventQueue Bind(Windows.System.DispatcherQueue Queue);
+
+            /// <summary>
+            /// Extracts a native queue from an event queue object.
+            /// </summary>
+            static Windows.System.DispatcherQueue ExtractDispatcherQueue(Org.WebRtc.IEventQueue Queue);
         };
 
     } // namespace WebRtc

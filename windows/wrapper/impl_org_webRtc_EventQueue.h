@@ -24,7 +24,8 @@ namespace wrapper {
           EventQueueWeakPtr thisWeak_;
 
 #ifdef CPPWINRT_VERSION
-          winrt::Windows::UI::Core::CoreDispatcher dispatcher_ {nullptr};
+          winrt::Windows::UI::Core::CoreDispatcher coreDispatcher_ {nullptr};
+          winrt::Windows::System::DispatcherQueue dispatcherQueue_ {nullptr};
 #endif // CPPWINRT_VERSION
           zsLib::IMessageQueuePtr queue_;
 
@@ -32,7 +33,10 @@ namespace wrapper {
           virtual ~EventQueue() noexcept;
 
           ZS_NO_DISCARD() static wrapper::org::webRtc::EventQueuePtr toWrapper(winrt::Windows::UI::Core::CoreDispatcher queue) noexcept;
-          ZS_NO_DISCARD() static winrt::Windows::UI::Core::CoreDispatcher toNative_winrt(WrapperTypePtr queue) noexcept;
+          ZS_NO_DISCARD() static winrt::Windows::UI::Core::CoreDispatcher toNative_winrtCoreDispatcher(WrapperTypePtr queue) noexcept;
+          ZS_NO_DISCARD() static wrapper::org::webRtc::EventQueuePtr toWrapper(winrt::Windows::System::DispatcherQueue  queue) noexcept;
+          ZS_NO_DISCARD() static winrt::Windows::System::DispatcherQueue toNative_winrtDispatcherQueue(WrapperTypePtr queue) noexcept;
+
           ZS_NO_DISCARD() static wrapper::org::webRtc::EventQueuePtr toWrapper(::zsLib::IMessageQueuePtr queue) noexcept;
           ZS_NO_DISCARD() static ::zsLib::IMessageQueuePtr toNative(WrapperTypePtr queue) noexcept;
 

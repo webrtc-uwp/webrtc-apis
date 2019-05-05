@@ -5,6 +5,8 @@
 #include "impl_org_webRtc_AudioBufferEvent.h"
 #include "impl_org_webRtc_AudioProcessingInitializeEvent.h"
 #include "impl_org_webRtc_AudioProcessingRuntimeSettingEvent.h"
+#include "impl_org_webRtc_CustomVideoCapturerFactory.h"
+#include "impl_org_webRtc_CustomAudioDevice.h"
 #include "impl_org_webRtc_helpers.h"
 
 #include "impl_webrtc_IAudioDeviceWasapi.h"
@@ -341,15 +343,17 @@ void WrapperImplType::setup() noexcept
   auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
   auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
 
-  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
-  audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
-    RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
-    webrtc::IAudioDeviceWasapi::CreationProperties props;
-    props.id_ = "";
-    props.playoutEnabled_ = audioCapturingEnabled;
-    props.recordingEnabled_ = audioRenderingEnabled;
-    return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
-  });
+  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule = CustomAudioDevice::toNative(configuration_->customAudioDevice_);
+  if (!audioDeviceModule) {
+    audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
+      RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
+      webrtc::IAudioDeviceWasapi::CreationProperties props;
+      props.id_ = "";
+      props.playoutEnabled_ = audioCapturingEnabled;
+      props.recordingEnabled_ = audioRenderingEnabled;
+      return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
+    });
+  }
 
   rtc::scoped_refptr<::webrtc::AudioProcessing> audioProcessing;
   if (enableAudioProcessingEvents)
@@ -371,8 +375,10 @@ void WrapperImplType::setup() noexcept
     enableAudioProcessingEvents ? audioProcessing : nullptr
   );
 
+  videoDeviceCaptureFactory_ = CustomVideoCapturerFactory::toNative(configuration_->customVideoFactory_);
+
 #ifdef _WIN32
-  videoDeviceCaptureFactory_ = make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
+  videoDeviceCaptureFactory_ = videoDeviceCaptureFactory_ ? videoDeviceCaptureFactory_ : make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
 #else
 #error PLATFORM REQUIRES FACTORY
 #endif //_WIN32

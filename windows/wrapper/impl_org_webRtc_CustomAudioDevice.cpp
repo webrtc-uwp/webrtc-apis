@@ -11,6 +11,7 @@
 #include "impl_org_webRtc_CustomAudioMixerRequestVolumeEvent.h"
 #include "impl_org_webRtc_CustomAudioMixerRequestSettingsEvent.h"
 #include "impl_org_webRtc_AudioData.h"
+#include "impl_org_webRtc_WebRtcLib.h"
 
 #include "impl_org_webRtc_pre_include.h"
 #include "modules/audio_device/audio_device_buffer.h"
@@ -46,7 +47,8 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseRecordingDeviceInfo, UseRecordingDevi
 
 
 //------------------------------------------------------------------------------
-wrapper::impl::org::webRtc::CustomAudioDevice::CustomAudioDevice() noexcept
+wrapper::impl::org::webRtc::CustomAudioDevice::CustomAudioDevice() noexcept :
+  queue_(WebRtcLib::customAudioQueue())
 {
 }
 
@@ -395,8 +397,17 @@ int32_t WrapperImplType::RegisterAudioCallback(::webrtc::AudioTransport* audioCa
 //-----------------------------------------------------------------------------
 int32_t WrapperImplType::Init()
 {
-  AutoRecursiveLock lock(lock_);
-  prepareBuffer();
+  HANDLE handle = ::CreateEventEx(NULL, NULL, 0, EVENT_ALL_ACCESS);
+
+  std::function<void(void)> callback = [handle]() { ::SetEvent(handle); };
+
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, callback]() { AutoRecursiveLock lock(pThis->lock_); pThis->prepareBuffer(); callback(); });
+
+  ::WaitForSingleObjectEx(handle, INFINITE, FALSE /* ALERTABLE */);
+  ::CloseHandle(handle);
+
+  callback = {};
   return 0;
 }
 
@@ -480,7 +491,10 @@ int32_t WrapperImplType::SetPlayoutDevice(uint16_t index)
     auto &value = (*iter);
     currentPlayoutDevice_ = value;
   }
-  onSelectDevice(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis,event]() {
+    pThis->onSelectDevice(event);
+  });
   return 0;
 }
 
@@ -533,7 +547,10 @@ int32_t WrapperImplType::SetRecordingDevice(uint16_t index)
     auto &value = (*iter);
     currentRecordingDevice_ = value;
   }
-  onSelectDevice(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onSelectDevice(event);
+  });
   return 0;
 }
 
@@ -586,7 +603,10 @@ int32_t WrapperImplType::PlayoutIsAvailable(bool* available)
 int32_t WrapperImplType::InitPlayout()
 {
   auto event = CustomAudioDeviceRequestStateEvent::toWrapper(false, true, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_initialize);
-  onRequestDeviceState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceState(event);
+  });
   return 0;
 }
 
@@ -612,7 +632,10 @@ int32_t WrapperImplType::RecordingIsAvailable(bool* available)
 int32_t WrapperImplType::InitRecording()
 {
   auto event = CustomAudioDeviceRequestStateEvent::toWrapper(true, false, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_initialize);
-  onRequestDeviceState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceState(event);
+  });
   return 0;
 }
 
@@ -627,7 +650,10 @@ bool WrapperImplType::RecordingIsInitialized() const
 int32_t WrapperImplType::StartPlayout()
 {
   auto event = CustomAudioDeviceRequestStateEvent::toWrapper(false, true, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_start);
-  onRequestDeviceState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceState(event);
+  });
   return 0;
 }
 
@@ -635,7 +661,10 @@ int32_t WrapperImplType::StartPlayout()
 int32_t WrapperImplType::StopPlayout()
 {
   auto event = CustomAudioDeviceRequestStateEvent::toWrapper(false, true, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_stop);
-  onRequestDeviceState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceState(event);
+  });
   return 0;
 }
 
@@ -650,7 +679,10 @@ bool WrapperImplType::Playing() const
 int32_t WrapperImplType::StartRecording()
 {
   auto event = CustomAudioDeviceRequestStateEvent::toWrapper(true, false, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_start);
-  onRequestDeviceState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceState(event);
+  });
   return 0;
 }
 
@@ -658,7 +690,10 @@ int32_t WrapperImplType::StartRecording()
 int32_t WrapperImplType::StopRecording()
 {
   auto event = CustomAudioDeviceRequestStateEvent::toWrapper(true, false, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_stop);
-  onRequestDeviceState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceState(event);
+  });
   return 0;
 }
 
@@ -673,7 +708,10 @@ bool WrapperImplType::Recording() const
 int32_t WrapperImplType::InitSpeaker()
 {
   auto event = CustomAudioMixerRequestStateEvent::toWrapper(true, false, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_initialize);
-  onRequestMixerState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerState(event);
+  });
   return 0;
 }
 
@@ -688,7 +726,10 @@ bool WrapperImplType::SpeakerIsInitialized() const
 int32_t WrapperImplType::InitMicrophone()
 {
   auto event = CustomAudioMixerRequestStateEvent::toWrapper(false, true, wrapper::org::webRtc::CustomAudioRequestState::CustomAudioRequestState_initialize);
-  onRequestMixerState(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerState(event);
+  });
   return 0;
 }
 
@@ -717,7 +758,10 @@ int32_t WrapperImplType::SpeakerVolumeIsAvailable(bool* available)
 int32_t WrapperImplType::SetSpeakerVolume(uint32_t volume)
 {
   auto event = CustomAudioMixerRequestVolumeEvent::toWrapper(true, false, volume);
-  onRequestMixerVolume(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerVolume(event);
+  });
 
   AutoRecursiveLock lock(lock_);
   speakerVolume_ = volume;
@@ -781,7 +825,10 @@ int32_t WrapperImplType::MicrophoneVolumeIsAvailable(bool* available)
 int32_t WrapperImplType::SetMicrophoneVolume(uint32_t volume)
 {
   auto event = CustomAudioMixerRequestVolumeEvent::toWrapper(false, true, volume);
-  onRequestMixerVolume(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerVolume(event);
+  });
 
   AutoRecursiveLock lock(lock_);
   microphoneVolume_ = volume;
@@ -845,7 +892,10 @@ int32_t WrapperImplType::SpeakerMuteIsAvailable(bool* available)
 int32_t WrapperImplType::SetSpeakerMute(bool enable)
 {
   auto event = CustomAudioMixerRequestMuteEvent::toWrapper(true, false, enable);
-  onRequestMixerMute(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerMute(event);
+  });
 
   AutoRecursiveLock lock(lock_);
   speakerMute_ = enable;
@@ -881,7 +931,10 @@ int32_t WrapperImplType::MicrophoneMuteIsAvailable(bool* available)
 int32_t WrapperImplType::SetMicrophoneMute(bool enable)
 {
   auto event = CustomAudioMixerRequestMuteEvent::toWrapper(false, true, enable);
-  onRequestMixerMute(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerMute(event);
+  });
 
   AutoRecursiveLock lock(lock_);
   microphoneMute_ = enable;
@@ -917,7 +970,10 @@ int32_t WrapperImplType::StereoPlayoutIsAvailable(bool* available) const
 int32_t WrapperImplType::SetStereoPlayout(bool enable)
 {
   auto event = CustomAudioDeviceRequestStereoEvent::toWrapper(false, true, enable);
-  onRequestDeviceStereo(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceStereo(event);
+  });
 
   AutoRecursiveLock lock(lock_);
   stereoPlayout_ = enable;
@@ -953,7 +1009,10 @@ int32_t WrapperImplType::StereoRecordingIsAvailable(bool* available) const
 int32_t WrapperImplType::SetStereoRecording(bool enable)
 {
   auto event = CustomAudioDeviceRequestStereoEvent::toWrapper(true, false, enable);
-  onRequestDeviceStereo(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestDeviceStereo(event);
+  });
 
   AutoRecursiveLock lock(lock_);
   stereoRecording_ = enable;
@@ -1013,7 +1072,10 @@ bool WrapperImplType::BuiltInNSIsAvailable() const
 int32_t WrapperImplType::EnableBuiltInAEC(bool enable)
 {
   auto event = CustomAudioMixerRequestSettingsEvent::toWrapper(false, true, enable, Optional<bool>(), Optional<bool>());
-  onRequestMixerSettings(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerSettings(event);
+  });
   return 0;
 }
 
@@ -1021,7 +1083,10 @@ int32_t WrapperImplType::EnableBuiltInAEC(bool enable)
 int32_t WrapperImplType::EnableBuiltInAGC(bool enable)
 {
   auto event = CustomAudioMixerRequestSettingsEvent::toWrapper(false, true, Optional<bool>(), enable, Optional<bool>());
-  onRequestMixerSettings(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerSettings(event);
+  });
   return 0;
 }
 
@@ -1029,7 +1094,10 @@ int32_t WrapperImplType::EnableBuiltInAGC(bool enable)
 int32_t WrapperImplType::EnableBuiltInNS(bool enable)
 {
   auto event = CustomAudioMixerRequestSettingsEvent::toWrapper(false, true, Optional<bool>(), Optional<bool>(), enable);
-  onRequestMixerSettings(event);
+  auto pThis = thisWeak_.lock();
+  queue_->postClosure([pThis, event]() {
+    pThis->onRequestMixerSettings(event);
+  });
   return 0;
 }
 

@@ -27,8 +27,8 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(CustomAudioDevice);
         ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceParameters);
         ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceRequestStateEvent);
-        ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceSelectEvent);
         ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceRequestStereoEvent);
+        ZS_DECLARE_STRUCT_PTR(CustomAudioDeviceSelectEvent);
         ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestMuteEvent);
         ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestSettingsEvent);
         ZS_DECLARE_STRUCT_PTR(CustomAudioMixerRequestStateEvent);
@@ -36,7 +36,8 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(CustomAudioPlayoutDeviceInfo);
         ZS_DECLARE_STRUCT_PTR(CustomAudioRecordingDeviceInfo);
         ZS_DECLARE_STRUCT_PTR(CustomVideoCapturer);
-        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerAttachmentEvent);
+        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerCreateEvent);
+        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerFactory);
         ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerParameters);
         ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerStartEvent);
         ZS_DECLARE_STRUCT_PTR(EventQueue);

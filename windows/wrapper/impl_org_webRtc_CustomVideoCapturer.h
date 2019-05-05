@@ -23,11 +23,6 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFormat, UseVideoFormat);
 
           ZS_DECLARE_TYPEDEF_PTR(::cricket::VideoCapturer, UseVideoCapturer);
-
-          class Factory : public ::cricket::VideoDeviceCapturerFactory {
-            // ::cricket::VideoDeviceCapturerFactory
-            std::unique_ptr<UseVideoCapturer> Create(const ::cricket::Device& device) override;
-          };
           
           class Proxy : public ::cricket::VideoCapturer
           {
@@ -43,6 +38,7 @@ namespace wrapper {
             bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) override { return wrapper_->GetPreferredFourccs(fourccs); }
           };
 
+          ::zsLib::IMessageQueuePtr queue_;
           mutable zsLib::RecursiveLock lock_;
           CustomVideoCapturerWeakPtr thisWeak_;
           wrapper::org::webRtc::VideoCaptureState state_ {};
@@ -74,6 +70,12 @@ namespace wrapper {
           bool IsRunning() override;
           bool IsScreencast() const override;
           bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) override;
+
+          ZS_NO_DISCARD() static WrapperImplTypePtr create() noexcept;
+
+          ZS_NO_DISCARD() static std::unique_ptr<UseVideoCapturer> toNative(WrapperType &wrapperType) noexcept;
+          ZS_NO_DISCARD() static std::unique_ptr<UseVideoCapturer> toNative(WrapperType *wrapperType) noexcept;
+          ZS_NO_DISCARD() static std::unique_ptr<UseVideoCapturer> toNative(WrapperTypePtr wrapperType) noexcept;
         };
 
       } // webRtc

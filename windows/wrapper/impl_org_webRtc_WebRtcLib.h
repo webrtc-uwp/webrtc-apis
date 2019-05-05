@@ -39,6 +39,8 @@ namespace wrapper {
           ::zsLib::IMessageQueuePtr audioCaptureFrameProcessingQueue_;
           ::zsLib::IMessageQueuePtr audioRenderFrameProcessingQueue_;
           ::zsLib::IMessageQueuePtr videoFrameProcessingQueue_;
+          ::zsLib::IMessageQueuePtr customAudioQueue_;
+          ::zsLib::IMessageQueuePtr customVideoQueue_;
 
           // constructor
           static WrapperImplTypePtr create() noexcept;
@@ -64,6 +66,8 @@ namespace wrapper {
           virtual zsLib::IMessageQueuePtr actual_audioCaptureFrameProcessingQueue() noexcept;
           virtual zsLib::IMessageQueuePtr actual_audioRenderFrameProcessingQueue() noexcept;
           virtual zsLib::IMessageQueuePtr actual_videoFrameProcessingQueue() noexcept;
+          virtual zsLib::IMessageQueuePtr actual_customAudioQueue() noexcept;
+          virtual zsLib::IMessageQueuePtr actual_customVideoQueue() noexcept;
 
           //-------------------------------------------------------------------
           //
@@ -80,6 +84,8 @@ namespace wrapper {
           static zsLib::IMessageQueuePtr audioCaptureFrameProcessingQueue() noexcept;
           static zsLib::IMessageQueuePtr audioRenderFrameProcessingQueue() noexcept;
           static zsLib::IMessageQueuePtr videoFrameProcessingQueue() noexcept;
+          static zsLib::IMessageQueuePtr customAudioQueue() noexcept;
+          static zsLib::IMessageQueuePtr customVideoQueue() noexcept;
         };
 
       } // webRtc
