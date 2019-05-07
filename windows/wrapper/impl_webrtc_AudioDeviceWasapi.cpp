@@ -1865,21 +1865,13 @@ namespace webrtc
     // Refresh the list of rendering endpoint devices
     RefreshDeviceList(DeviceClass::AudioRender);
 
-    if (initialized_) {
-      return (DeviceListCount(DeviceClass::AudioRender));
-    }
-
-    return -1;
+    return (DeviceListCount(DeviceClass::AudioRender));
   }
 
   // ----------------------------------------------------------------------------
   //  SetPlayoutDevice I (II)
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::SetPlayoutDevice(uint16_t index) {
-    if (playIsInitialized_) {
-      return -1;
-    }
-
     if (!playoutEnabled_) {
       return 0;
     }
@@ -1922,11 +1914,13 @@ namespace webrtc
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::SetPlayoutDevice(
     AudioDeviceModule::WindowsDeviceType device) {
-    if (playIsInitialized_) {
-      return -1;
+    if (!playoutEnabled_) {
+      return 0;
     }
 
-    if (!playoutEnabled_) {
+    // If device has been selected once by index value it couldn't be changed afterwards
+    // by setting the device type
+    if (usingOutputDeviceIndex_) {
       return 0;
     }
 
@@ -1954,8 +1948,6 @@ namespace webrtc
       WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_, "friendly name: \"%S\"",
         str.c_str());
     }
-
-    usingOutputDeviceIndex_ = false;
 
     return 0;
   }
@@ -2120,21 +2112,13 @@ namespace webrtc
     // Refresh the list of capture endpoint devices
     RefreshDeviceList(DeviceClass::AudioCapture);
 
-    if (initialized_) {
-      return (DeviceListCount(DeviceClass::AudioCapture));
-    }
-
-    return -1;
+    return (DeviceListCount(DeviceClass::AudioCapture));
   }
 
   // ----------------------------------------------------------------------------
   //  SetRecordingDevice I (II)
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::SetRecordingDevice(uint16_t index) {
-    if (recIsInitialized_) {
-        return -1;
-    }
-
     if (!recordingEnabled_) {
       return 0;
     }
@@ -2178,11 +2162,13 @@ namespace webrtc
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::SetRecordingDevice(
     AudioDeviceModule::WindowsDeviceType device) {
-    if (recIsInitialized_) {
-        return -1;
+    if (!recordingEnabled_) {
+      return 0;
     }
 
-    if (!recordingEnabled_) {
+    // If device has been selected once by index value it couldn't be changed
+    // afterwards by setting the device type
+    if (usingInputDeviceIndex_) {
       return 0;
     }
 
@@ -2211,8 +2197,6 @@ namespace webrtc
       WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_, "friendly name: \"%S\"",
         GetDeviceName(captureDevice_));
     }
-
-    usingInputDeviceIndex_ = false;
 
     return 0;
   }

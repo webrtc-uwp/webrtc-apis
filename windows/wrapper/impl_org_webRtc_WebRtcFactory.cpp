@@ -326,6 +326,8 @@ void WrapperImplType::setup() noexcept
 
   bool audioCapturingEnabled = configuration_ ? configuration_->audioCapturingEnabled : true;
   bool audioRenderingEnabled = configuration_ ? configuration_->audioRenderingEnabled : true;
+  String audioCaptureDeviceId = configuration_ ? configuration_->audioCaptureDeviceId : String();
+  String audioRenderDeviceId = configuration_ ? configuration_->audioRenderDeviceId : String();
   bool enableAudioProcessingEvents = configuration_ ? configuration_->enableAudioBufferEvents : false;
 
   networkThread = rtc::Thread::CreateWithSocketServer();
@@ -350,6 +352,38 @@ void WrapperImplType::setup() noexcept
     props.recordingEnabled_ = audioRenderingEnabled;
     return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
   });
+
+  if (audioCaptureDeviceId.size() != 0) {
+    int deviceCount = audioDeviceModule->RecordingDevices();
+    char deviceName[::webrtc::kAdmMaxDeviceNameSize];
+    char deviceId[::webrtc::kAdmMaxGuidSize];
+    uint16_t deviceIndex = USHRT_MAX;
+    for (uint16_t i = 0; i < deviceCount; i++) {
+      audioDeviceModule->RecordingDeviceName(i, deviceName, deviceId);
+      if (strcmp(audioCaptureDeviceId.c_str(), deviceId) == 0) {
+        deviceIndex = i;
+        break;
+      }
+    }
+    if (deviceIndex != USHRT_MAX)
+      audioDeviceModule->SetRecordingDevice(deviceIndex);
+  }
+
+  if (audioRenderDeviceId.size() != 0) {
+    int deviceCount = audioDeviceModule->PlayoutDevices();
+    char deviceName[::webrtc::kAdmMaxDeviceNameSize];
+    char deviceId[::webrtc::kAdmMaxGuidSize];
+    uint16_t deviceIndex = USHRT_MAX;
+    for (uint16_t i = 0; i < deviceCount; i++) {
+      audioDeviceModule->PlayoutDeviceName(i, deviceName, deviceId);
+      if (strcmp(audioRenderDeviceId.c_str(), deviceId) == 0) {
+        deviceIndex = i;
+        break;
+      }
+    }
+    if (deviceIndex != USHRT_MAX)
+      audioDeviceModule->SetPlayoutDevice(deviceIndex);
+  }
 
   rtc::scoped_refptr<::webrtc::AudioProcessing> audioProcessing;
   if (enableAudioProcessingEvents)
