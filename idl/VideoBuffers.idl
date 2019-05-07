@@ -105,6 +105,31 @@ namespace org
       /// <summary>
       [getter]
       VideoFrameNativeBuffer nativeFrame;
+
+      /// <summary>
+      /// Convert to an ARGB data buffer (if possible).
+      /// <summary>
+      VideoData toARGB();
+
+      /// <summary>
+      /// Convert to an BGRA data buffer (if possible).
+      /// <summary>
+      VideoData toBGRA();
+
+      /// <summary>
+      /// Convert to an ABGR data buffer (if possible).
+      /// <summary>
+      VideoData toABGR();
+
+      /// <summary>
+      /// Convert to an RGBA data buffer (if possible).
+      /// <summary>
+      VideoData toRGBA();
+
+      /// <summary>
+      /// Convert to an RGB24 data buffer (if possible).
+      /// <summary>
+      VideoData toRGB24();
     };
 
     [disposable]

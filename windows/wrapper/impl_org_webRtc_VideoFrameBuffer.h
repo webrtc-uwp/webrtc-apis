@@ -20,6 +20,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoFrameBuffer, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBuffer, WrapperImplType);
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::VideoFrameBuffer, NativeType);
+          ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoData, UseVideoData);
 
           typedef rtc::scoped_refptr<NativeType> NativeTypeScopedRefPtr;
 
@@ -34,6 +35,11 @@ namespace wrapper {
 
           // methods VideoFrameBuffer
           wrapper::org::webRtc::VideoFramePlanarYuvBufferPtr toI420() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toARGB() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toBGRA() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toABGR() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toRGBA() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toRGB24() noexcept override;
 
           // properties VideoFrameBuffer
           wrapper::org::webRtc::VideoFrameBufferType get_type() noexcept override;
@@ -49,6 +55,12 @@ namespace wrapper {
           ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperTypePtr type) noexcept;
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeType *native) noexcept;
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeTypeScopedRefPtr native) noexcept;
+
+          ZS_NO_DISCARD() static wrapper::org::webRtc::VideoDataPtr toARGB(NativeType *native) noexcept;
+          ZS_NO_DISCARD() static wrapper::org::webRtc::VideoDataPtr toBGRA(NativeType *native) noexcept;
+          ZS_NO_DISCARD() static wrapper::org::webRtc::VideoDataPtr toABGR(NativeType *native) noexcept;
+          ZS_NO_DISCARD() static wrapper::org::webRtc::VideoDataPtr toRGBA(NativeType *native) noexcept;
+          ZS_NO_DISCARD() static wrapper::org::webRtc::VideoDataPtr toRGB24(NativeType *native) noexcept;
         };
 
       } // webRtc

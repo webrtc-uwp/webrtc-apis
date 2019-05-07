@@ -52,6 +52,7 @@ wrapper::impl::org::webRtc::VideoData::~VideoData() noexcept
 void wrapper::impl::org::webRtc::VideoData::wrapper_dispose() noexcept
 {
   native_ = NativeTypeScopedRefPtr();
+  allocatedRawBuffer_.reset();
   buffer8bit_ = nullptr;
   buffer16bit_ = nullptr;
   size_ = 0;
@@ -140,4 +141,20 @@ WrapperImplTypePtr WrapperImplType::toWrapper(
   if (!native)
     return {};
   return toWrapper(native.get(), buffer, size);
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  std::unique_ptr<uint8_t> allocatedRawBuffer,
+  size_t size) noexcept
+{
+  if (!allocatedRawBuffer)
+    return {};
+
+  auto result = make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->allocatedRawBuffer_ = std::move(allocatedRawBuffer);
+  result->buffer8bit_ = result->allocatedRawBuffer_.get();
+  result->size_ = size;
+  return result;
 }

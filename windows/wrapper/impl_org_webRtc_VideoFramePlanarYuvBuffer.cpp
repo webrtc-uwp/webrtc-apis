@@ -2,6 +2,7 @@
 #include "impl_org_webRtc_VideoFramePlanarYuvBuffer.h"
 #include "impl_org_webRtc_VideoFramePlanarYuvaBuffer.h"
 #include "impl_org_webRtc_VideoData.h"
+#include "impl_org_webRtc_VideoFrameBuffer.h"
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -75,6 +76,36 @@ wrapper::org::webRtc::VideoFramePlanarYuvBufferPtr wrapper::impl::org::webRtc::V
 
   auto i420Frame = native_->ToI420();
   return toWrapper(i420Frame);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toARGB() noexcept
+{
+  return UseVideoFrameBuffer::toARGB(native_);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toBGRA() noexcept
+{
+  return UseVideoFrameBuffer::toBGRA(native_);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toABGR() noexcept
+{
+  return UseVideoFrameBuffer::toABGR(native_);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGBA() noexcept
+{
+  return UseVideoFrameBuffer::toRGBA(native_);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGB24() noexcept
+{
+  return UseVideoFrameBuffer::toRGB24(native_);
 }
 
 //------------------------------------------------------------------------------

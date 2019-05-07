@@ -8,6 +8,7 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include "api/video/video_frame_buffer.h"
+#include "libyuv.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>
@@ -74,6 +75,37 @@ wrapper::org::webRtc::VideoFramePlanarYuvBufferPtr wrapper::impl::org::webRtc::V
 
   auto i420Frame = native_->ToI420();
   return UseVideoFramePlanarYuvBuffer::toWrapper(i420Frame);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toARGB() noexcept
+{
+  return toARGB(native_.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toBGRA() noexcept
+{
+  return toBGRA(native_.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toABGR() noexcept
+{
+  return toABGR(native_.get());
+}
+
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGBA() noexcept
+{
+  return toRGBA(native_.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGB24() noexcept
+{
+  return toRGB24(native_.get());
 }
 
 //------------------------------------------------------------------------------
@@ -200,4 +232,134 @@ WrapperImplTypePtr WrapperImplType::toWrapper(NativeTypeScopedRefPtr native) noe
   if (!native)
     return {};
   return toWrapper(native.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toARGB(NativeType *native) noexcept
+{
+  if (!native)
+    return {};
+  auto i420Frame = native->ToI420();
+  if (!i420Frame)
+    return {};
+
+  size_t stride = (sizeof(uint8_t) * 4);
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
+
+  libyuv::I420ToARGB(
+    i420Frame->DataY(), i420Frame->StrideY(),
+    i420Frame->DataU(), i420Frame->StrideU(),
+    i420Frame->DataV(), i420Frame->StrideV(),
+    buffer.get(),
+    SafeInt<int>(stride),
+    i420Frame->width(),
+    i420Frame->height()
+  );
+
+  return UseVideoData::toWrapper(std::move(buffer), size);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toBGRA(NativeType *native) noexcept
+{
+  if (!native)
+    return {};
+  auto i420Frame = native->ToI420();
+  if (!i420Frame)
+    return {};
+
+  size_t stride = (sizeof(uint8_t) * 4);
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
+
+  libyuv::I420ToBGRA(
+    i420Frame->DataY(), i420Frame->StrideY(),
+    i420Frame->DataU(), i420Frame->StrideU(),
+    i420Frame->DataV(), i420Frame->StrideV(),
+    buffer.get(),
+    SafeInt<int>(stride),
+    i420Frame->width(),
+    i420Frame->height()
+  );
+
+  return UseVideoData::toWrapper(std::move(buffer), size);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toABGR(NativeType *native) noexcept
+{
+  if (!native)
+    return {};
+  auto i420Frame = native->ToI420();
+  if (!i420Frame)
+    return {};
+
+  size_t stride = (sizeof(uint8_t) * 4);
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
+
+  libyuv::I420ToABGR(
+    i420Frame->DataY(), i420Frame->StrideY(),
+    i420Frame->DataU(), i420Frame->StrideU(),
+    i420Frame->DataV(), i420Frame->StrideV(),
+    buffer.get(),
+    SafeInt<int>(stride),
+    i420Frame->width(),
+    i420Frame->height()
+  );
+
+  return UseVideoData::toWrapper(std::move(buffer), size);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGBA(NativeType *native) noexcept
+{
+  if (!native)
+    return {};
+  auto i420Frame = native->ToI420();
+  if (!i420Frame)
+    return {};
+
+  size_t stride = (sizeof(uint8_t) * 4);
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
+
+  libyuv::I420ToRGBA(
+    i420Frame->DataY(), i420Frame->StrideY(),
+    i420Frame->DataU(), i420Frame->StrideU(),
+    i420Frame->DataV(), i420Frame->StrideV(),
+    buffer.get(),
+    SafeInt<int>(stride),
+    i420Frame->width(),
+    i420Frame->height()
+  );
+
+  return UseVideoData::toWrapper(std::move(buffer), size);
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGB24(NativeType *native) noexcept
+{
+  if (!native)
+    return {};
+  auto i420Frame = native->ToI420();
+  if (!i420Frame)
+    return {};
+
+  size_t stride = (sizeof(uint8_t) * 3);
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
+
+  libyuv::I420ToRGB24(
+    i420Frame->DataY(), i420Frame->StrideY(),
+    i420Frame->DataU(), i420Frame->StrideU(),
+    i420Frame->DataV(), i420Frame->StrideV(),
+    buffer.get(),
+    SafeInt<int>(stride),
+    i420Frame->width(),
+    i420Frame->height()
+  );
+
+  return UseVideoData::toWrapper(std::move(buffer), size);
 }

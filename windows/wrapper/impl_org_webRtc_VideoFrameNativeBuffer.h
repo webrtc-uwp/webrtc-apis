@@ -19,6 +19,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoFrameNativeBuffer, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameNativeBuffer, WrapperImplType);
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::NativeHandleBuffer, NativeNativeHandleBufferType);
+          ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBuffer, UseVideoFrameBuffer);
 
           typedef rtc::scoped_refptr<NativeNativeHandleBufferType> NativeNativeHandleBufferTypeScopedRefPtr;
 
@@ -32,6 +33,11 @@ namespace wrapper {
 
           // methods VideoFrameBuffer
           wrapper::org::webRtc::VideoFramePlanarYuvBufferPtr toI420() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toARGB() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toBGRA() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toABGR() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toRGBA() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toRGB24() noexcept override;
 
           // properties VideoFrameBuffer
           wrapper::org::webRtc::VideoFrameBufferType get_type() noexcept override;

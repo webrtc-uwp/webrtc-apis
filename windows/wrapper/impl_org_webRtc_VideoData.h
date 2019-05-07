@@ -24,6 +24,7 @@ namespace wrapper {
           VideoDataWeakPtr thisWeak_;
           NativeTypeScopedRefPtr native_;
 
+          std::unique_ptr<uint8_t> allocatedRawBuffer_;
           const uint8_t *buffer8bit_ {};
           const uint16_t *buffer16bit_ {};
           size_t size_ {};
@@ -59,6 +60,10 @@ namespace wrapper {
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(
             NativeTypeScopedRefPtr native,
             const uint16_t *buffer,
+            size_t size) noexcept;
+
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(
+            std::unique_ptr<uint8_t> allocatedRawBuffer,
             size_t size) noexcept;
 
         };
