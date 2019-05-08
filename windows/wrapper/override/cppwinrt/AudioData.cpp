@@ -172,7 +172,7 @@ Org::WebRtc::implementation::AudioData::AudioData(uint64_t Size)
   : native_(wrapper::org::webRtc::AudioData::wrapper_create())
 {
   if (!native_) { throw hresult_error(E_POINTER); }
-  native_->wrapper_init_org_webRtc_AudioData(Size);
+  native_->wrapper_init_org_webRtc_AudioData(SafeInt<size_t>(Size));
 }
 
 //------------------------------------------------------------------------------
