@@ -65,6 +65,52 @@ namespace org
       [constructor, default, delete]
       void VideoFrameBuffer();
 
+      [static]
+      VideoFrameBuffer createFromYuv(
+        int width,
+        int height,
+        int strideY,
+        int strideU,
+        int strideV,
+        VideoData y,
+        VideoData u,
+        VideoData v);
+
+      [static]
+      VideoFrameBuffer createFromARGB(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromBGRA(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromABGR(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromRGBA(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromRGB24(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
       /// <summary>
       /// Gets the video frame type.
       /// </summary>

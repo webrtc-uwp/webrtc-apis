@@ -52,10 +52,18 @@ wrapper::impl::org::webRtc::VideoData::~VideoData() noexcept
 void wrapper::impl::org::webRtc::VideoData::wrapper_dispose() noexcept
 {
   native_ = NativeTypeScopedRefPtr();
-  allocatedRawBuffer_.reset();
+  allocatedRawBuffer8Bit_.reset();
+  allocatedRawBuffer16Bit_.reset();
   buffer8bit_ = nullptr;
   buffer16bit_ = nullptr;
-  size_ = 0;
+  creationSize_ = size_ = 0;
+}
+
+//------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::VideoData::wrapper_init_org_webRtc_VideoData(size_t size) noexcept
+{
+  wrapper_dispose();
+  creationSize_ = size;
 }
 
 //------------------------------------------------------------------------------
@@ -73,20 +81,61 @@ bool wrapper::impl::org::webRtc::VideoData::get_is16BitColorSpace() noexcept
 //------------------------------------------------------------------------------
 const uint8_t * wrapper::impl::org::webRtc::VideoData::get_data8bit() noexcept
 {
+  prepareCreation(PrepareMode::mode8Bit);
   return buffer8bit_;
 }
 
 //------------------------------------------------------------------------------
 const uint16_t * wrapper::impl::org::webRtc::VideoData::get_data16bit() noexcept
 {
+  prepareCreation(PrepareMode::mode16Bit);
   return buffer16bit_;
 }
 
+//------------------------------------------------------------------------------
+uint8_t *wrapper::impl::org::webRtc::VideoData::get_mutableData8bit() noexcept
+{
+  prepareCreation(PrepareMode::mode8Bit);
+  return allocatedRawBuffer8Bit_.get();
+}
+
+//------------------------------------------------------------------------------
+uint16_t *wrapper::impl::org::webRtc::VideoData::get_mutableData16bit() noexcept
+{
+  prepareCreation(PrepareMode::mode16Bit);
+  return allocatedRawBuffer16Bit_.get();
+}
 
 //------------------------------------------------------------------------------
 size_t wrapper::impl::org::webRtc::VideoData::get_size() noexcept
 {
+  if (0 != creationSize_)
+    return creationSize_;
   return size_;
+}
+
+//------------------------------------------------------------------------------
+void wrapper::impl::org::webRtc::VideoData::prepareCreation(PrepareMode mode) noexcept
+{
+  if (0 == creationSize_)
+    return;
+
+  size_ = creationSize_;
+  creationSize_ = 0;
+
+  switch (mode)
+  {
+    case PrepareMode::mode8Bit: {
+      allocatedRawBuffer8Bit_ = std::unique_ptr<uint8_t>(new uint8_t[size_]);
+      buffer8bit_ = allocatedRawBuffer8Bit_.get();
+      break;
+    }
+    case PrepareMode::mode16Bit: {
+      allocatedRawBuffer16Bit_ = std::unique_ptr<uint16_t>(new uint16_t[size_]);
+      buffer16bit_ = allocatedRawBuffer16Bit_.get();
+      break;
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -153,8 +202,24 @@ WrapperImplTypePtr WrapperImplType::toWrapper(
 
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->allocatedRawBuffer_ = std::move(allocatedRawBuffer);
-  result->buffer8bit_ = result->allocatedRawBuffer_.get();
+  result->allocatedRawBuffer8Bit_ = std::move(allocatedRawBuffer);
+  result->buffer8bit_ = result->allocatedRawBuffer8Bit_.get();
+  result->size_ = size;
+  return result;
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::toWrapper(
+  std::unique_ptr<uint16_t> allocatedRawBuffer,
+  size_t size) noexcept
+{
+  if (!allocatedRawBuffer)
+    return {};
+
+  auto result = make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->allocatedRawBuffer16Bit_ = std::move(allocatedRawBuffer);
+  result->buffer16bit_ = result->allocatedRawBuffer16Bit_.get();
   result->size_ = size;
   return result;
 }

@@ -20,7 +20,9 @@ namespace Org
             UInt64 Length{ get; };
 
             UInt64 GetData8bit(ref UInt8[] values);
+            UInt64 SetData8bit(UInt8[] values);
             UInt64 GetData16bit(ref UInt16[] values);
+            UInt64 SetData16bit(UInt16[] values);
 
             /// <summary>
             /// Gets or sets the video 8 bit color space data.
@@ -35,6 +37,12 @@ namespace Org
 
         runtimeclass VideoData : [default] IVideoData, Windows.Foundation.IClosable
         {
+            /// <summary>
+            /// Contructs an video frame.
+            /// </summary>
+            [method_name("VideoDataWithSize")]
+            [default_overload]
+            VideoData(UInt64 Size);
 
             /// <summary>
             /// Cast from Org.WebRtc.IVideoData to Org.WebRtc.VideoData

@@ -149,6 +149,14 @@ wrapper::org::webRtc::VideoDataPtr Org::WebRtc::implementation::VideoData::FromC
 }
 
 //------------------------------------------------------------------------------
+Org::WebRtc::implementation::VideoData::VideoData(uint64_t Size)
+  : native_(wrapper::org::webRtc::VideoData::wrapper_create())
+{
+  if (!native_) { throw hresult_error(E_POINTER); }
+  native_->wrapper_init_org_webRtc_VideoData(SafeInt<size_t>(Size));
+}
+
+//------------------------------------------------------------------------------
 Org::WebRtc::VideoData Org::WebRtc::implementation::VideoData::Cast(Org::WebRtc::IVideoData const & value)
 {
   if (!value) return nullptr;
@@ -214,6 +222,30 @@ uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(array_view<uint8_t>
 }
 
 //------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::SetData8bit(ZS_MAYBE_USED() array_view<uint8_t const> values)
+{
+  if (!native_)
+    return 0;
+
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
+
+  uint64_t size = native_->get_size();
+
+  size = inSize < size ? inSize : size;
+
+  auto source = values.data();
+  auto dest = native_->get_mutableData8bit();
+
+  if ((!dest) ||
+      (!source))
+    return 0;
+
+  memcpy(dest, source, SafeInt<size_t>(sizeof(uint8_t) * size));
+
+  return size;
+}
+
+//------------------------------------------------------------------------------
 uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_t> values)
 {
   if (!native_)
@@ -226,6 +258,30 @@ uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_
 
   auto dest = values.data();
   auto source = native_->get_data16bit();
+
+  if ((!dest) ||
+      (!source))
+    return 0;
+
+  memcpy(dest, source, SafeInt<size_t>(sizeof(uint16_t) * size));
+
+  return size;
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::SetData16bit(ZS_MAYBE_USED() array_view<uint16_t const> values)
+{
+  if (!native_)
+    return 0;
+
+  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
+
+  uint64_t size = native_->get_size();
+
+  size = inSize < size ? inSize : size;
+
+  auto source = values.data();
+  auto dest = native_->get_mutableData16bit();
 
   if ((!dest) ||
       (!source))
