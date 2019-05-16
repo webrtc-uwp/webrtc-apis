@@ -40,6 +40,9 @@ namespace org
       [constructor, default, delete]
       void VideoData();
 
+      [constructor, default]
+      void VideoData(size_t size);
+
       [getter]
       bool is8BitColorSpace;
 
