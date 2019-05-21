@@ -127,6 +127,7 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(RTCVideoReceiverStats);
         ZS_DECLARE_STRUCT_PTR(RTCVideoSenderStats);
         ZS_DECLARE_STRUCT_PTR(VideoCapturer);
+        ZS_DECLARE_STRUCT_PTR(VideoCapturerCreationParameters);
         ZS_DECLARE_STRUCT_PTR(VideoCapturerInputSize);
         ZS_DECLARE_STRUCT_PTR(VideoData);
         ZS_DECLARE_STRUCT_PTR(VideoDeviceInfo);

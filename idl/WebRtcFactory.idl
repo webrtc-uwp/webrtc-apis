@@ -118,12 +118,12 @@ namespace org
       /// <summary>
       /// Gets or sets if a custom factory should be used for capturering.
       /// </summary>
-      CustomAudioDevice customAudioDevice_;
+      CustomAudioDevice customAudioDevice;
 
       /// <summary>
       /// Gets or sets if a custom factory should be used for capturering.
       /// </summary>
-      CustomVideoCapturerFactory customVideoFactory_;
+      CustomVideoCapturerFactory customVideoFactory;
     };
 
     /// <summary>

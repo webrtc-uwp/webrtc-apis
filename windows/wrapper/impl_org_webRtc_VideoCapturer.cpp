@@ -17,6 +17,8 @@
 #include "impl_org_webRtc_WebrtcLib.h"
 #include "impl_org_webRtc_enums.h"
 #include "impl_org_webRtc_VideoCapturerInputSize.h"
+#include "impl_org_webRtc_VideoCapturerCreationParameters.h"
+#include "impl_org_webRtc_WebrtcFactory.h"
 #include "impl_webrtc_VideoCapturer.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -54,6 +56,7 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCError, UseError);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoDeviceInfo, UseVideoDeviceInfo);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFormat, UseVideoFormat);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, UseFactory);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturerInputSize, UseVideoCapturerInputSize);
 
@@ -92,22 +95,46 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::create(
-  String name,
-  String id,
-  bool enableMrc
-  ) noexcept
+wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::create(wrapper::org::webRtc::VideoCapturerCreationParametersPtr params) noexcept
 {
-  webrtc::IVideoCapturer::CreationProperties props;
-  props.name_ = name.c_str();
-  props.id_ = id.c_str();
-  props.mrcEnabled_ = enableMrc;
-  auto native = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
-  if (!native) return WrapperTypePtr();
+  String name;
+  String id;
+  bool enableMrc {false};
+
+  UseFactoryPtr factory = UseFactory::toWrapper(params->factory);
+
+  if (params) {
+    name = params->name;
+    id = params->id;
+    enableMrc = params->enableMrc;
+  }
+
+  std::unique_ptr<::cricket::VideoCapturer> capturer;
+
+  if (factory) {
+    auto capturerFactory = factory->videoDeviceCaptureFactory();
+    if (capturerFactory) {
+      ::cricket::Device device;
+      device.name = name;
+      device.id = id;
+      capturer = capturerFactory->Create(device);
+      if (!capturer)
+        return {};
+    }
+  }
+
+  if (!capturer) {
+    webrtc::IVideoCapturer::CreationProperties props;
+    props.name_ = name.c_str();
+    props.id_ = id.c_str();
+    props.mrcEnabled_ = enableMrc;
+    capturer = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
+    if (!capturer) return {};
+  }
 
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->native_ = std::move(native);
+  result->native_ = std::move(capturer);
   result->setupObserver();
   return result;
 }

@@ -389,7 +389,9 @@ int32_t WrapperImplType::RegisterAudioCallback(::webrtc::AudioTransport* audioCa
   AutoRecursiveLock lock(lock_);
   audioCallback_ = audioCallback;
   if (buffer_) {
-    buffer_->RegisterAudioCallback(audioCallback_);
+
+    auto pThis = thisWeak_.lock();
+    queue_->postClosure([pThis, audioCallback]() { AutoRecursiveLock lock(pThis->lock_); pThis->buffer_->RegisterAudioCallback(audioCallback); });
   }
   return 0;
 }

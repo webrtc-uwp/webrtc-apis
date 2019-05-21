@@ -343,7 +343,7 @@ void WrapperImplType::setup() noexcept
   auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
   auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
 
-  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule = CustomAudioDevice::toNative(configuration_->customAudioDevice_);
+  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule = CustomAudioDevice::toNative(configuration_->customAudioDevice);
   if (!audioDeviceModule) {
     audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
       RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
@@ -375,10 +375,10 @@ void WrapperImplType::setup() noexcept
     enableAudioProcessingEvents ? audioProcessing : nullptr
   );
 
-  videoDeviceCaptureFactory_ = CustomVideoCapturerFactory::toNative(configuration_->customVideoFactory_);
+  videoDeviceCaptureFactory_ = CustomVideoCapturerFactory::toNative(configuration_->customVideoFactory);
 
 #ifdef _WIN32
-  videoDeviceCaptureFactory_ = videoDeviceCaptureFactory_ ? videoDeviceCaptureFactory_ : make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
+  //videoDeviceCaptureFactory_ = videoDeviceCaptureFactory_ ? videoDeviceCaptureFactory_ : make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
 #else
 #error PLATFORM REQUIRES FACTORY
 #endif //_WIN32

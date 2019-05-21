@@ -93,6 +93,15 @@ namespace org
       int height;
     };
 
+    [dictionary]
+    struct VideoCapturerCreationParameters
+    {
+      WebRtcFactory factory;
+      string name;
+      string id;
+      bool enableMrc;
+    };
+
     [disposable]
     interface VideoCapturer
     {
@@ -100,7 +109,7 @@ namespace org
       void VideoCapturer();
 
       [static]
-      VideoCapturer create(string name, string id, bool enableMrc);
+      VideoCapturer create(VideoCapturerCreationParameters params);
 
       [static]
       PromiseWithVideoDeviceInfoList getDevices();
