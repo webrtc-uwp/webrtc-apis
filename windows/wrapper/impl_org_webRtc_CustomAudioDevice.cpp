@@ -223,6 +223,49 @@ wrapper::org::webRtc::AudioDataPtr wrapper::impl::org::webRtc::CustomAudioDevice
 }
 
 //------------------------------------------------------------------------------
+uint64_t wrapper::impl::org::webRtc::CustomAudioDevice::requestFillWithPlayoutData(wrapper::org::webRtc::AudioDataPtr inData) noexcept
+{
+  NativeAudioDeviceBufferPtr buffer;
+  int32_t channels {};
+
+  {
+    AutoRecursiveLock lock(lock_);
+    if (!buffer_)
+      return {};
+
+    buffer = buffer_;
+    channels = playbackChannels_ < 1 ? 1 : playbackChannels_;
+  }
+  
+  if (channels < 1)
+    return {};
+
+  auto data = AudioData::toWrapper(inData);
+  if (!data)
+    return {};
+
+  auto mutableData = data->mutableData();
+  auto mutableSize = data->size();
+  if (mutableSize < 1)
+    return {};
+
+  auto samplesPerChannel = mutableSize / SafeInt<decltype(mutableSize)>(channels);
+  if (samplesPerChannel < 1)
+    return {};
+
+  auto size = buffer->RequestPlayoutData(SafeInt<size_t>(samplesPerChannel));
+  if (size < 1)
+    return {};
+
+  {
+    AutoRecursiveLock lock(lock_);
+    buffer_->GetPlayoutData(mutableData);
+  }
+
+  return SafeInt<uint64_t>(size);
+}
+
+//------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::CustomAudioDevice::updateVqeData(
   int playDelayMs,
   int recordDelayMs

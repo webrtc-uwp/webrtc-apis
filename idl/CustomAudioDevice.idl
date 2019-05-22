@@ -342,6 +342,8 @@ namespace org
 
       AudioData requestPlayoutData(size_t samplesPerChannel);
 
+      size_t requestFillWithPlayoutData(AudioData data);
+
       void updateVqeData(int playDelayMs, int recordDelayMs);
 
       [event]

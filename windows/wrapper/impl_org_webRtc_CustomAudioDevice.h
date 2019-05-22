@@ -144,6 +144,7 @@ namespace wrapper {
           bool notifyNewMicrophoneLevel() noexcept override;
           bool setTypingStatus(bool isTyping) noexcept override;
           wrapper::org::webRtc::AudioDataPtr requestPlayoutData(uint64_t samplesPerChannel) noexcept override;
+          uint64_t requestFillWithPlayoutData(wrapper::org::webRtc::AudioDataPtr data) noexcept override;
           void updateVqeData(
             int playDelayMs,
             int recordDelayMs
