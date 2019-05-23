@@ -200,8 +200,6 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_dispose() noexcept
   peerConnectionFactory_ = PeerConnectionFactoryInterfaceScopedPtr();
   videoDeviceCaptureFactory_.reset();
 
-#pragma ZS_BUILD_NOTE("TODO","(mosa) shutdown threads need something more?")
-
   networkThread.reset();
   workerThread.reset();
   signalingThread.reset();
