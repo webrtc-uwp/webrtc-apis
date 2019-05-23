@@ -5,7 +5,7 @@
 #include "generated/org_webRtc_RTCCertificate.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/scoped_ref_ptr.h"
+//#include "rtc_base/scoped_ref_ptr.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

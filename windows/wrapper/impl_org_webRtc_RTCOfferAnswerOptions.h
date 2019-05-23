@@ -5,7 +5,7 @@
 #include "generated/org_webRtc_RTCOfferAnswerOptions.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/peerconnectioninterface.h"
+#include "api/peer_connection_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

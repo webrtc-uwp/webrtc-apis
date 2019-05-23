@@ -7,7 +7,7 @@
 #ifdef CPPWINRT_VERSION
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "rtc_base/criticalsection.h"
+#include "rtc_base/critical_section.h"
 #include "rtc_base/scoped_ref_ptr.h"
 #include "system_wrappers/include/event_wrapper.h"
 #include "modules/audio_device/audio_device_buffer.h"

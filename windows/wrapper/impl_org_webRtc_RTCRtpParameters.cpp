@@ -5,7 +5,7 @@
 #include "impl_org_webRtc_RTCRtpHeaderExtensionParameters.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtpparameters.h"
+#include "api/rtp_parameters.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

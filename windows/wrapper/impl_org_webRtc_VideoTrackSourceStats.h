@@ -5,7 +5,7 @@
 #include "generated/org_webRtc_VideoTrackSourceStats.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api\mediastreaminterface.h"
+#include "api\media_stream_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

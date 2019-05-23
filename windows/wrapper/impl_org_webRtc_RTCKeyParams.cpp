@@ -4,7 +4,7 @@
 #include "impl_org_webRtc_RTCRSAParams.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/sslidentity.h"
+#include "rtc_base/ssl_identity.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

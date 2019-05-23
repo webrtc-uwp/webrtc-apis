@@ -7,8 +7,8 @@
 #include "impl_webrtc_IVideoCapturer.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/scoped_ref_ptr.h"
-#include "media/base/videocapturer.h"
+//#include "rtc_base/scoped_ref_ptr.h"
+//#include "media/base/videocapturer.h"
 #include "impl_org_webRtc_post_include.h"
 
 

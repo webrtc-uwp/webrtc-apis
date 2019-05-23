@@ -6,8 +6,8 @@
 #include "generated/org_webRtc_WebRtcLib.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/scoped_ref_ptr.h"
-#include "media/base/videocapturerfactory.h"
+//#include "rtc_base/scoped_ref_ptr.h"
+//#include "media/base/videocapturerfactory.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/Singleton.h>

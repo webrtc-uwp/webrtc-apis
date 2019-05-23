@@ -5,7 +5,7 @@
 #include "generated/org_webRtc_MessageEvent.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/datachannelinterface.h"
+#include "api/data_channel_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

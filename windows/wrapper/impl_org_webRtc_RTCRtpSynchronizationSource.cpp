@@ -3,7 +3,7 @@
 #include "impl_org_webRtc_RTCRtpContributingSource.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtpreceiverinterface.h"
+#include "api/rtp_receiver_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

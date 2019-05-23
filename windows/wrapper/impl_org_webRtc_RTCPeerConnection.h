@@ -6,8 +6,8 @@
 #include "impl_org_webRtc_RTCIceCandidate.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/scoped_ref_ptr.h"
-#include "api/peerconnectioninterface.h"
+//#include "rtc_base/scoped_ref_ptr.h"
+#include "api/peer_connection_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

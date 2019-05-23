@@ -7,9 +7,9 @@
 #include "impl_webrtc_IMediaStreamSource.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/scoped_ref_ptr.h"
+//#include "rtc_base/scoped_ref_ptr.h"
 #include "api/video/video_frame.h"
-#include "api/mediastreaminterface.h"
+#include "api/media_stream_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/IMessageQueue.h>

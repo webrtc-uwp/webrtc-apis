@@ -2,7 +2,7 @@
 #include "impl_org_webRtc_VideoFormat.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "media/base/videocommon.h"
+#include "media/base/video_common.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>

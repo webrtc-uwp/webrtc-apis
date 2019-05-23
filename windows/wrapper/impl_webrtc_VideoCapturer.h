@@ -6,8 +6,8 @@
 #ifdef CPPWINRT_VERSION
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "rtc_base/criticalsection.h"
-#include "media/base/videocapturer.h"
+#include "rtc_base/critical_section.h"
+//#include "media/base/videocapturer.h"
 #include "system_wrappers/include/event_wrapper.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 

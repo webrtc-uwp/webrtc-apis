@@ -3,7 +3,7 @@
 #include "impl_org_webRtc_RTCRtpCodingParameters.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtpparameters.h"
+#include "api/rtp_parameters.h"
 #include "impl_org_webRtc_post_include.h"
 
 

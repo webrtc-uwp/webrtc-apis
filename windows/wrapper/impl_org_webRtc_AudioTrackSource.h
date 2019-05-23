@@ -5,8 +5,8 @@
 #include "generated/org_webRtc_AudioTrackSource.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/scoped_ref_ptr.h"
-#include "api/mediastreaminterface.h"
+//#include "rtc_base/scoped_ref_ptr.h"
+#include "api/media_stream_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/IMessageQueue.h>

@@ -23,7 +23,7 @@
 #include "pc/audiotrack.h"
 #include "pc/videotrack.h"
 #include "api/mediastreamtrackproxy.h"
-#include "api/peerconnectioninterface.h"
+#include "api/peer_connection_interface.h"
 #include "third_party/winuwp_h264/native_handle_buffer.h"
 #include "impl_org_webRtc_post_include.h"
 

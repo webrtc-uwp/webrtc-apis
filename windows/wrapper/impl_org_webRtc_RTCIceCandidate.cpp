@@ -5,7 +5,7 @@
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/jsepicecandidate.h"
+#include "api/jsep_ice_candidate.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>

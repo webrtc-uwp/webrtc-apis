@@ -4,7 +4,7 @@
 #include "impl_org_webRtc_RTCRtpEncodingParameters.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtptransceiverinterface.h"
+#include "api/rtp_transceiver_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

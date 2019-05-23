@@ -17,7 +17,7 @@
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/stats/rtcstats.h"
+#include "api/stats/rtc_stats.h"
 #include "api/stats/rtcstats_objects.h"
 #include "impl_org_webRtc_post_include.h"
 

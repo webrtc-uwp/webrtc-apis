@@ -2,7 +2,7 @@
 #include "impl_org_webRtc_RTCDtlsFingerprint.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/sslfingerprint.h"
+#include "rtc_base/ssl_fingerprint.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

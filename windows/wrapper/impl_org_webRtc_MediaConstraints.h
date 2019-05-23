@@ -5,7 +5,7 @@
 #include "generated/org_webRtc_MediaConstraints.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/mediaconstraintsinterface.h"
+//#include "api/mediaconstraintsinterface.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

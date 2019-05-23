@@ -6,7 +6,7 @@
 #ifdef CPPWINRT_VERSION
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "rtc_base/criticalsection.h"
+#include "rtc_base/critical_section.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <assert.h>

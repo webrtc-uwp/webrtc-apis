@@ -10,7 +10,7 @@
 #ifdef CPPWINRT_VERSION
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "api/mediastreaminterface.h"
+#include "api/media_stream_interface.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <zsLib/types.h>

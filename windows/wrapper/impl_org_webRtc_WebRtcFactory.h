@@ -5,8 +5,8 @@
 #include "generated/org_webRtc_WebRtcFactory.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/scoped_ref_ptr.h"
-#include "media/base/videocapturerfactory.h"
+//#include "rtc_base/scoped_ref_ptr.h"
+//#include "media/base/videocapturerfactory.h"
 #include "modules/audio_processing/include/audio_processing.h"
 #include "impl_org_webRtc_post_include.h"
 
