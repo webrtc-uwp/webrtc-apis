@@ -50,7 +50,6 @@ namespace wrapper {
           wrapper::org::webRtc::VideoFramePlanarYuvaBufferPtr get_yuvaFrame() noexcept override;
           wrapper::org::webRtc::VideoFrameNativeBufferPtr get_nativeFrame() noexcept override;
 
-          ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperType &type) noexcept;
           ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperType *type) noexcept;
           ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperTypePtr type) noexcept;
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeType *native) noexcept;

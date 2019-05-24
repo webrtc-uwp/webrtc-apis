@@ -10,6 +10,7 @@
 #include "api/video/video_frame_buffer.h"
 #include "api/video/i420_buffer.h"
 #include "libyuv.h"
+#include "third_party/winuwp_h264/native_handle_buffer.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>
@@ -435,18 +436,31 @@ wrapper::org::webRtc::VideoFrameNativeBufferPtr wrapper::impl::org::webRtc::Vide
 }
 
 //------------------------------------------------------------------------------
-WrapperImplType::NativeTypeScopedRefPtr WrapperImplType::toNative(WrapperType &type) noexcept
-{
-  auto wrapper = dynamic_cast<WrapperImplType &>(type);
-  return wrapper.native_;
-}
-
-//------------------------------------------------------------------------------
 WrapperImplType::NativeTypeScopedRefPtr WrapperImplType::toNative(WrapperType *type) noexcept
 {
   if (!type)
     return {};
-  return toNative(*type);
+  {
+    auto ptr = dynamic_cast<WrapperImplType *>(type);
+    if (ptr)
+      return ptr->native_;
+  }
+  {
+    auto ptr = dynamic_cast<UseVideoFramePlanarYuvBuffer *>(type);
+    if (ptr)
+      return ptr->native_;
+  }
+  {
+    auto ptr = dynamic_cast<UseVideoFramePlanarYuvaBuffer *>(type);
+    if (ptr)
+      return ptr->native_;
+  }
+  {
+    auto ptr = dynamic_cast<UseVideoFrameNativeBuffer *>(type);
+    if (ptr)
+      return ptr->native_;
+  }
+  return {};
 }
 
 //------------------------------------------------------------------------------
@@ -454,7 +468,7 @@ WrapperImplType::NativeTypeScopedRefPtr WrapperImplType::toNative(WrapperTypePtr
 {
   if (!type)
     return {};
-  return toNative(*type);
+  return toNative(type.get());
 }
 
 //------------------------------------------------------------------------------
