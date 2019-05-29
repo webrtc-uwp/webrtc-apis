@@ -85,7 +85,10 @@ void wrapper::impl::org::webRtc::CustomVideoCapturer::notifyFrame(
   builder.set_timestamp_ms(timestamp);
   builder.set_rotation(UseEnum::toNative(rotation));
 
-  OnFrame(builder.build(), origWidth, origHeight);
+  AutoRecursiveLock lock(ProxyReferencelock_);
+  if (!proxyReference_)
+    return;
+  proxyReference_->notifyOnFrame(builder.build(), origWidth, origHeight);
 }
 
 //------------------------------------------------------------------------------
@@ -180,6 +183,13 @@ bool WrapperImplType::GetPreferredFourccs(std::vector<uint32_t>* fourccs)
 }
 
 //------------------------------------------------------------------------------
+void WrapperImplType::destroyProxyReference() noexcept
+{
+  AutoRecursiveLock lock(ProxyReferencelock_);
+  proxyReference_ = {};
+}
+
+//------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::create() noexcept
 {
   auto result = std::make_shared<WrapperImplType>();
@@ -188,18 +198,23 @@ WrapperImplTypePtr WrapperImplType::create() noexcept
 }
 
 //------------------------------------------------------------------------------
-std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(WrapperType &wrapperType) noexcept
-{
-  auto result = std::make_unique<Proxy>(dynamic_cast<WrapperImplType &>(wrapperType).thisWeak_.lock());
-  return std::move(result);
-}
-
-//------------------------------------------------------------------------------
 std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(WrapperType *wrapperType) noexcept
 {
   if (!wrapperType)
     return {};
-  return toNative(*wrapperType);
+
+  auto converted = dynamic_cast<WrapperImplType *>(wrapperType);
+  if (!converted)
+    return {};
+
+  auto result = std::make_unique<Proxy>(converted->thisWeak_.lock());
+
+  {
+    AutoRecursiveLock lock(converted->ProxyReferencelock_);
+    converted->proxyReference_ = result.get();
+  }
+
+  return std::move(result);
 }
 
 //------------------------------------------------------------------------------
