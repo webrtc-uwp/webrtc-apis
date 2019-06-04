@@ -8,7 +8,7 @@
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "rtc_base/critical_section.h"
-#include "rtc_base/scoped_ref_ptr.h"
+#include "api/scoped_refptr.h"
 #include "system_wrappers/include/event_wrapper.h"
 #include "modules/audio_device/audio_device_buffer.h"
 #include <wrapper/impl_org_webRtc_post_include.h>

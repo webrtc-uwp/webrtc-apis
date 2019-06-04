@@ -40,7 +40,7 @@
 #include "system_wrappers/include/sleep.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/win32.h"
-#include "rtc_base/refcountedobject.h"
+#include "rtc_base/ref_counted_object.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <zsLib/String.h>

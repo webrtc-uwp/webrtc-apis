@@ -8,7 +8,7 @@
 
 #include "impl_org_webRtc_pre_include.h"
 //#include "rtc_base/scoped_ref_ptr.h"
-//#include "media/base/videocapturer.h"
+#include "media/base/adapted_video_track_source.h"
 #include "impl_org_webRtc_post_include.h"
 
 
@@ -21,7 +21,7 @@ namespace wrapper {
         {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoCapturer, WrapperType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer, WrapperImplType);
-          ZS_DECLARE_TYPEDEF_PTR(::cricket::VideoCapturer, NativeType);
+          ZS_DECLARE_TYPEDEF_PTR(::rtc::AdaptedVideoTrackSource, NativeType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::MediaSample, UseMediaSample);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
 
@@ -70,24 +70,11 @@ namespace wrapper {
 
 
           // methods VideoCapturer
-          shared_ptr< list< wrapper::org::webRtc::VideoFormatPtr > > getSupportedFormats() noexcept override;
-          wrapper::org::webRtc::VideoFormatPtr getBestCaptureFormat(wrapper::org::webRtc::VideoFormatPtr desired) noexcept override;
-          wrapper::org::webRtc::VideoCaptureState start(wrapper::org::webRtc::VideoFormatPtr captureFormat) noexcept override;
-          wrapper::org::webRtc::VideoFormatPtr getCaptureFormat() noexcept override;
-          void stop() noexcept override;
-          void constrainSupportedFormats(wrapper::org::webRtc::VideoFormatPtr maxFormat) noexcept override;
 
           // properties VideoCapturer
-          String get_id() noexcept override;
-          bool get_enableCameraList() noexcept override;
-          void set_enableCameraList(bool value) noexcept override;
-          bool get_enableVideoAdapter() noexcept override;
-          void set_enableVideoAdapter(bool value) noexcept override;
-          bool get_isRunning() noexcept override;
           bool get_applyRotation() noexcept override;
           bool get_isScreencast() noexcept override;
-          wrapper::org::webRtc::VideoCapturerInputSizePtr get_inputSize() noexcept override;
-          wrapper::org::webRtc::VideoCaptureState get_state() noexcept override;
+          wrapper::org::webRtc::MediaSourceState get_state() noexcept override;
 
           virtual void wrapper_onObserverCountChanged(size_t count) noexcept override;
 

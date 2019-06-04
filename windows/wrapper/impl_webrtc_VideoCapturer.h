@@ -7,7 +7,7 @@
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "rtc_base/critical_section.h"
-//#include "media/base/videocapturer.h"
+#include "media/base/adapted_video_track_source.h"
 #include "system_wrappers/include/event_wrapper.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
@@ -46,7 +46,7 @@ namespace webrtc
   };
 
   class VideoCapturer : public IVideoCapturer,
-    public cricket::VideoCapturer,
+    public rtc::AdaptedVideoTrackSource,
     public CaptureDeviceListener,
     public DisplayOrientationListener
   {
@@ -66,12 +66,12 @@ namespace webrtc
 
     std::string id() const noexcept override { return id_; }
 
-    // Overrides from cricket::VideoCapturer
-    virtual cricket::CaptureState Start(const cricket::VideoFormat& capture_format) override;
-    virtual void Stop() override;
-    virtual bool IsRunning() override;
-    virtual bool IsScreencast() const override;
-    virtual bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) override;
+    // Overrides from rtc::AdaptedVideoTrackSource
+    absl::optional<bool> needs_denoising() const override;
+    bool is_screencast() const override;
+    rtc::AdaptedVideoTrackSource::SourceState state() const override;
+
+    bool remote() const override;
 
     // Overrides from DisplayOrientationListener
     void OnDisplayOrientationChanged(

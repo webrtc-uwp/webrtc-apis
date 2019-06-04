@@ -20,7 +20,7 @@
 #include "impl_webrtc_VideoCapturer.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "media/engine/webrtcvideocapturer.h"
+#include "media/base/adapted_video_track_source.h"
 #include "api/rtc_error.h"
 #include "impl_org_webRtc_post_include.h"
 

@@ -14,7 +14,7 @@
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "third_party/winuwp_h264/native_handle_buffer.h"
-#include "media/base/videocommon.h"
+#include "media/base/video_common.h"
 #include "libyuv/convert.h"
 #include "rtc_base/logging.h"
 #include <wrapper/impl_org_webRtc_post_include.h>

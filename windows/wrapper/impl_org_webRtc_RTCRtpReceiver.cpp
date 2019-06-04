@@ -11,11 +11,13 @@
 #include "impl_org_webRtc_WebRtcFactory.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtpreceiverinterface.h"
-#include "pc/rtpreceiver.h"
-#include "pc/peerconnectionfactory.h"
-#include "pc/rtpparametersconversion.h"
-#include "media/base/mediaengine.h"
+#include "api/rtp_receiver_interface.h"
+#include "pc/rtp_receiver.h"
+#include "pc/audio_rtp_receiver.h"
+#include "pc/video_rtp_receiver.h"
+#include "pc/peer_connection_factory.h"
+#include "pc/rtp_parameters_conversion.h"
+#include "media/base/media_engine.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

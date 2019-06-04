@@ -33,7 +33,7 @@
 #include "impl_webrtc_MRCVideoEffectDefinition.h"
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "media/base/videocommon.h"
+#include "media/base/video_common.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/Win32.h"
 #include "libyuv/planar_functions.h"
