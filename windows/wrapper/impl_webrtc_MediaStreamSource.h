@@ -14,6 +14,7 @@
 #include <zsLib/Proxy.h>
 #include <zsLib/ProxySubscriptions.h>
 
+#include <queue>
 #include <atomic>
 #include <wrl.h>
 #include <mfidl.h>

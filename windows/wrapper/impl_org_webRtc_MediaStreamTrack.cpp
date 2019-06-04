@@ -19,9 +19,9 @@
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "pc/audiotrack.h"
-#include "pc/videotrack.h"
-#include "api/mediastreamtrackproxy.h"
+#include "pc/audio_track.h"
+#include "pc/video_track.h"
+#include "api/media_stream_track_proxy.h"
 #include "api/peer_connection_interface.h"
 #include "third_party/winuwp_h264/native_handle_buffer.h"
 #include "impl_org_webRtc_post_include.h"

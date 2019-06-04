@@ -133,9 +133,6 @@ namespace wrapper {
           ZS_NO_DISCARD() static wrapper::org::webRtc::RTCRtpTransceiverDirection toWrapper(::webrtc::RtpTransceiverDirection value) noexcept;
           ZS_NO_DISCARD() static ::webrtc::RtpTransceiverDirection toNative(wrapper::org::webRtc::RTCRtpTransceiverDirection value) noexcept;
 
-          ZS_NO_DISCARD() static wrapper::org::webRtc::VideoCaptureState toWrapper(::cricket::CaptureState value) noexcept;
-          ZS_NO_DISCARD() static ::cricket::CaptureState toNative(wrapper::org::webRtc::VideoCaptureState value) noexcept;
-
           ZS_NO_DISCARD() static wrapper::org::webRtc::RTCStatsOutputLevel toWrapper(::webrtc::PeerConnectionInterface::StatsOutputLevel value) noexcept;
           ZS_NO_DISCARD() static ::webrtc::PeerConnectionInterface::StatsOutputLevel toNative(wrapper::org::webRtc::RTCStatsOutputLevel value) noexcept;
 

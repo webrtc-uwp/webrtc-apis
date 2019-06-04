@@ -3,8 +3,8 @@
 #include "impl_org_webRtc_RTCStats.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/stats/rtcstats.h"
-#include "api/stats/rtcstatsreport.h"
+#include "api/stats/rtc_stats.h"
+#include "api/stats/rtc_stats_report.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>

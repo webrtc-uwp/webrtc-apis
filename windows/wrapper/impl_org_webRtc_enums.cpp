@@ -6,7 +6,7 @@
 #include "api/media_types.h"
 #include "rtc_base/ssl_identity.h"
 #include "api/rtp_transceiver_interface.h"
-#include "media/base/videocapturer.h"
+#include "media/base/adapted_video_track_source.h"
 #include "api/stats/rtcstats_objects.h"
 #include "modules/audio_processing/audio_buffer.h"
 #include "impl_org_webRtc_post_include.h"
@@ -963,35 +963,6 @@ wrapper::org::webRtc::RTCRtpTransceiverDirection UseEnum::toWrapper(::webrtc::Rt
   }
   ZS_ASSERT_FAIL("unknown type");
   return ::webrtc::RtpTransceiverDirection::kInactive;
-}
-
-
-//-----------------------------------------------------------------------------
-wrapper::org::webRtc::VideoCaptureState UseEnum::toWrapper(::cricket::CaptureState value) noexcept
-{
-  switch (value)
-  {
-    case ::cricket::CaptureState::CS_STOPPED:   return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_stopped;
-    case ::cricket::CaptureState::CS_STARTING:  return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_starting;
-    case ::cricket::CaptureState::CS_RUNNING:   return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_running;
-    case ::cricket::CaptureState::CS_FAILED:    return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed;
-  }
-  ZS_ASSERT_FAIL("unknown type");
-  return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_stopped;
-}
-
-//-----------------------------------------------------------------------------
-::cricket::CaptureState UseEnum::toNative(wrapper::org::webRtc::VideoCaptureState value) noexcept
-{
-  switch (value)
-  {
-    case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_stopped:    return ::cricket::CaptureState::CS_STOPPED;
-    case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_starting:   return ::cricket::CaptureState::CS_STARTING;
-    case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_running:    return ::cricket::CaptureState::CS_RUNNING;
-    case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed:     return ::cricket::CaptureState::CS_FAILED;
-  }
-  ZS_ASSERT_FAIL("unknown type");
-  return ::cricket::CaptureState::CS_STOPPED;
 }
 
 //-----------------------------------------------------------------------------

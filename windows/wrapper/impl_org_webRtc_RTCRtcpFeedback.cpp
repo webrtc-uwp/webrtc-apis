@@ -3,7 +3,7 @@
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtp_parametersrtp_parameters.h"
+#include "api/rtp_parameters.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

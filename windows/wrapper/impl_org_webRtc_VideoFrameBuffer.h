@@ -6,7 +6,7 @@
 
 
 #include "impl_org_webRtc_pre_include.h"
-//#include "rtc_base/scoped_ref_ptr.h"
+#include "api/scoped_refptr.h"
 #include "impl_org_webRtc_post_include.h"
 
 

@@ -63,11 +63,11 @@ void wrapper::impl::org::webRtc::RTCDataChannelInit::wrapper_init_org_webRtc_RTC
 static void apply(const NativeType &from, WrapperImplType &to)
 {
   to.ordered = from.ordered;
-  if (from.maxRetransmitTime >= 0) {
-    to.maxPacketLifetime = ::zsLib::Milliseconds(SafeInt<::zsLib::Milliseconds::rep>(from.maxRetransmitTime));
+  if (from.maxRetransmitTime.has_value()) {
+    to.maxPacketLifetime = ::zsLib::Milliseconds(SafeInt<::zsLib::Milliseconds::rep>(from.maxRetransmitTime.value()));
   }
-  if (from.maxRetransmits >= 0) {
-    to.maxRetransmits = SafeInt<decltype(to.maxRetransmits)::value_type>(from.maxRetransmits);
+  if (from.maxRetransmits.has_value()) {
+    to.maxRetransmits = SafeInt<decltype(to.maxRetransmits)::value_type>(from.maxRetransmits.value());
   }
   to.protocol = from.protocol;
   to.negotiated = from.negotiated;

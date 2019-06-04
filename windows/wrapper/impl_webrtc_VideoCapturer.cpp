@@ -10,7 +10,7 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include "api/video/video_frame_buffer.h"
-#include "rtc_base/refcountedobject.h"
+#include "rtc_base/ref_counted_object.h"
 #include "third_party/winuwp_h264/native_handle_buffer.h"
 #include "impl_org_webRtc_post_include.h"
 

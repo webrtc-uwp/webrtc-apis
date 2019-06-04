@@ -11,7 +11,6 @@
 
 namespace cricket
 {
-  enum CaptureState : int;
   enum MediaType : int;
 
   struct VideoFormat;

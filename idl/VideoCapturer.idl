@@ -142,7 +142,7 @@ namespace org
       ///   failed:    if the capturer failes to start..
       ///   noDevie:   if the capturer has no device and fails to start.
       /// </summary>
-      VideoCaptureState start(VideoFormat captureFormat);
+      MediaSourceState start(VideoFormat captureFormat);
 
       /// <summary>
       /// Get the current capture format, which is set by the Start() call.
@@ -205,7 +205,7 @@ namespace org
       VideoCapturerInputSize inputSize;
 
       [getter]
-      VideoCaptureState state;
+      MediaSourceState state;
 	  
       /// <summary>
       /// Event fires when a new video frame buffer is available.

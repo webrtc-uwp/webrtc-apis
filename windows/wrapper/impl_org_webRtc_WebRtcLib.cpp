@@ -22,8 +22,8 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include "rtc_base/event_tracer.h"
-#include "rtc_base/win32socketinit.h"
-#include "rtc_base/ssladapter.h"
+#include "rtc_base/win32_socket_init.h"
+#include "rtc_base/ssl_adapter.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/eventing/IHelper.h>

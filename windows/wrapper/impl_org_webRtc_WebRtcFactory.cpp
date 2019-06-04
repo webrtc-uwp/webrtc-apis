@@ -14,11 +14,9 @@
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/peer_connection_interface.h"
 #include "api/peer_connection_factory_proxy.h"
-#include "api/test/fakeconstraints.h"
 #include "rtc_base/event_tracer.h"
 #include "third_party/winuwp_h264/winuwp_h264_factory.h"
-#include "media/engine/webrtcvideocapturerfactory.h"
-#include "pc/peerconnectionfactory.h"
+#include "pc/peer_connection_factory.h"
 #include "modules/audio_device/include/audio_device.h"
 #include "impl_org_webRtc_post_include.h"
 
@@ -198,7 +196,6 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_dispose() noexcept
 
   // reset the factory (cannot be used anymore)...
   peerConnectionFactory_ = PeerConnectionFactoryInterfaceScopedPtr();
-  videoDeviceCaptureFactory_.reset();
 
 #pragma ZS_BUILD_NOTE("TODO","(mosa) shutdown threads need something more?")
 
@@ -268,14 +265,6 @@ PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noex
   setup();
   auto realInterface = unproxy(peerConnectionFactory_);
   return dynamic_cast<NativePeerConnectionFactory *>(realInterface);
-}
-
-//------------------------------------------------------------------------------
-UseVideoDeviceCaptureFacrtoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
-{
-  zsLib::AutoRecursiveLock lock(lock_);
-  setup();
-  return videoDeviceCaptureFactory_;
 }
 
 //------------------------------------------------------------------------------
@@ -404,12 +393,6 @@ void WrapperImplType::setup() noexcept
     nullptr,
     enableAudioProcessingEvents ? audioProcessing : nullptr
   );
-
-#ifdef _WIN32
-  videoDeviceCaptureFactory_ = make_shared<::cricket::WebRtcVideoDeviceCapturerFactory>();
-#else
-#error PLATFORM REQUIRES FACTORY
-#endif //_WIN32
 }
 
 //------------------------------------------------------------------------------

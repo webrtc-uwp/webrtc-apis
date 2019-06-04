@@ -9,8 +9,8 @@
 #include "generated/org_webRtc_RTCRtpReceiver.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtpsenderinterface.h"
-#include "pc/rtpsender.h"
+#include "api/rtp_sender_interface.h"
+#include "pc/rtp_sender.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;

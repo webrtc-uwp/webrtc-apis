@@ -8,8 +8,8 @@
 #include "impl_org_webRtc_WebrtcLib.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/rtptransceiverinterface.h"
-#include "pc/rtptransceiver.h"
+#include "api/rtp_transceiver_interface.h"
+#include "pc/rtp_transceiver.h"
 #include "api/array_view.h"
 #include "impl_org_webRtc_post_include.h"
 
