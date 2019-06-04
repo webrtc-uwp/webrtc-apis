@@ -82,9 +82,6 @@ static void apply(const NativeType &from, WrapperImplType &to)
   if (from.typing_detection.has_value()) {
     to.typingDetection = from.typing_detection.value();
   }
-  if (from.aecm_generate_comfort_noise.has_value()) {
-    to.aecmGenerateComfortNoise = from.aecm_generate_comfort_noise.value();
-  }
   if (from.experimental_agc.has_value()) {
     to.experimentalAgc = from.experimental_agc.value();
   }
@@ -151,9 +148,6 @@ static void apply(const WrapperImplType &from, NativeType &to)
   }
   if (from.typingDetection.has_value()) {
     to.typing_detection = from.typingDetection.value();
-  }
-  if (from.aecmGenerateComfortNoise.has_value()) {
-    to.aecm_generate_comfort_noise = from.aecmGenerateComfortNoise.value();
   }
   if (from.experimentalAgc.has_value()) {
     to.experimental_agc = from.experimentalAgc.value();

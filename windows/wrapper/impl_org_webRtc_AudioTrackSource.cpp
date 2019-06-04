@@ -2,7 +2,6 @@
 #include "impl_org_webRtc_AudioTrackSource.h"
 #include "impl_org_webRtc_helpers.h"
 #include "impl_org_webRtc_AudioOptions.h"
-#include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_WebRtcLib.h"
 #include "impl_org_webRtc_WebRtcFactory.h"
 #include "impl_org_webRtc_enums.h"
@@ -39,7 +38,6 @@ typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 typedef wrapper::impl::org::webRtc::WrapperMapper<NativeType, WrapperImplType> UseWrapperMapper;
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaConstraints, UseMediaConstraints);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioOptions, UseAudioOptions);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 

@@ -8,7 +8,7 @@
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "pc/datachannel.h"
+#include "pc/data_channel.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>

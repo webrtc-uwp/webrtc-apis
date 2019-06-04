@@ -31,7 +31,6 @@
         "StatsProvider.idl",
         "Certificate.idl",
         "DataChannel.idl",
-        "MediaConstraints.idl",
         "AudioOptions.idl",
         "AudioTrackSource.idl",
         "VideoOptions.idl",

@@ -1,7 +1,6 @@
 
 #include "impl_org_webRtc_VideoTrackSource.h"
 #include "impl_org_webRtc_VideoOptions.h"
-#include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_VideoCapturer.h"
 #include "impl_org_webRtc_VideoTrackSourceStats.h"
 #include "impl_org_webRtc_WebRtcLib.h"
@@ -39,7 +38,6 @@ ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseWebRtcFactory, UseWebRtcFactory);
 typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebRtcLib);
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaConstraints, UseMediaConstraints);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer, UseVideoCapturer);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 
@@ -114,14 +112,10 @@ wrapper::org::webRtc::VideoTrackSourcePtr wrapper::org::webRtc::VideoTrackSource
   if (!factory) return WrapperTypePtr();
 
   auto convertedCapture = UseVideoCapturer::toNative(options ? options->capturer : nullptr);
-  auto convertedConstraints = UseMediaConstraints::toNative(options ? options->constraints : nullptr);
 
   WrapperImplTypePtr result;
 
-  if (!convertedConstraints)
-    result = WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture)));
-  else 
-    result = WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture), convertedConstraints.get()));
+  result = WrapperImplType::toWrapper(factory->CreateVideoSource(std::move(convertedCapture)));
   result->factory_ = factoryImpl;
   return result;
 }

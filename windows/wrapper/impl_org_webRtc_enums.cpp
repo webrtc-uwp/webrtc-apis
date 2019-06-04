@@ -4,7 +4,7 @@
 #include "impl_org_webRtc_pre_include.h"
 #include "api/rtc_error.h"
 #include "api/media_types.h"
-#include "rtc_base/sslidentity.h"
+#include "rtc_base/ssl_identity.h"
 #include "api/rtp_transceiver_interface.h"
 #include "media/base/videocapturer.h"
 #include "api/stats/rtcstats_objects.h"

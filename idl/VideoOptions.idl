@@ -47,11 +47,6 @@ namespace org
       /// Gets or sets the associated video capturer.
       /// </summary>
       VideoCapturer capturer;
-
-      /// <summary>
-      /// Gets or sets the associated constraints.
-      /// </summary>
-      MediaConstraints constraints;
     };
   }
 }

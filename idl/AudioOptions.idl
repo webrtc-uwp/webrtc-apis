@@ -102,9 +102,6 @@ namespace org
       bool typingDetection;
 
       [optional]
-      bool aecmGenerateComfortNoise;
-
-      [optional]
       bool experimentalAgc;
 
       [optional]

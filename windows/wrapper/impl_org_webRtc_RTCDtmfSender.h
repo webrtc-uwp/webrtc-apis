@@ -5,8 +5,8 @@
 #include "generated/org_webRtc_RTCDtmfSender.h"
 
 #include "impl_org_webRtc_pre_include.h"
-//#include "rtc_base/scoped_ref_ptr.h"
-#include "api/dtmfsenderinterface.h"
+#include "api/scoped_refptr.h"
+#include "api/dtmf_sender_interface.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

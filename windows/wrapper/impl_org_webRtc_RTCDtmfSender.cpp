@@ -5,7 +5,7 @@
 #include "impl_org_webRtc_WebrtcLib.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "pc/dtmfsender.h"
+#include "pc/dtmf_sender.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>

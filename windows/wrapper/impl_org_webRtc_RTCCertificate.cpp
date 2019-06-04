@@ -3,9 +3,10 @@
 #include "impl_org_webRtc_RTCDtlsFingerprint.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "rtc_base/rtccertificate.h"
-#include "rtc_base/sslidentity.h"
-#include "rtc_base/sslfingerprint.h"
+#include "rtc_base/rtc_certificate.h"
+#include "rtc_base/ssl_certificate.h"
+#include "rtc_base/ssl_identity.h"
+#include "rtc_base/ssl_fingerprint.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/date.h>
@@ -85,7 +86,9 @@ shared_ptr< list< wrapper::org::webRtc::RTCDtlsFingerprintPtr > > wrapper::impl:
   auto &sslCert = native_->ssl_certificate();
   if (!sslCert.GetSignatureDigestAlgorithm(&digest_alg)) return result;
 
-  std::unique_ptr<::rtc::SSLFingerprint> nativeFingerprint(::rtc::SSLFingerprint::Create(digest_alg, &sslCert));
+  auto identity = native_->identity();
+
+  std::unique_ptr<::rtc::SSLFingerprint> nativeFingerprint(::rtc::SSLFingerprint::Create(digest_alg, identity));
   
   auto wrapperFingerprint = UseFingerprint::toWrapper(digest_alg, std::move(nativeFingerprint));
   if (wrapperFingerprint) {

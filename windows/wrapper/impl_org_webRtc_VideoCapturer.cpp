@@ -21,7 +21,7 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include "media/engine/webrtcvideocapturer.h"
-#include "api/rtcerror.h"
+#include "api/rtc_error.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <experimental/generator>

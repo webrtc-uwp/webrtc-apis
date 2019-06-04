@@ -10,7 +10,6 @@
 #include "impl_org_webRtc_helpers.h"
 #include "impl_org_webRtc_MediaElement.h"
 #include "impl_org_webRtc_MediaSource.h"
-#include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_AudioTrackSource.h"
 #include "impl_org_webRtc_VideoTrackSource.h"
 #include "impl_org_webRtc_WebRtcLib.h"

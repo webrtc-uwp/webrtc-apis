@@ -14,7 +14,6 @@
 #include "impl_org_webRtc_RTCPeerConnectionIceEvent.h"
 #include "impl_org_webRtc_RTCTrackEvent.h"
 #include "impl_org_webRtc_MediaStreamTrack.h"
-#include "impl_org_webRtc_MediaConstraints.h"
 #include "impl_org_webRtc_RTCRtpSender.h"
 #include "impl_org_webRtc_RTCRtpReceiver.h"
 #include "impl_org_webRtc_RTCRtpTransceiver.h"
@@ -29,11 +28,11 @@
 #include "impl_org_webRtc_WebRtcFactory.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include "api/peerconnectionproxy.h"
-#include "api/rtcerror.h"
-#include "pc/peerconnection.h"
-#include "rtc_base/refcountedobject.h"
-#include "rtc_base/rtccertificategenerator.h"
+#include "api/peer_connection_proxy.h"
+#include "api/rtc_error.h"
+#include "pc/peer_connection.h"
+#include "rtc_base/ref_counted_object.h"
+#include "rtc_base/rtc_certificate_generator.h"
 #include "impl_org_webRtc_post_include.h"
 
 using ::zsLib::String;
@@ -83,7 +82,6 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCRtpTransceiver, UseRtpTran
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCRtpTransceiverInit, UseRtpTransceiverInit);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCTrackEvent, UseTrackEvent);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaStreamTrack, UseMediaStreamTrack);
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaConstraints, UseMediaConstraints);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCBitrateParameters, UseBitrateParameters);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCKeyParams, UseKeyParams);
 
