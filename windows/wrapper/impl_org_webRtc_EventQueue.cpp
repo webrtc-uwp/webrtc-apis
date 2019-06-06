@@ -95,18 +95,38 @@ wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWr
     return {};
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->dispatcher_ = queue;
+  result->coreDispatcher_ = queue;
   return result;
 }
 
-winrt::Windows::UI::Core::CoreDispatcher wrapper::impl::org::webRtc::EventQueue::toNative_winrt(WrapperTypePtr queue) noexcept
+winrt::Windows::UI::Core::CoreDispatcher wrapper::impl::org::webRtc::EventQueue::toNative_winrtCoreDispatcher(WrapperTypePtr queue) noexcept
 {            
   if (!queue)
     return {nullptr};
   auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, queue);
   if (!converted)
     return {nullptr};
-  return converted->dispatcher_;
+  return converted->coreDispatcher_;
+}
+
+wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWrapper(winrt::Windows::System::DispatcherQueue queue) noexcept
+{
+  if (!queue)
+    return {};
+  auto result = make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->dispatcherQueue_ = queue;
+  return result;
+}
+
+winrt::Windows::System::DispatcherQueue wrapper::impl::org::webRtc::EventQueue::toNative_winrtDispatcherQueue(WrapperTypePtr queue) noexcept
+{
+  if (!queue)
+    return { nullptr };
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, queue);
+  if (!converted)
+    return { nullptr };
+  return converted->dispatcherQueue_;
 }
 
 #endif // CPPWINRT_VERSION
@@ -129,8 +149,10 @@ wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWr
   if (!converted)
     return {};
 #ifdef CPPWINRT_VERSION
-  if (converted->dispatcher_)
-    return zsLib::IMessageQueueDispatcher::create(converted->dispatcher_);
+  if (converted->coreDispatcher_)
+    return zsLib::IMessageQueueDispatcher::create(converted->coreDispatcher_);
+  if (converted->dispatcherQueue_)
+    return zsLib::IMessageQueueDispatcher::create(converted->dispatcherQueue_);
 #endif //CPPWINRT_VERSION
   return converted->queue_;
 }

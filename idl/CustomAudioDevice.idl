@@ -1,0 +1,372 @@
+/*
+
+ Copyright (c) 2017, Optical Tone Ltd.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ The views and conclusions contained in the software and documentation are those
+ of the authors and should not be interpreted as representing official policies,
+ either expressed or implied, of the FreeBSD Project.
+ 
+ */
+
+
+namespace org
+{
+  namespace webRtc
+  {
+    [dictionary]
+    struct CustomAudioPlayoutDeviceInfo
+    {
+      string name;
+      string guid;
+
+      bool isDefaultDevice;
+      bool isDefaultCommunicationDevice;
+
+      bool speakerVolumeIsAvailable;
+      int32 minSpeakerVolume;
+      int32 maxSpeakerVolume;
+
+      bool speakerMuteIsAvailable;
+      bool stereoPlayoutIsAvailable;
+    };
+
+    [dictionary]
+    struct CustomAudioRecordingDeviceInfo
+    {
+      string name;
+      string guid;
+
+      bool isDefaultDevice;
+      bool isDefaultCommunicationDevice;
+
+      bool microphoneVolumeIsAvailable;
+      int32 minMicrophoneVolume;
+      int32 maxMicrophoneVolume;
+
+      bool microphoneMuteIsAvailable;
+      bool stereoRecordingIsAvailable;
+      bool isBuiltInAecAvailable;
+      bool isBuiltInAgcAvailable;
+      bool isBuiltInNsAvailable;
+    };
+
+    [dictionary]
+    struct CustomAudioDeviceParameters
+    {
+      CustomAudioPlayoutDeviceInfoList playoutDevices;
+      CustomAudioRecordingDeviceInfoList recordingDevices;
+    };
+
+    /// <summary>
+    /// This event is called to update the active device.
+    /// <summary>
+    [disposable]
+    interface CustomAudioDeviceSelectEvent
+    {
+      [constructor, delete, default]
+      void CustomAudioDeviceSelectEvent();
+
+      [getter]
+      uint16 deviceId;
+
+      /// <summary>
+      /// Gets if the requested device is a recording device.
+      /// <summary>
+      [getter]
+      bool isRecordingDevice;
+
+      /// <summary>
+      /// Gets if the requested device is a playout device.
+      /// <summary>
+      [getter]
+      bool isPlayoutDevice;
+    };
+
+    /// <summary>
+    /// This event is called to update the custome audio device state.
+    /// <summary>
+    [disposable]
+    interface CustomAudioDeviceRequestStateEvent
+    {
+      [constructor, delete, default]
+      void CustomAudioDeviceRequestStateEvent();
+
+      /// <summary>
+      /// Gets if the requested device is a recording device.
+      /// <summary>
+      [getter]
+      bool isRecordingDevice;
+
+      /// <summary>
+      /// Gets if the requested device is a playout device.
+      /// <summary>
+      [getter]
+      bool isPlayoutDevice;
+
+      /// <summary>
+      /// Gets the requested state for the audio device.
+      /// <summary>
+      [getter]
+      CustomAudioRequestState requestedState;
+    };
+
+    /// <summary>
+    /// This event is called to update the custom mixer state.
+    /// <summary>
+    [disposable]
+    interface CustomAudioMixerRequestStateEvent
+    {
+      [constructor, delete, default]
+      void CustomAudioMixerRequestStateEvent();
+
+      /// <summary>
+      /// Gets if the requested mixer is a speaker mixer.
+      /// <summary>
+      [getter]
+      bool isSpeaker;
+
+      /// <summary>
+      /// Gets if the requested mixer is a microphone mixer.
+      /// <summary>
+      [getter]
+      bool isMicrophone;
+
+      /// <summary>
+      /// Gets the requested state for the audio mixer.
+      /// <summary>
+      [getter]
+      CustomAudioRequestState requestedState;
+    };
+
+    /// <summary>
+    /// This event is called to update the custom mixer state.
+    /// <summary>
+    [disposable]
+    interface CustomAudioMixerRequestVolumeEvent
+    {
+      [constructor, delete, default]
+      void CustomAudioMixerRequestVolumeEvent();
+
+      /// <summary>
+      /// Gets if the requested mixer is a speaker mixer.
+      /// <summary>
+      [getter]
+      bool isSpeaker;
+
+      /// <summary>
+      /// Gets if the requested mixer is a microphone mixer.
+      /// <summary>
+      [getter]
+      bool isMicrophone;
+
+      /// <summary>
+      /// Gets the requested volume for the audio mixer.
+      /// <summary>
+      [getter]
+      int32 requestedVolume;
+    };
+
+    /// <summary>
+    /// This event is called to update the custom mixer state.
+    /// <summary>
+    [disposable]
+    interface CustomAudioMixerRequestMuteEvent
+    {
+      [constructor, delete, default]
+      void CustomAudioMixerRequestMuteEvent();
+
+      /// <summary>
+      /// Gets if the requested mixer is a speaker mixer.
+      /// <summary>
+      [getter]
+      bool isSpeaker;
+
+      /// <summary>
+      /// Gets if the requested mixer is a microphone mixer.
+      /// <summary>
+      [getter]
+      bool isMicrophone;
+
+      /// <summary>
+      /// Gets the requested mute state for the audio mixer.
+      /// <summary>
+      [getter]
+      bool mute;
+    };
+
+    /// <summary>
+    /// This event is called to update the custom device state.
+    /// <summary>
+    [disposable]
+    interface CustomAudioDeviceRequestStereoEvent
+    {
+      [constructor, delete, default]
+      void CustomAudioDeviceRequestStereoEvent();
+
+      /// <summary>
+      /// Gets if the requested device is a recording device.
+      /// <summary>
+      [getter]
+      bool isRecordingDevice;
+
+      /// <summary>
+      /// Gets if the requested device is a playout device.
+      /// <summary>
+      [getter]
+      bool isPlayoutDevice;
+
+      /// <summary>
+      /// Gets the requested stereo state for the audio mixer.
+      /// <summary>
+      [getter]
+      bool stereo;
+    };
+
+    /// <summary>
+    /// This event is called to update the custom mixer state.
+    /// <summary>
+    [disposable]
+    interface CustomAudioMixerRequestSettingsEvent
+    {
+      [constructor, delete, default]
+      void CustomAudioMixerRequestSettingsEvent();
+
+      /// <summary>
+      /// Gets if the requested mixer is a speaker mixer.
+      /// <summary>
+      [getter]
+      bool isSpeaker;
+
+      /// <summary>
+      /// Gets if the requested mixer is a microphone mixer.
+      /// <summary>
+      [getter]
+      bool isMicrophone;
+
+      /// <summary>
+      /// Gets the requested aec state for the audio mixer.
+      /// <summary>
+      [getter, optional]
+      bool enableBuiltInAec;
+
+      /// <summary>
+      /// Gets the requested agc state for the audio mixer.
+      /// <summary>
+      [getter, optional]
+      bool enableBuiltInAgc;
+
+      /// <summary>
+      /// Gets the requested ns state for the audio mixer.
+      /// <summary>
+      [getter, optional]
+      bool enableBuiltInNs;
+    };
+
+    [disposable]
+    interface CustomAudioDevice
+    {
+      [constructor, default, delete]
+      void CustomAudioDevice();
+
+      [static]
+      CustomAudioDevice create(CustomAudioDeviceParameters params);
+
+      /// <summary>
+      /// Gets or sets the current state of the custom playout audio device.
+      /// </summary>
+      [getter, setter]
+      CustomAudioState playoutCurrentState;
+
+      /// <summary>
+      /// Gets or sets the current state of the custom recording audio device.
+      /// </summary>
+      [getter, setter]
+      CustomAudioState recordingCurrentState;
+
+      /// <summary>
+      /// Gets or sets the current state of the custom speaker audio mixer.
+      /// </summary>
+      [getter, setter]
+      CustomAudioState speakerCurrentState;
+
+      /// <summary>
+      /// Gets or sets the current state of the custom microphone audio mixer.
+      /// </summary>
+      [getter, setter]
+      CustomAudioState microphoneCurrentState;
+
+      [getter, setter]
+      uint32 playbackSampleRateFsHz;
+
+      [getter, setter]
+      uint32 recordingSampleRateFsHz;
+
+      [getter, setter]
+      void updateDevices(CustomAudioDeviceParameters params);
+
+      [getter, setter]
+      int32 playoutChannels;
+
+      [getter, setter]
+      int32 recordingChannels;
+
+      void updateCurrentPlayoutDelay(uint16 delayMs);
+
+      void setRecordedBuffer(AudioData buffer);
+
+      bool deliverRecordedData();
+      bool notifyNewMicrophoneLevel();
+
+      bool setTypingStatus(bool isTyping);
+
+      AudioData requestPlayoutData(size_t samplesPerChannel);
+
+      size_t requestFillWithPlayoutData(AudioData data);
+
+      void updateVqeData(int playDelayMs, int recordDelayMs);
+
+      [event]
+      void onSelectDevice(CustomAudioDeviceSelectEvent evt);
+
+      [event]
+      void onRequestDeviceState(CustomAudioDeviceRequestStateEvent evt);
+
+      [event]
+      void onRequestDeviceStereo(CustomAudioDeviceRequestStereoEvent evt);
+      
+      [event]
+      void onRequestMixerState(CustomAudioMixerRequestStateEvent evt);
+
+      [event]
+      void onRequestMixerVolume(CustomAudioMixerRequestVolumeEvent evt);
+
+      [event]
+      void onRequestMixerMute(CustomAudioMixerRequestMuteEvent evt);
+
+      [event]
+      void onRequestMixerSettings(CustomAudioMixerRequestSettingsEvent evt);
+
+    };
+  }
+}

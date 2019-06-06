@@ -5,6 +5,8 @@
 #include "impl_org_webRtc_AudioBufferEvent.h"
 #include "impl_org_webRtc_AudioProcessingInitializeEvent.h"
 #include "impl_org_webRtc_AudioProcessingRuntimeSettingEvent.h"
+#include "impl_org_webRtc_CustomVideoCapturerFactory.h"
+#include "impl_org_webRtc_CustomAudioDevice.h"
 #include "impl_org_webRtc_helpers.h"
 
 #include "impl_webrtc_IAudioDeviceWasapi.h"
@@ -341,15 +343,17 @@ void WrapperImplType::setup() noexcept
   auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
   auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
 
-  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule;
-  audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
-    RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
-    webrtc::IAudioDeviceWasapi::CreationProperties props;
-    props.id_ = "";
-    props.playoutEnabled_ = audioCapturingEnabled;
-    props.recordingEnabled_ = audioRenderingEnabled;
-    return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
-  });
+  rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule = CustomAudioDevice::toNative(configuration_->customAudioDevice);
+  if (!audioDeviceModule) {
+    audioDeviceModule = workerThread->Invoke<rtc::scoped_refptr<::webrtc::AudioDeviceModule>>(
+      RTC_FROM_HERE, [audioCapturingEnabled, audioRenderingEnabled]() {
+      webrtc::IAudioDeviceWasapi::CreationProperties props;
+      props.id_ = "";
+      props.playoutEnabled_ = audioCapturingEnabled;
+      props.recordingEnabled_ = audioRenderingEnabled;
+      return rtc::scoped_refptr<::webrtc::AudioDeviceModule>(webrtc::IAudioDeviceWasapi::create(props));
+    });
+  }
 
   if (audioCaptureDeviceId.size() != 0) {
     int deviceCount = audioDeviceModule->RecordingDevices();
@@ -402,6 +406,8 @@ void WrapperImplType::setup() noexcept
     nullptr,
     enableAudioProcessingEvents ? audioProcessing : nullptr
   );
+
+  videoDeviceCaptureFactory_ = CustomVideoCapturerFactory::toNative(configuration_->customVideoFactory);
 }
 
 //------------------------------------------------------------------------------

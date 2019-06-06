@@ -50,6 +50,8 @@ namespace org
 
     struct AudioBufferConfiguration;
     struct AudioFrame;
+    struct CustomAudioPlayoutDeviceInfo;
+    struct CustomAudioRecordingDeviceInfo;
     struct VideoFormat;
     struct RTCOAuthCredential;
     struct RTCIceServer;
@@ -61,7 +63,6 @@ namespace org
     struct RTCDataChannelInit;
     struct MessageEvent;
     struct RTCSessionDescriptionInit;
-    struct Constraint;
     struct RTCIceCandidateInit;
     struct RTCBitrateParameters;
     struct RTCRtpEncodingParameters;
@@ -78,6 +79,8 @@ namespace org
     struct WebRtcFactoryConfiguration;
     interface AudioData;
     interface AudioBuffer;
+    interface CustomAudioDevice;
+    interface CustomVideoCapturerFactory;
     interface RTCError;
     interface RTCPeerConnection;
     interface RTCDtmfSender;
@@ -118,13 +121,14 @@ namespace org
     typedef std::list<RTCRtpEncodingParameters> RTCRtpEncodingParametersList;
     typedef std::list<RTCRtpHeaderExtensionParameters> RTCRtpHeaderExtensionParametersList;
     typedef std::list<RTCRtpCodecParameters> RTCRtpCodecParametersList;
-    typedef std::list<Constraint> Constraints;
     typedef std::list<RTCIceServer> RTCIceServers;
     typedef std::list<RTCCertificate> RTCCertificates;
     typedef std::list<RTCRtpSender> RTCRtpSenders;
     typedef std::list<RTCRtpReceiver> RTCRtpReceivers;
     typedef std::list<RTCRtpTransceiver> RTCRtpTransceivers;
     typedef std::list<RTCIceCandidate> RTCIceCandidates;
+    typedef std::list<CustomAudioPlayoutDeviceInfo> CustomAudioPlayoutDeviceInfoList;
+    typedef std::list<CustomAudioRecordingDeviceInfo> CustomAudioRecordingDeviceInfoList;
 
 
     [dictionary]
@@ -223,6 +227,17 @@ namespace org
       /// events. If not specified then the GUI queue is used.
       /// </summary>
       EventQueue videoFrameProcessingQueue;
+
+      /// <summary>
+      /// Gets or sets the default queue for processing audio frame
+      /// events related to custom audio processing.
+      /// </summary>
+      EventQueue customAudioQueue;
+      /// <summary>
+      /// Gets or sets the default queue for processing video frame
+      /// events related to custom video processing.
+      /// </summary>
+      EventQueue customVideoQueue;
     };
 
     /// <summary>

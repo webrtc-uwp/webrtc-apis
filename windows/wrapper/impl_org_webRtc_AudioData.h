@@ -44,6 +44,7 @@ namespace wrapper {
             size_t size) noexcept;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(WrapperTypePtr wrapper) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(size_t sampleCount) noexcept;
         };
 
       } // webRtc

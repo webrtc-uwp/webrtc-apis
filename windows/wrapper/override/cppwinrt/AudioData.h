@@ -62,6 +62,7 @@ namespace winrt {
           /// Constructs a new audio data object. <summary> </summary>
           /// </summary>
           AudioData();
+          AudioData(uint64_t Size);
 
           // Windows.Foundation.IClosable
           void Close();

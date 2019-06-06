@@ -40,6 +40,9 @@ namespace org
       [constructor, default, delete]
       void VideoData();
 
+      [constructor, default]
+      void VideoData(size_t size);
+
       [getter]
       bool is8BitColorSpace;
 
@@ -64,6 +67,52 @@ namespace org
     {
       [constructor, default, delete]
       void VideoFrameBuffer();
+
+      [static]
+      VideoFrameBuffer createFromYuv(
+        int width,
+        int height,
+        int strideY,
+        int strideU,
+        int strideV,
+        VideoData y,
+        VideoData u,
+        VideoData v);
+
+      [static]
+      VideoFrameBuffer createFromARGB(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromBGRA(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromABGR(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromRGBA(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
+
+      [static]
+      VideoFrameBuffer createFromRGB24(
+        int width,
+        int height,
+        int strideRgb,
+        VideoData data);
 
       /// <summary>
       /// Gets the video frame type.
@@ -105,6 +154,31 @@ namespace org
       /// <summary>
       [getter]
       VideoFrameNativeBuffer nativeFrame;
+
+      /// <summary>
+      /// Convert to an ARGB data buffer (if possible).
+      /// <summary>
+      VideoData toARGB();
+
+      /// <summary>
+      /// Convert to an BGRA data buffer (if possible).
+      /// <summary>
+      VideoData toBGRA();
+
+      /// <summary>
+      /// Convert to an ABGR data buffer (if possible).
+      /// <summary>
+      VideoData toABGR();
+
+      /// <summary>
+      /// Convert to an RGBA data buffer (if possible).
+      /// <summary>
+      VideoData toRGBA();
+
+      /// <summary>
+      /// Convert to an RGB24 data buffer (if possible).
+      /// <summary>
+      VideoData toRGB24();
     };
 
     [disposable]

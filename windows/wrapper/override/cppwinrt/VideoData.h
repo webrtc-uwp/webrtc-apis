@@ -49,6 +49,11 @@ namespace winrt {
 
         public:
           /// <summary>
+          /// Constructs a new audio data object. <summary> </summary>
+          /// </summary>
+          VideoData(uint64_t Size);
+
+          /// <summary>
           /// Cast from Org::WebRtc::IVideoData to VideoData
           /// </summary>
           static Org::WebRtc::VideoData Cast(Org::WebRtc::IVideoData const & value);
@@ -61,7 +66,9 @@ namespace winrt {
 
           uint64_t Length();
           uint64_t GetData8bit(array_view<uint8_t> values);
+          uint64_t SetData8bit(array_view<uint8_t const> values);
           uint64_t GetData16bit(array_view<uint16_t> values);
+          uint64_t SetData16bit(array_view<uint16_t const> values);
 
           /// <summary>
           /// Gets or sets the video 8 bit color space data. <summary>

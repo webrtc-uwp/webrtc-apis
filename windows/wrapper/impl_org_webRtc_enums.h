@@ -170,6 +170,8 @@ namespace wrapper {
           ZS_NO_DISCARD() static ::webrtc::AudioProcessing::RuntimeSetting::Type toNative(wrapper::org::webRtc::RuntimeSetting value) noexcept;
 
           ZS_NO_DISCARD() static wrapper::org::webRtc::VideoFrameBufferType toWrapper(::webrtc::VideoFrameBuffer::Type value) noexcept;
+
+          ZS_NO_DISCARD() static ::webrtc::VideoRotation toNative(wrapper::org::webRtc::VideoRotation value) noexcept;
 #if 0
 
           enum MediaType {

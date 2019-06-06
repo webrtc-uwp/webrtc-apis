@@ -173,13 +173,16 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
   wrapper::org::webRtc::EventQueuePtr audioRenderFrameProcessingQueue = configuration ? configuration->audioRenderFrameProcessingQueue : nullptr;
   wrapper::org::webRtc::EventQueuePtr videoFrameProcessingQueue = configuration ? configuration->videoFrameProcessingQueue : nullptr;
 
+  wrapper::org::webRtc::EventQueuePtr customAudioQueue = configuration ? configuration->customAudioQueue : nullptr;
+  wrapper::org::webRtc::EventQueuePtr customVideoQueue = configuration ? configuration->customVideoQueue : nullptr;
+
   // Setup for WinWUP...
 
 #ifdef CPPWINRT_VERSION
 
   {
     // Setup if WinUWP CppWinRT is defined...
-    auto nativeCppWinrt = UseEventQueue::toNative_winrt(queue);
+    auto nativeCppWinrt = UseEventQueue::toNative_winrtCoreDispatcher(queue);
     if ((nativeCppWinrt) && (!didSetupZsLib_.test_and_set())) {
       UseHelper::setup(nativeCppWinrt);
     }
@@ -196,18 +199,18 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
 
   // scope: setup audio frame processing queue
   {
-     auto nativeCaptureQueue = EventQueue::toNative(audioCaptureFrameProcessingQueue);
-     auto nativeRenderQueue = EventQueue::toNative(audioRenderFrameProcessingQueue);
-     // use the native queue if available otherwise use delegate queue
-     audioCaptureFrameProcessingQueue_ = nativeCaptureQueue ? nativeCaptureQueue : actual_delegateQueue();
-     audioRenderFrameProcessingQueue_ = nativeRenderQueue ? nativeRenderQueue : actual_delegateQueue();
-  }
+    auto nativeVideoFrameProcessingQueue = EventQueue::toNative(videoFrameProcessingQueue);
+    auto nativeCaptureQueue = EventQueue::toNative(audioCaptureFrameProcessingQueue);
+    auto nativeRenderQueue = EventQueue::toNative(audioRenderFrameProcessingQueue);
+    auto nativeCustomAudioQueue = EventQueue::toNative(customAudioQueue);
+    auto nativeCustomVideoQueue = EventQueue::toNative(customVideoQueue);
 
-  // scope: setup audio frame processing queue
-  {
-    auto nativeQueue = EventQueue::toNative(videoFrameProcessingQueue);
     // use the native queue if available otherwise use delegate queue
-    videoFrameProcessingQueue_ = nativeQueue ? nativeQueue : actual_delegateQueue();
+    audioCaptureFrameProcessingQueue_ = nativeCaptureQueue ? nativeCaptureQueue : actual_delegateQueue();
+    videoFrameProcessingQueue_ = nativeVideoFrameProcessingQueue ? nativeVideoFrameProcessingQueue : actual_delegateQueue();
+    audioRenderFrameProcessingQueue_ = nativeRenderQueue ? nativeRenderQueue : actual_delegateQueue();
+    customAudioQueue_ = nativeCustomAudioQueue ? nativeCustomAudioQueue : actual_delegateQueue();
+    customVideoQueue_ = nativeCustomVideoQueue ? nativeCustomVideoQueue : actual_delegateQueue();
   }
 
   rtc::tracing::SetupInternalTracer();
@@ -365,6 +368,20 @@ zsLib::IMessageQueuePtr WrapperImplType::actual_videoFrameProcessingQueue() noex
 }
 
 //------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::actual_customAudioQueue() noexcept
+{
+  ::zsLib::AutoLock lock(lock_);
+  return customAudioQueue_;
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::actual_customVideoQueue() noexcept
+{
+  ::zsLib::AutoLock lock(lock_);
+  return customVideoQueue_;
+}
+
+//------------------------------------------------------------------------------
 void WrapperImplType::notifySingletonCleanup() noexcept
 {
   // prevent clean-up twice
@@ -435,6 +452,18 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
         return actual_delegateQueue();
       }
 
+      //-----------------------------------------------------------------------
+      zsLib::IMessageQueuePtr actual_customAudioQueue() noexcept final
+      {
+        return actual_delegateQueue();
+      }
+
+      //-----------------------------------------------------------------------
+      zsLib::IMessageQueuePtr actual_customVideoQueue() noexcept final
+      {
+        return actual_delegateQueue();
+      }
+
       void notifySingletonCleanup() noexcept final {}
     };
     return make_shared<BogusSingleton>();
@@ -475,4 +504,18 @@ zsLib::IMessageQueuePtr WrapperImplType::videoFrameProcessingQueue() noexcept
 {
   auto singleton = WrapperImplType::singleton();
   return singleton->actual_videoFrameProcessingQueue();
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::customAudioQueue() noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  return singleton->actual_customAudioQueue();
+}
+
+//------------------------------------------------------------------------------
+zsLib::IMessageQueuePtr WrapperImplType::customVideoQueue() noexcept
+{
+  auto singleton = WrapperImplType::singleton();
+  return singleton->actual_customVideoQueue();
 }

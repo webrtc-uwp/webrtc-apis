@@ -36,109 +36,6 @@ struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novta
   virtual HRESULT __stdcall GetBuffer(uint8_t** value, uint32_t* capacity) = 0;
 };
 
-struct AudioDataVectorView : implements<
-  AudioDataVectorView,
-  Windows::Foundation::Collections::IVectorView<int16_t>,
-  Windows::Foundation::Collections::IIterable<int16_t>>,
-  winrt::vector_view_base<AudioDataVectorView, int16_t>
-{
-  AudioDataVectorView(
-    const int16_t * const data,
-    size_t size
-    ) : container_(data, size)
-  {}
-
-  auto& get_container() const noexcept
-  {
-    return container_;
-  }
-
-  auto& get_container() noexcept
-  {
-    return container_;
-  }
-
-private:
-
-  struct Container
-  {
-    Container(
-      const int16_t * const data,
-      size_t size) :
-      first_(data),
-      last_(data + size)
-    {}
-
-    int16_t const* const first_;
-    int16_t const* const last_;
-
-    auto begin() const noexcept
-    {
-      return first_;
-    }
-
-    auto end() const noexcept
-    {
-      return last_;
-    }
-  };
-
-  Container container_;
-};
-
-#if 0
-struct AudioDataVector : implements<
-  AudioDataVector,
-  Windows::Foundation::Collections::IVector<int16_t>,
-  Windows::Foundation::Collections::IVectorView<int16_t>,
-  Windows::Foundation::Collections::IIterable<int16_t>>,
-  winrt::vector_base<AudioDataVector, int16_t>
-{
-  AudioDataVector(
-    int16_t * const data,
-    size_t size
-  ) : container_(data, size)
-  {}
-
-  auto& get_container() const noexcept
-  {
-    return container_;
-  }
-
-  auto& get_container() noexcept
-  {
-    return container_;
-  }
-
-private:
-
-  struct Container
-  {
-    Container(
-      int16_t * const data,
-      size_t size) :
-      first_(data),
-      last_(data + size)
-    {}
-
-    int16_t * const first_;
-    int16_t * const last_;
-
-    auto begin() const noexcept
-    {
-      return first_;
-    }
-
-    auto end() const noexcept
-    {
-      return last_;
-    }
-  };
-
-  Container container_;
-};
-#endif //0
-
 //------------------------------------------------------------------------------
 winrt::com_ptr< Org::WebRtc::implementation::AudioData > Org::WebRtc::implementation::AudioData::ToCppWinrtImpl(wrapper::org::webRtc::AudioDataPtr value)
 {
@@ -268,6 +165,14 @@ Org::WebRtc::implementation::AudioData::AudioData()
 {
   if (!native_) {throw hresult_error(E_POINTER);}
   native_->wrapper_init_org_webRtc_AudioData();
+}
+
+//------------------------------------------------------------------------------
+Org::WebRtc::implementation::AudioData::AudioData(uint64_t Size)
+  : native_(wrapper::org::webRtc::AudioData::wrapper_create())
+{
+  if (!native_) { throw hresult_error(E_POINTER); }
+  native_->wrapper_init_org_webRtc_AudioData(SafeInt<size_t>(Size));
 }
 
 //------------------------------------------------------------------------------

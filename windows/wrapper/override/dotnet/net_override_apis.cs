@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 
 using bool_t = System.Boolean;
+using uint64_t = System.UInt64;
 using binary_t = System.IntPtr;
 using string_t = System.IntPtr;
 using raw_pointer_t = System.IntPtr;
@@ -226,6 +227,9 @@ namespace Wrapper
             public extern static void org_webRtc_VideoData_wrapperDispose(org_webRtc_VideoData_t handle);
 
             [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
+            public extern static org_webRtc_VideoData_t org_webRtc_VideoData_wrapperCreate_VideoData(uint64_t size);
+
+            [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
             public extern static instance_id_t org_webRtc_VideoData_wrapperInstanceId(org_webRtc_VideoData_t handle);
 
             [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
@@ -251,6 +255,18 @@ namespace Wrapper
                 [Out] System.UInt16[] buffer,
                 binary_size_t size);
 
+
+            [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
+            public extern static void org_webRtc_VideoData_set_data8bit(
+                org_webRtc_VideoData_t thisHandle,
+                byte[] buffer,
+                binary_size_t size);
+
+            [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
+            public extern static void org_webRtc_VideoData_set_data16bit(
+                org_webRtc_VideoData_t thisHandle,
+                System.UInt16[] buffer,
+                binary_size_t size);
 
             #endregion // Org.WebRtc.VideoData
 

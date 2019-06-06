@@ -17,6 +17,8 @@
 #include "impl_org_webRtc_WebrtcLib.h"
 #include "impl_org_webRtc_enums.h"
 #include "impl_org_webRtc_VideoCapturerInputSize.h"
+#include "impl_org_webRtc_VideoCapturerCreationParameters.h"
+#include "impl_org_webRtc_WebrtcFactory.h"
 #include "impl_webrtc_VideoCapturer.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -55,6 +57,7 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCError, UseError);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoDeviceInfo, UseVideoDeviceInfo);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFormat, UseVideoFormat);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, UseFactory);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturerInputSize, UseVideoCapturerInputSize);
 

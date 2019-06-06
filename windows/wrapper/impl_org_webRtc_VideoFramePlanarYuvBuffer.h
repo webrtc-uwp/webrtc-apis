@@ -25,7 +25,8 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::PlanarYuvBuffer, NativePlanarYuvBufferType);
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::PlanarYuv8Buffer, NativePlanarYuv8BufferType);
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::PlanarYuv16BBuffer, NativePlanarYuv16BufferType);
-          
+          ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBuffer, UseVideoFrameBuffer);
+
           typedef rtc::scoped_refptr<NativeType> NativeTypeScopedRefPtr;
           typedef rtc::scoped_refptr<NativeI420Type> NativeI420TypeScopedRefPtr;
           typedef rtc::scoped_refptr<NativeI420AType> NativeI420ATypeScopedRefPtr;
@@ -50,6 +51,11 @@ namespace wrapper {
 
           // methods VideoFrameBuffer
           wrapper::org::webRtc::VideoFramePlanarYuvBufferPtr toI420() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toARGB() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toBGRA() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toABGR() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toRGBA() noexcept override;
+          wrapper::org::webRtc::VideoDataPtr toRGB24() noexcept override;
 
           // properties VideoFrameBuffer
           wrapper::org::webRtc::VideoFrameBufferType get_type() noexcept override;

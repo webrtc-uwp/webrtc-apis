@@ -50,6 +50,8 @@
         "AudioBuffers.idl",
         "VideoBuffers.idl",
         "WebRtcFactory.idl",
+        "CustomAudioDevice.idl",
+        "CustomVideoCapturer.idl"
       ]
     }
   }
