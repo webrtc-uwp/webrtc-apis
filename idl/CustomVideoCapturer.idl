@@ -81,9 +81,7 @@ namespace org
       void notifyFrame(
         VideoFrameBuffer frame,
         int64 timestamp,
-        VideoRotation rotation,
-        int origWidth,
-        int origHeight
+        VideoRotation rotation
         );
 
       [event]

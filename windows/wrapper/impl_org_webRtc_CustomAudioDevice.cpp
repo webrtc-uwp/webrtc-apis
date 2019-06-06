@@ -15,6 +15,7 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include "modules/audio_device/audio_device_buffer.h"
+#include "api/task_queue/global_task_queue_factory.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/SafeInt.h>
@@ -1187,7 +1188,7 @@ void WrapperImplType::resetBuffer() noexcept
 {
   buffer_.reset();
 
-  buffer_ = std::make_unique<NativeAudioDeviceBuffer>();
+  buffer_ = std::make_unique<NativeAudioDeviceBuffer>(&(::webrtc::GlobalTaskQueueFactory()));
   if (audioCallback_) {
     buffer_->RegisterAudioCallback(audioCallback_);
   }

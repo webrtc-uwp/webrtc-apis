@@ -5,8 +5,7 @@
 #include "generated/org_webRtc_CustomVideoCapturer.h"
 
 #include "impl_org_webRtc_pre_include.h"
-#include <media/base/videocapturerfactory.h>
-#include <media/base/videocapturer.h>
+#include <media/base/adapted_video_track_source.h>
 #include "impl_org_webRtc_post_include.h"
 
 
@@ -21,11 +20,11 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::CustomVideoCapturer, WrapperImplType);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFormat, UseVideoFormat);
 
-          ZS_DECLARE_TYPEDEF_PTR(::cricket::VideoCapturer, UseVideoCapturer);
+          ZS_DECLARE_TYPEDEF_PTR(::rtc::AdaptedVideoTrackSource, UseAdaptedVideoTrackSource);
 
           ZS_DECLARE_CLASS_PTR(Proxy);
 
-          class Proxy : public ::cricket::VideoCapturer
+          class Proxy : public ::rtc::AdaptedVideoTrackSource
           {
           public:
             WrapperImplTypePtr wrapper_;
@@ -33,24 +32,22 @@ namespace wrapper {
             Proxy(WrapperImplTypePtr wrapper) : wrapper_(wrapper) {}
             ~Proxy() noexcept { wrapper_->destroyProxyReference(); }
 
-            ::cricket::CaptureState Start(const ::cricket::VideoFormat& capture_format) override { return wrapper_->Start(capture_format); }
-            void Stop() override { return wrapper_->Stop(); }
-            bool IsRunning() override { return wrapper_->IsRunning(); }
-            bool IsScreencast() const override { return wrapper_->IsScreencast(); }
-            bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) override { return wrapper_->GetPreferredFourccs(fourccs); }
+            bool Start(const ::cricket::VideoFormat& capture_format) { return wrapper_->Start(capture_format); }
+            void Stop() { return wrapper_->Stop(); }
+            bool IsRunning() { return wrapper_->IsRunning(); }
+            bool IsScreencast() const { return wrapper_->IsScreencast(); }
+            bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) { return wrapper_->GetPreferredFourccs(fourccs); }
 
-            void notifyOnFrame(const webrtc::VideoFrame& frame,
-              int orig_width,
-              int orig_height)
+            void notifyOnFrame(const webrtc::VideoFrame& frame)
             {
-              OnFrame(frame, orig_width, orig_height);
+              OnFrame(frame);
             }
           };
 
           ::zsLib::IMessageQueuePtr queue_;
           mutable zsLib::RecursiveLock lock_;
           CustomVideoCapturerWeakPtr thisWeak_;
-          wrapper::org::webRtc::VideoCaptureState state_ {};
+          wrapper::org::webRtc::MediaSourceState state_ {};
           CustomVideoCapturerParametersPtr params_ {};
 
           mutable zsLib::RecursiveLock ProxyReferencelock_;
@@ -65,10 +62,8 @@ namespace wrapper {
           void notifyFrame(
             wrapper::org::webRtc::VideoFrameBufferPtr frame,
             int64_t timestamp,
-            wrapper::org::webRtc::VideoRotation rotation,
-            int origWidth,
-            int origHeight
-          ) noexcept override;
+            wrapper::org::webRtc::VideoRotation rotation
+            ) noexcept override;
 
           // properties CustomVideoCapturer
           wrapper::org::webRtc::MediaSourceState get_currentState() noexcept override;
@@ -77,7 +72,7 @@ namespace wrapper {
           void wrapper_onObserverCountChanged(size_t count) noexcept override;
 
           // ::cricket::VideoCapturer
-          ::cricket::CaptureState Start(const ::cricket::VideoFormat& capture_format);
+          bool Start(const ::cricket::VideoFormat& capture_format);
           void Stop();
           bool IsRunning();
           bool IsScreencast() const;
@@ -87,8 +82,8 @@ namespace wrapper {
 
           ZS_NO_DISCARD() static WrapperImplTypePtr create() noexcept;
 
-          ZS_NO_DISCARD() static std::unique_ptr<UseVideoCapturer> toNative(WrapperType *wrapperType) noexcept;
-          ZS_NO_DISCARD() static std::unique_ptr<UseVideoCapturer> toNative(WrapperTypePtr wrapperType) noexcept;
+          ZS_NO_DISCARD() static std::unique_ptr<UseAdaptedVideoTrackSource> toNative(WrapperType *wrapperType) noexcept;
+          ZS_NO_DISCARD() static std::unique_ptr<UseAdaptedVideoTrackSource> toNative(WrapperTypePtr wrapperType) noexcept;
         };
 
       } // webRtc

@@ -70,9 +70,7 @@ wrapper::org::webRtc::CustomVideoCapturerPtr wrapper::org::webRtc::CustomVideoCa
 void wrapper::impl::org::webRtc::CustomVideoCapturer::notifyFrame(
   wrapper::org::webRtc::VideoFrameBufferPtr frame,
   int64_t timestamp,
-  wrapper::org::webRtc::VideoRotation rotation,
-  int origWidth,
-  int origHeight
+  wrapper::org::webRtc::VideoRotation rotation
 ) noexcept
 {
   if (!frame)
@@ -88,18 +86,18 @@ void wrapper::impl::org::webRtc::CustomVideoCapturer::notifyFrame(
   AutoRecursiveLock lock(ProxyReferencelock_);
   if (!proxyReference_)
     return;
-  proxyReference_->notifyOnFrame(builder.build(), origWidth, origHeight);
+  proxyReference_->notifyOnFrame(builder.build());
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoCaptureState wrapper::impl::org::webRtc::CustomVideoCapturer::get_currentState() noexcept
+wrapper::org::webRtc::MediaSourceState wrapper::impl::org::webRtc::CustomVideoCapturer::get_currentState() noexcept
 {
   AutoRecursiveLock lock(lock_);
   return state_;
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::CustomVideoCapturer::set_currentState(wrapper::org::webRtc::VideoCaptureState value) noexcept
+void wrapper::impl::org::webRtc::CustomVideoCapturer::set_currentState(wrapper::org::webRtc::MediaSourceState value) noexcept
 {
   AutoRecursiveLock lock(lock_);
   state_ = value;
@@ -112,28 +110,19 @@ void wrapper::impl::org::webRtc::CustomVideoCapturer::wrapper_onObserverCountCha
 }
 
 //------------------------------------------------------------------------------
-::cricket::CaptureState WrapperImplType::Start(const ::cricket::VideoFormat& capture_format)
+bool WrapperImplType::Start(const ::cricket::VideoFormat& capture_format)
 {
-  ::cricket::CaptureState result {::cricket::CaptureState::CS_STARTING};
-
   {
     AutoRecursiveLock lock(lock_);
 
     auto event = CustomVideoCapturerStartEvent::toWrapper(capture_format);
     auto pThis = thisWeak_.lock();
 
-    switch (state_) {
-      case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed:   result = ::cricket::CaptureState::CS_FAILED; break;
-      case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_starting: result = ::cricket::CaptureState::CS_STARTING; break;
-      case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_running:  result = ::cricket::CaptureState::CS_RUNNING; break;
-      case wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_stopped:  result = ::cricket::CaptureState::CS_STARTING; break;
-    }
-
     queue_->postClosure([event, pThis]() {
       pThis->onStart(event);
     });
   }
-  return result;
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +139,7 @@ void WrapperImplType::Stop()
 bool WrapperImplType::IsRunning()
 {
   AutoRecursiveLock lock(lock_);
-  return (wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_running == state_);
+  return (wrapper::org::webRtc::MediaSourceState::MediaSourceState_live == state_);
 }
 
 //------------------------------------------------------------------------------
@@ -198,7 +187,7 @@ WrapperImplTypePtr WrapperImplType::create() noexcept
 }
 
 //------------------------------------------------------------------------------
-std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(WrapperType *wrapperType) noexcept
+std::unique_ptr<WrapperImplType::UseAdaptedVideoTrackSource> WrapperImplType::toNative(WrapperType *wrapperType) noexcept
 {
   if (!wrapperType)
     return {};
@@ -218,7 +207,7 @@ std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(Wra
 }
 
 //------------------------------------------------------------------------------
-std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::toNative(WrapperTypePtr wrapperType) noexcept
+std::unique_ptr<WrapperImplType::UseAdaptedVideoTrackSource> WrapperImplType::toNative(WrapperTypePtr wrapperType) noexcept
 {
   if (!wrapperType)
     return {};

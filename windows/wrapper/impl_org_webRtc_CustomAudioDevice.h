@@ -6,7 +6,7 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include "modules/audio_device/include/audio_device.h"
-#include "rtc_base/refcountedobject.h"
+#include "rtc_base/ref_counted_object.h"
 #include "impl_org_webRtc_post_include.h"
 
 namespace wrapper {

@@ -19,6 +19,7 @@ namespace cricket
 // forward for webrtc can go here
 namespace rtc
 {
+  class AdaptedVideoTrackSource;
   class Thread;
   class RTCCertificate;
   class IntervalRange;
