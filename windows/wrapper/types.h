@@ -110,6 +110,7 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(RTCVideoReceiverStats);
         ZS_DECLARE_STRUCT_PTR(RTCVideoSenderStats);
         ZS_DECLARE_STRUCT_PTR(VideoCapturer);
+        ZS_DECLARE_STRUCT_PTR(VideoCapturerCreationParameters);
         ZS_DECLARE_STRUCT_PTR(VideoCapturerInputSize);
         ZS_DECLARE_STRUCT_PTR(VideoData);
         ZS_DECLARE_STRUCT_PTR(VideoDeviceInfo);
@@ -119,9 +120,6 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(VideoFrameNativeBuffer);
         ZS_DECLARE_STRUCT_PTR(VideoFramePlanarYuvBuffer);
         ZS_DECLARE_STRUCT_PTR(VideoFramePlanarYuvaBuffer);
-        ZS_DECLARE_STRUCT_PTR(VideoOptions);
-        ZS_DECLARE_STRUCT_PTR(VideoTrackSource);
-        ZS_DECLARE_STRUCT_PTR(VideoTrackSourceStats);
         ZS_DECLARE_STRUCT_PTR(WebRtcFactory);
         ZS_DECLARE_STRUCT_PTR(WebRtcFactoryConfiguration);
         ZS_DECLARE_STRUCT_PTR(WebRtcLib);

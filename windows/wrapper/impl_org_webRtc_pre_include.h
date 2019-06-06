@@ -88,4 +88,7 @@ namespace webrtc
   class RTCStats;
   class RTCStatsReport;
   class RTCStatsCollectorCallback;
+
+  struct Device;
+  class VideoDeviceCapturerFactory;
 }

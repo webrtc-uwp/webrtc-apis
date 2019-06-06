@@ -49,6 +49,7 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::WrapperType, W
 // borrow definitions from class
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::NativeType, NativeType);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer::NativeTypeScopedRefPtr, NativeTypeScopedRefPtr);
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::RTCError, UseError);
@@ -92,22 +93,46 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::create(
-  String name,
-  String id,
-  bool enableMrc
-  ) noexcept
+wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::create(wrapper::org::webRtc::VideoCapturerCreationParametersPtr params) noexcept
 {
-  webrtc::IVideoCapturer::CreationProperties props;
-  props.name_ = name.c_str();
-  props.id_ = id.c_str();
-  props.mrcEnabled_ = enableMrc;
-  auto native = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
-  if (!native) return WrapperTypePtr();
+  String name;
+  String id;
+  bool enableMrc {false};
+
+  UseFactoryPtr factory = UseFactory::toWrapper(params->factory);
+
+  if (params) {
+    name = params->name;
+    id = params->id;
+    enableMrc = params->enableMrc;
+  }
+
+  std::unique_ptr<::cricket::VideoCapturer> capturer;
+
+  if (factory) {
+    auto capturerFactory = factory->videoDeviceCaptureFactory();
+    if (capturerFactory) {
+      ::cricket::Device device;
+      device.name = name;
+      device.id = id;
+      capturer = capturerFactory->Create(device);
+      if (!capturer)
+        return {};
+    }
+  }
+
+  if (!capturer) {
+    webrtc::IVideoCapturer::CreationProperties props;
+    props.name_ = name.c_str();
+    props.id_ = id.c_str();
+    props.mrcEnabled_ = enableMrc;
+    capturer = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
+    if (!capturer) return {};
+  }
 
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->native_ = std::move(native);
+  result->native_ = std::move(capturer);
   result->setupObserver();
   return result;
 }
@@ -407,21 +432,21 @@ void WrapperImplType::onWebrtcObserverVideoFrameReceived(UseVideoFrameBufferEven
 }
 
 //------------------------------------------------------------------------------
-WrapperImplTypePtr WrapperImplType::toWrapper(NativeTypeUniPtr native) noexcept
+WrapperImplTypePtr WrapperImplType::toWrapper(NativeType *native) noexcept
 {
   if (!native) return WrapperImplTypePtr();
 
   auto result = make_shared<WrapperImplType>();
   result->thisWeak_ = result;
-  result->native_ = std::move(native);
+  result->native_ = NativeTypeScopedRefPtr(native);
   return result;
 }
 
 //------------------------------------------------------------------------------
-NativeTypeUniPtr WrapperImplType::toNative(WrapperTypePtr wrapper) noexcept
+NativeTypeScopedRefPtr WrapperImplType::toNative(WrapperTypePtr wrapper) noexcept
 {
-  if (!wrapper) return NativeTypeUniPtr();
+  if (!wrapper) return {};
   auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
-  if (!converted) return NativeTypeUniPtr();
-  return NativeTypeUniPtr(std::move(converted->native_));
+  if (!converted) return {};
+  return converted->native_;
 }

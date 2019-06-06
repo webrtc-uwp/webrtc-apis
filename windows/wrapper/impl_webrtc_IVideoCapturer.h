@@ -52,6 +52,23 @@ namespace webrtc
   ZS_DECLARE_CLASS_PTR(VideoCapturer);
   ZS_DECLARE_INTERACTION_PROXY_SUBSCRIPTION(IVideoCapturerSubscription, IVideoCapturerDelegate);
 
+  // Used to represent an audio or video capture or render device.
+  struct Device {
+    Device() {}
+    Device(const std::string& name, int id) : name(name), id(rtc::ToString(id)) {}
+    Device(const std::string& name, const std::string& id) : name(name), id(id) {}
+
+    std::string name;
+    std::string id;
+  };
+
+  class VideoDeviceCapturerFactory {
+  public:
+    VideoDeviceCapturerFactory() {}
+    virtual ~VideoDeviceCapturerFactory() {}
+
+    virtual std::unique_ptr<VideoCapturer> Create(const Device& device) = 0;
+  };
 
   interaction IVideoCapturer
   {

@@ -196,6 +196,7 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_dispose() noexcept
 
   // reset the factory (cannot be used anymore)...
   peerConnectionFactory_ = PeerConnectionFactoryInterfaceScopedPtr();
+  videoDeviceCaptureFactory_.reset();
 
 #pragma ZS_BUILD_NOTE("TODO","(mosa) shutdown threads need something more?")
 
@@ -265,6 +266,14 @@ PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noex
   setup();
   auto realInterface = unproxy(peerConnectionFactory_);
   return dynamic_cast<NativePeerConnectionFactory *>(realInterface);
+}
+
+//------------------------------------------------------------------------------
+UseVideoDeviceCaptureFacrtoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
+{
+  zsLib::AutoRecursiveLock lock(lock_);
+  setup();
+  return videoDeviceCaptureFactory_;
 }
 
 //------------------------------------------------------------------------------

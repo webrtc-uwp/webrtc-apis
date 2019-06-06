@@ -25,6 +25,8 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::MediaSample, UseMediaSample);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
 
+          typedef rtc::scoped_refptr<NativeType> NativeTypeScopedRefPtr;
+
 #ifdef CPPWINRT_VERSION
           ZS_DECLARE_TYPEDEF_PTR(webrtc::IVideoCapturer, UseVideoCapturer);
 #endif // CPPWINRT_VERSION
@@ -57,7 +59,7 @@ namespace wrapper {
           WebrtcVideoObserverPtr videoObserver_;
 
           std::atomic_bool stopCalled_{};
-          NativeTypeUniPtr native_;
+          NativeTypeScopedRefPtr native_;
           VideoCapturerWeakPtr thisWeak_;
 
           zsLib::Lock lock_;
@@ -70,10 +72,16 @@ namespace wrapper {
 
 
           // methods VideoCapturer
-
           // properties VideoCapturer
+          bool get_enableCameraList() noexcept override;
+          void set_enableCameraList(bool value) noexcept override;
+          bool get_enableVideoAdapter() noexcept override;
+          void set_enableVideoAdapter(bool value) noexcept override;
+          bool get_isRunning() noexcept override;
           bool get_applyRotation() noexcept override;
           bool get_isScreencast() noexcept override;
+          Optional< bool > get_needsDenoising() noexcept override;
+          wrapper::org::webRtc::VideoCapturerInputSizePtr get_inputSize() noexcept override;
           wrapper::org::webRtc::MediaSourceState get_state() noexcept override;
 
           virtual void wrapper_onObserverCountChanged(size_t count) noexcept override;
@@ -84,8 +92,8 @@ namespace wrapper {
           // WebrtcObserver methods
           void onWebrtcObserverVideoFrameReceived(UseVideoFrameBufferEventPtr event) noexcept;
 
-          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeTypeUniPtr native) noexcept;
-          ZS_NO_DISCARD() static NativeTypeUniPtr toNative(WrapperTypePtr wrapper) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(NativeType *native) noexcept;
+          ZS_NO_DISCARD() static NativeTypeScopedRefPtr toNative(WrapperTypePtr wrapper) noexcept;
         };
 
       } // webRtc

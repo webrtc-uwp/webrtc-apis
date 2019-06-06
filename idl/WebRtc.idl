@@ -89,13 +89,13 @@ namespace org
     interface RTCDataChannel;
     interface RTCDataChannelEvent;
     interface RTCSessionDescription;
-    interface MediaConstraints;
     interface RTCIceCandidate;
     interface RTCCertificate;
     interface RTCKeyParams;
     interface VideoCapturer;
     interface VideoData;
     interface WebRtcFactory;
+    interface VideoCapturer;
     interface VideoFrameBuffer;
     interface VideoFrameBufferEvent;
     interface VideoFramePlanarYuvBuffer;

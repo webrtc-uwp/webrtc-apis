@@ -44,7 +44,6 @@ namespace org
       zs::Any info;
     };
     typedef std::list<VideoDeviceInfo> VideoDeviceInfoList;
-    typedef zs::PromiseWith<VideoDeviceInfoList> PromiseWithVideoDeviceInfoList;
 
     struct VideoFormat
     {
@@ -93,6 +92,16 @@ namespace org
       int height;
     };
 
+    [dictionary]
+    struct VideoCapturerCreationParameters
+    {
+      WebRtcFactory factory;
+      string name;
+      string id;
+      bool enableMrc;
+      VideoFormat format;
+    };
+
     [disposable]
     interface VideoCapturer
     {
@@ -100,10 +109,24 @@ namespace org
       void VideoCapturer();
 
       [static]
-      VideoCapturer create(string name, string id, bool enableMrc);
+      VideoCapturer create(VideoCapturerCreationParameters params);
 
-      [static]
-      PromiseWithVideoDeviceInfoList getDevices();
+      [getter,setter]
+      bool enableCameraList;
+
+      /// <summary>
+      /// If true, run video adaptation. By default, video adaptation is enabled
+      /// and users must call video_adapter()->OnOutputFormatRequest()
+      /// to receive frames.
+      /// </summary>
+      [getter,setter]
+      bool enableVideoAdapter;
+
+      /// <summary>
+      /// Check if the video capturer is running.
+      /// </summary>
+      [getter]
+      bool isRunning;
 
       [getter]
       bool applyRotation;
@@ -114,6 +137,12 @@ namespace org
       /// </summary>
       [getter]
       bool isScreencast;
+
+      [getter, optional]
+      bool needsDenoising;
+
+      [getter]
+      VideoCapturerInputSize inputSize;
 
       [getter]
       MediaSourceState state;

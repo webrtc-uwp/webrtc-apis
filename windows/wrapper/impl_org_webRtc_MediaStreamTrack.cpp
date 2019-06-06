@@ -11,7 +11,7 @@
 #include "impl_org_webRtc_MediaElement.h"
 #include "impl_org_webRtc_MediaSource.h"
 #include "impl_org_webRtc_AudioTrackSource.h"
-#include "impl_org_webRtc_VideoTrackSource.h"
+#include "impl_org_webRtc_VideoCapturer.h"
 #include "impl_org_webRtc_WebRtcLib.h"
 #include "impl_org_webRtc_WebRtcFactory.h"
 #include "impl_org_webRtc_VideoFrameBuffer.h"
@@ -57,7 +57,7 @@ typedef wrapper::impl::org::webRtc::WrapperMapper<NativeType, WrapperImplType> U
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioTrackSource, UseAudioTrackSource);
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoTrackSource, UseVideoTrackSource);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer, UseVideoCapturer);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBuffer, UseVideoFrameBuffer);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::IEnum, UseEnum);
@@ -162,27 +162,17 @@ wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack::createVideoTrack(
   String label,
-  wrapper::org::webRtc::VideoTrackSourcePtr source
+  wrapper::org::webRtc::VideoCapturerPtr source
   ) noexcept
 {
   ZS_ASSERT(source);
   if (!source) return WrapperTypePtr();
 
-  auto sourceImpl = UseVideoTrackSource::toWrapper(source);
+  auto sourceImpl = UseVideoCapturer::toWrapper(source);
   ZS_ASSERT(sourceImpl);
   if (!sourceImpl) return WrapperTypePtr();
 
-  auto factoryImpl = sourceImpl->factory();
-  ZS_ASSERT(factoryImpl);
-  if (!factoryImpl) return WrapperTypePtr();
-
-  auto factory = factoryImpl->peerConnectionFactory();
-  ZS_ASSERT(factory);
-  if (!factory) return WrapperTypePtr();
-
-  auto nativeSource = UseVideoTrackSource::toNative(source);
-
-  auto native = factory->CreateVideoTrack(label, nativeSource);
+  auto native = factory->CreateVideoTrack(label, sourceImpl);
 
   return WrapperImplType::toWrapper(native);
 }
