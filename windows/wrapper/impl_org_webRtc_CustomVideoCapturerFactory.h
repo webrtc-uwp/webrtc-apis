@@ -5,6 +5,7 @@
 #include "generated/org_webRtc_CustomVideoCapturerFactory.h"
 
 #include "impl_org_webRtc_pre_include.h"
+#include "api/scoped_refptr.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include "impl_webrtc_IVideoCapturer.h"
@@ -31,7 +32,7 @@ namespace wrapper {
 
           void wrapper_onObserverCountChanged(size_t count) noexcept override;
 
-          std::unique_ptr<UseAdaptedVideoTrackSource> Create(const ::webrtc::Device& device) override;
+          rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> Create(const ::webrtc::Device& device) override;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr create() noexcept;
 

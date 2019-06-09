@@ -1,11 +1,13 @@
 
 #include "impl_org_webRtc_CustomVideoCapturer.h"
 #include "impl_org_webRtc_CustomVideoCapturerParameters.h"
-#include "impl_org_webRtc_CustomVideoCapturerStartEvent.h"
+#include "impl_org_webRtc_VideoCapturerInputSize.h"
 #include "impl_org_webRtc_VideoFormat.h"
 #include "impl_org_webRtc_VideoFrameBuffer.h"
 #include "impl_org_webRtc_WebRtcLib.h"
 #include "impl_org_webRtc_enums.h"
+
+#include <zsLib/SafeInt.h>
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -104,46 +106,22 @@ void wrapper::impl::org::webRtc::CustomVideoCapturer::set_currentState(wrapper::
 }
 
 //------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::CustomVideoCapturer::wrapper_onObserverCountChanged(size_t count) noexcept
-{
-  ZS_MAYBE_USED(count);
-}
-
-//------------------------------------------------------------------------------
-bool WrapperImplType::Start(const ::cricket::VideoFormat& capture_format)
-{
-  {
-    AutoRecursiveLock lock(lock_);
-
-    auto event = CustomVideoCapturerStartEvent::toWrapper(capture_format);
-    auto pThis = thisWeak_.lock();
-
-    queue_->postClosure([event, pThis]() {
-      pThis->onStart(event);
-    });
-  }
-  return true;
-}
-
-//------------------------------------------------------------------------------
-void WrapperImplType::Stop()
-{
-  auto pThis = thisWeak_.lock();
-
-  queue_->postClosure([pThis]() {
-    pThis->onStop();
-  });
-}
-
-//------------------------------------------------------------------------------
-bool WrapperImplType::IsRunning()
+webrtc::MediaSourceInterface::SourceState WrapperImplType::state() const noexcept
 {
   AutoRecursiveLock lock(lock_);
-  return (wrapper::org::webRtc::MediaSourceState::MediaSourceState_live == state_);
+  return UseEnum::toNative(state_);
 }
 
 //------------------------------------------------------------------------------
-bool WrapperImplType::IsScreencast() const
+bool WrapperImplType::remote() const noexcept
+{
+  if (!params_)
+    return false;
+  return params_->isRemote;
+}
+
+//------------------------------------------------------------------------------
+bool WrapperImplType::is_screencast() const noexcept
 {
   if (!params_)
     return {};
@@ -151,23 +129,30 @@ bool WrapperImplType::IsScreencast() const
 }
 
 //------------------------------------------------------------------------------
-bool WrapperImplType::GetPreferredFourccs(std::vector<uint32_t>* fourccs)
+absl::optional<bool> WrapperImplType::needs_denoising() const noexcept
 {
-  if (!fourccs)
-    return false;
-
   if (!params_)
-    return false;
+    return {};
+  if (!params_->needsDenoising.has_value())
+    return {};
 
-  if (!params_->supportedFormats)
-    return false;
+  return params_->needsDenoising.value();
+}
 
-  for (auto iter = params_->supportedFormats->begin(); iter != params_->supportedFormats->end(); ++iter) {
-    auto &value = (*iter);
-    if (!value)
-      continue;
-    (*fourccs).push_back(value->get_fourcc());
-  }
+//------------------------------------------------------------------------------
+bool WrapperImplType::GetStats(webrtc::VideoTrackSourceInterface::Stats* stats) noexcept
+{
+  if (!params_)
+    return {};
+
+  if (!stats)
+    return {};
+
+  if (!params_->inputSize)
+    return {};
+
+  stats->input_height = SafeInt<decltype(stats->input_height)>(params_->inputSize->height);
+  stats->input_width = SafeInt<decltype(stats->input_width)>(params_->inputSize->width);
   return true;
 }
 
@@ -187,7 +172,7 @@ WrapperImplTypePtr WrapperImplType::create() noexcept
 }
 
 //------------------------------------------------------------------------------
-std::unique_ptr<WrapperImplType::UseAdaptedVideoTrackSource> WrapperImplType::toNative(WrapperType *wrapperType) noexcept
+WrapperImplType::UseAdaptedVideoTrackSourceScopedPtr WrapperImplType::toNative(WrapperType *wrapperType) noexcept
 {
   if (!wrapperType)
     return {};
@@ -196,18 +181,19 @@ std::unique_ptr<WrapperImplType::UseAdaptedVideoTrackSource> WrapperImplType::to
   if (!converted)
     return {};
 
-  auto result = std::make_unique<Proxy>(converted->thisWeak_.lock());
+  auto proxy = new Proxy(converted->thisWeak_.lock());
+  auto result = WrapperImplType::UseAdaptedVideoTrackSourceScopedPtr(proxy);
 
   {
     AutoRecursiveLock lock(converted->ProxyReferencelock_);
-    converted->proxyReference_ = result.get();
+    converted->proxyReference_ = proxy;
   }
 
-  return std::move(result);
+  return result;
 }
 
 //------------------------------------------------------------------------------
-std::unique_ptr<WrapperImplType::UseAdaptedVideoTrackSource> WrapperImplType::toNative(WrapperTypePtr wrapperType) noexcept
+WrapperImplType::UseAdaptedVideoTrackSourceScopedPtr WrapperImplType::toNative(WrapperTypePtr wrapperType) noexcept
 {
   if (!wrapperType)
     return {};

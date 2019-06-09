@@ -37,25 +37,14 @@ namespace org
     [dictionary]
     struct CustomVideoCapturerParameters
     {
-      string id;
+      bool isRemote;
+
       bool isScreencast;
-      VideoFormats supportedFormats;
-    };
 
-    /// <summary>
-    /// This event is called to update the start the video engine.
-    /// <summary>
-    [disposable]
-    interface CustomVideoCapturerStartEvent
-    {
-      [constructor, delete, default]
-      void CustomVideoCapturerStartEvent();
+      [optional]
+      bool needsDenoising;
 
-      /// <summary>
-      /// Gets the format expected for the start of video.
-      /// <summary>
-      [getter]
-      VideoFormat format;
+      VideoCapturerInputSize inputSize;
     };
 
     [disposable]
@@ -83,12 +72,6 @@ namespace org
         int64 timestamp,
         VideoRotation rotation
         );
-
-      [event]
-      void onStart(CustomVideoCapturerStartEvent evt);
-
-      [event]
-      void onStop();
     };
 
     /// <summary>
@@ -111,6 +94,12 @@ namespace org
       /// <summary>
       [getter]
       string deviceName;
+
+      /// <summary>
+      /// Gets the device format to create.
+      /// <summary>
+      [getter]
+      VideoFormat format;
 
       [getter, setter]
       CustomVideoCapturer createdCapturer;

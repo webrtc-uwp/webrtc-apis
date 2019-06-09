@@ -21,6 +21,8 @@ namespace wrapper {
           void wrapper_init_org_webRtc_VideoCapturerInputSize() noexcept override;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(int width, int height) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(WrapperType *wrapper) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(WrapperTypePtr wrapper) noexcept;
         };
 
       } // webRtc

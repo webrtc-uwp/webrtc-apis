@@ -835,9 +835,9 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  VideoCapturerUniPtr VideoCapturer::create(const CreationProperties &info) noexcept
+  rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> VideoCapturer::create(const CreationProperties &info) noexcept
   {
-    auto result = std::make_unique<VideoCapturer>(make_private{});
+    rtc::scoped_refptr<VideoCapturer> result(new VideoCapturer(make_private{}));
     result->init(info);
     return result;
   }
@@ -845,7 +845,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void VideoCapturer::init(const CreationProperties &props) noexcept
   {
-    SetId(String(props.id_));
+    id_ = props.id_;
 
     if (props.delegate_) {
       defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::videoFrameProcessingQueue());
@@ -905,6 +905,10 @@ namespace webrtc
 
     device_->Initialize(device_id_);
 
+#pragma ZS_BUILD_NOTE("TODO","(mosa) fix me")
+    Start(props.format_);
+
+#if 0
     std::vector<VideoFormat> formats;
     auto mediaCapture = device_->GetMediaCapture();
     auto streamProperties =
@@ -923,6 +927,7 @@ namespace webrtc
       formats.push_back(format);
     }
     SetSupportedFormats(formats);
+#endif //0
   }
 
   //-----------------------------------------------------------------------------
@@ -934,16 +939,48 @@ namespace webrtc
     return subscriptions_.subscribe(originalDelegate, UseWebrtcLib::videoFrameProcessingQueue());
   }
 
-  //-----------------------------------------------------------------------------
-  CaptureState VideoCapturer::Start(const VideoFormat& capture_format) {
 
+  //-----------------------------------------------------------------------------
+  absl::optional<bool> VideoCapturer::needs_denoising() const
+  {
+    return {};
+  }
+
+  //-----------------------------------------------------------------------------
+  bool VideoCapturer::is_screencast() const
+  {
+    return false;
+  }
+
+  //-----------------------------------------------------------------------------
+  rtc::AdaptedVideoTrackSource::SourceState VideoCapturer::state() const
+  {
+    rtc::CritScope cs(&apiCs_);
+    return state_;
+  }
+
+  //-----------------------------------------------------------------------------
+  bool VideoCapturer::remote() const
+  {
+    return false;
+  }
+
+  //-----------------------------------------------------------------------------
+  void VideoCapturer::OnDisplayOrientationChanged(
+    DisplayOrientations orientation) {
+    ApplyDisplayOrientation(orientation);
+  }
+
+  //-----------------------------------------------------------------------------
+  bool VideoCapturer::Start(const cricket::VideoFormat& capture_format) noexcept
+  {
     rtc::CritScope cs(&apiCs_);
 
     winrt::hstring subtype = CaptureDevice::GetVideoSubtype(capture_format.fourcc);
     if (subtype.empty()) {
       RTC_LOG(LS_ERROR) <<
         "The specified raw video format is not supported on this platform.";
-      return CS_FAILED;
+      return false;
     }
     if (_wcsicmp(subtype.c_str(),
       MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
@@ -991,12 +1028,14 @@ namespace webrtc
         min_width_diff = width_diff;
         min_height_diff = height_diff;
         min_fps_diff = fps_diff;
-      } else if (width_diff == min_width_diff) {
+      }
+      else if (width_diff == min_width_diff) {
         if (height_diff < min_height_diff) {
           video_encoding_properties_ = prop;
           min_height_diff = height_diff;
           min_fps_diff = fps_diff;
-        } else if (height_diff == min_height_diff) {
+        }
+        else if (height_diff == min_height_diff) {
           if (fps_diff < min_fps_diff) {
             video_encoding_properties_ = prop;
             min_fps_diff = fps_diff;
@@ -1008,70 +1047,48 @@ namespace webrtc
       ApplyDisplayOrientation(display_orientation_->Orientation());
       device_->StartCapture(media_encoding_profile_,
         video_encoding_properties_, mrc_enabled_);
-    } catch (winrt::hresult_error const& e) {
+    }
+    catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to start capture. "
         << rtc::ToUtf8(e.message().c_str());
-      return CS_FAILED;
+      return false;
     }
 
     SetCaptureFormat(&capture_format);
-
-    SetCaptureState(CS_RUNNING);
-
-    return CS_RUNNING;
+    SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState::kLive);
+    return true;
   }
 
   //-----------------------------------------------------------------------------
-  void VideoCapturer::Stop() {
+  void VideoCapturer::Stop() noexcept
+  {
     rtc::CritScope cs(&apiCs_);
     try {
       if (device_->CaptureStarted()) {
         device_->StopCapture();
       }
-    } catch (winrt::hresult_error const& e) {
+    }
+    catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to stop capture. "
         << rtc::ToUtf8(e.message().c_str());
       return;
     }
     SetCaptureFormat(nullptr);
-    SetCaptureState(CS_STOPPED);
+    SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState::kEnded);
   }
 
   //-----------------------------------------------------------------------------
-  bool VideoCapturer::IsRunning() {
+  void VideoCapturer::SetCaptureFormat(const cricket::VideoFormat* format) noexcept
+  {
     rtc::CritScope cs(&apiCs_);
-    return device_->CaptureStarted();
+    capture_format_.reset(format ? new cricket::VideoFormat(*format) : NULL);
   }
 
   //-----------------------------------------------------------------------------
-  bool VideoCapturer::IsScreencast() const {
-    return false;
-  }
-
-  //-----------------------------------------------------------------------------
-  bool VideoCapturer::GetPreferredFourccs(std::vector<uint32_t>* fourccs) {
-    if (!fourccs) {
-      return false;
-    }
-
-    fourccs->clear();
-    fourccs->push_back(FOURCC_I420);
-    fourccs->push_back(FOURCC_YV12);
-    fourccs->push_back(FOURCC_YUY2);
-    fourccs->push_back(FOURCC_UYVY);
-    fourccs->push_back(FOURCC_NV12);
-    fourccs->push_back(FOURCC_NV21);
-    fourccs->push_back(FOURCC_MJPG);
-    fourccs->push_back(FOURCC_ARGB);
-    fourccs->push_back(FOURCC_24BG);
-
-    return true;
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCapturer::OnDisplayOrientationChanged(
-    DisplayOrientations orientation) {
-    ApplyDisplayOrientation(orientation);
+  void VideoCapturer::SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState state) noexcept
+  {
+    rtc::CritScope cs(&apiCs_);
+    state_ = state;
   }
 
   //-----------------------------------------------------------------------------
@@ -1143,7 +1160,7 @@ namespace webrtc
     captureFrame.set_ntp_time_ms(captureTime);
 
     forwardToDelegates(frameInfo, spMediaSample, buffer);
-    OnFrame(captureFrame, captureFrame.width(), captureFrame.height());
+    OnFrame(captureFrame);
   }
 
   //-----------------------------------------------------------------------------
@@ -1217,7 +1234,7 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  IVideoCapturerUniPtr IVideoCapturer::create(const CreationProperties &info) noexcept
+  rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> IVideoCapturer::create(const CreationProperties &info) noexcept
   {
     return VideoCapturer::create(info);
   }

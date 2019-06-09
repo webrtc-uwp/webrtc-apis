@@ -27,6 +27,8 @@
 #include <wrapper/generated/types.h>
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
+#include "media/base/video_common.h"
+#include "api/scoped_refptr.h"
 #include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <zsLib/types.h>
@@ -55,11 +57,10 @@ namespace webrtc
   // Used to represent an audio or video capture or render device.
   struct Device {
     Device() {}
-    Device(const std::string& name, int id) : name(name), id(rtc::ToString(id)) {}
-    Device(const std::string& name, const std::string& id) : name(name), id(id) {}
 
     std::string name;
     std::string id;
+    ::cricket::VideoFormat format;
   };
 
   class VideoDeviceCapturerFactory {
@@ -67,11 +68,13 @@ namespace webrtc
     VideoDeviceCapturerFactory() {}
     virtual ~VideoDeviceCapturerFactory() {}
 
-    virtual std::unique_ptr<VideoCapturer> Create(const Device& device) = 0;
+    virtual rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> Create(const Device& device) = 0;
   };
 
   interaction IVideoCapturer
   {
+    typedef rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> AdaptedVideoTrackSourceScopedPtr;
+
     struct CreationProperties
     {
       IVideoCapturerDelegatePtr delegate_;
@@ -79,9 +82,10 @@ namespace webrtc
       const char *name_ {};
       const char *id_ {};
       bool mrcEnabled_ {};
+      ::cricket::VideoFormat format_;
     };
 
-    static IVideoCapturerUniPtr create(const CreationProperties &info) noexcept;
+    static AdaptedVideoTrackSourceScopedPtr create(const CreationProperties &info) noexcept;
 
     virtual IVideoCapturerSubscriptionPtr subscribe(IVideoCapturerDelegatePtr delegate) = 0;
 

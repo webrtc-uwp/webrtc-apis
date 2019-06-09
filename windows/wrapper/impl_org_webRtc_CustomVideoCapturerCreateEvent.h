@@ -18,6 +18,7 @@ namespace wrapper {
           CustomVideoCapturerCreateEventWeakPtr thisWeak_;
           String deviceId_;
           String deviceName_;
+          wrapper::org::webRtc::VideoFormatPtr format_;
           wrapper::org::webRtc::CustomVideoCapturerPtr capturer_;
 
           CustomVideoCapturerCreateEvent() noexcept;
@@ -28,6 +29,7 @@ namespace wrapper {
           // properties CustomVideoCapturerCreateEvent
           String get_deviceId() noexcept override;
           String get_deviceName() noexcept override;
+          wrapper::org::webRtc::VideoFormatPtr get_format() noexcept override;
           wrapper::org::webRtc::CustomVideoCapturerPtr get_createdCapturer() noexcept override;
           void set_createdCapturer(wrapper::org::webRtc::CustomVideoCapturerPtr value) noexcept override;
 
@@ -37,7 +39,8 @@ namespace wrapper {
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(
             const std::string &deviceId,
-            const std::string &deviceName) noexcept;
+            const std::string &deviceName,
+            wrapper::org::webRtc::VideoFormatPtr format) noexcept;
 
         };
 

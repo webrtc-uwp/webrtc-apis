@@ -2,6 +2,7 @@
 #include "impl_org_webRtc_CustomVideoCapturerFactory.h"
 #include "impl_org_webRtc_CustomVideoCapturer.h"
 #include "impl_org_webRtc_CustomVideoCapturerCreateEvent.h"
+#include "impl_org_webRtc_VideoFormat.h"
 #include "impl_org_webRtc_WebRtcLib.h"
 
 using ::zsLib::String;
@@ -25,6 +26,8 @@ using ::std::map;
 // borrow definitions from class
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::CustomVideoCapturerFactory::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
+
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFormat, UseVideoFormat);
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::CustomVideoCapturerFactory::CustomVideoCapturerFactory() noexcept
@@ -64,9 +67,9 @@ void wrapper::impl::org::webRtc::CustomVideoCapturerFactory::wrapper_onObserverC
 }
 
 //------------------------------------------------------------------------------
-std::unique_ptr<WrapperImplType::UseVideoCapturer> WrapperImplType::Create(const ::cricket::Device& device)
+rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> WrapperImplType::Create(const ::webrtc::Device& device)
 {
-  auto event = CustomVideoCapturerCreateEvent::toWrapper(device.id, device.name);
+  auto event = CustomVideoCapturerCreateEvent::toWrapper(device.id, device.name, UseVideoFormat::toWrapper(device.format));
   if (!event)
     return {};
 

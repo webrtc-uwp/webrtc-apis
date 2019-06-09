@@ -22,7 +22,6 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include "rtc_base/event_tracer.h"
-#include "rtc_base/win32_socket_init.h"
 #include "rtc_base/ssl_adapter.h"
 #include "impl_org_webRtc_post_include.h"
 
@@ -194,7 +193,6 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
     UseHelper::setup();
   }
 
-  rtc::EnsureWinsockInit();
   rtc::InitializeSSL();
 
   // scope: setup audio frame processing queue

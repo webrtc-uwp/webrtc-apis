@@ -19,6 +19,7 @@
 #include "rtc_base/event_tracer.h"
 #include "third_party/winuwp_h264/winuwp_h264_factory.h"
 #include "pc/peer_connection_factory.h"
+#include "api/create_peerconnection_factory.h"
 #include "modules/audio_device/include/audio_device.h"
 #include "impl_org_webRtc_post_include.h"
 
@@ -56,9 +57,7 @@ typedef WrapperImplType::PeerConnectionFactoryScopedPtr PeerConnectionFactorySco
 ZS_DECLARE_TYPEDEF_PTR(::webrtc::PeerConnectionFactory, NativePeerConnectionFactory)
 ZS_DECLARE_TYPEDEF_PTR(::webrtc::PeerConnectionFactoryInterface, NativePeerConnectionFactoryInterface)
 
-ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseVideoDeviceCaptureFacrtory, UseVideoDeviceCaptureFacrtory);
-
-ZS_DECLARE_TYPEDEF_PTR(::cricket::WebRtcVideoDeviceCapturerFactory, UseWebrtcVideoDeviceCaptureFacrtory);
+ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseVideoDeviceCaptureFactory, UseVideoDeviceCaptureFactory);
 
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseAudioBufferEvent, UseAudioBufferEvent);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::UseAudioInitEvent, UseAudioInitEvent);
@@ -271,7 +270,7 @@ PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noex
 }
 
 //------------------------------------------------------------------------------
-UseVideoDeviceCaptureFacrtoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
+UseVideoDeviceCaptureFactoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
   setup();
@@ -340,8 +339,8 @@ void WrapperImplType::setup() noexcept
   signalingThread->Start();
 
 
-  auto encoderFactory = new ::webrtc::WinUWPH264EncoderFactory();
-  auto decoderFactory = new ::webrtc::WinUWPH264DecoderFactory();
+  auto encoderFactory = std::unique_ptr<::webrtc::WinUWPH264EncoderFactory>(new ::webrtc::WinUWPH264EncoderFactory());
+  auto decoderFactory = std::unique_ptr<::webrtc::WinUWPH264DecoderFactory>(new ::webrtc::WinUWPH264DecoderFactory());
 
   rtc::scoped_refptr<::webrtc::AudioDeviceModule> audioDeviceModule = CustomAudioDevice::toNative(configuration_->customAudioDevice);
   if (!audioDeviceModule) {
@@ -401,8 +400,8 @@ void WrapperImplType::setup() noexcept
     audioDeviceModule.release(),
     ::webrtc::CreateBuiltinAudioEncoderFactory(),
     ::webrtc::CreateBuiltinAudioDecoderFactory(),
-    encoderFactory,
-    decoderFactory,
+    std::move(encoderFactory),
+    std::move(decoderFactory),
     nullptr,
     enableAudioProcessingEvents ? audioProcessing : nullptr
   );

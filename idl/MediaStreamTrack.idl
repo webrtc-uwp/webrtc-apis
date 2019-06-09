@@ -68,13 +68,19 @@ namespace org
       /// Creates an audio MediaStreamTrack for use with an RtpSender.
       /// </summary>
       [static]
-      MediaStreamTrack createAudioTrack(string label, AudioTrackSource source);
+      MediaStreamTrack createAudioTrack(
+        WebRtcFactory factory,
+        string label,
+        AudioTrackSource source);
 
       /// <summary>
       /// Creates a video MediaStreamTrack for use with an RtpSender.
       /// </summary>
       [static]
-      MediaStreamTrack createVideoTrack(string label, VideoCapturer source);
+      MediaStreamTrack createVideoTrack(
+        WebRtcFactory factory,
+        string label,
+        VideoCapturer source);
 
       /// <summary>
       /// Gets the kind attribute. MUST return the string "audio" if

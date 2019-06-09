@@ -193,11 +193,28 @@ WrapperImplTypePtr WrapperImplType::toWrapper(const NativeType *native) noexcept
 //------------------------------------------------------------------------------
 NativeTypePtr WrapperImplType::toNative(WrapperTypePtr wrapper) noexcept
 {
-  if (!wrapper) return NativeTypePtr();
+  if (!wrapper)
+    return {};
 
   auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
   ZS_ASSERT(converted);
   if (!converted) return NativeTypePtr();
   ZS_ASSERT(converted->native_);
   return make_shared<NativeType>(*converted->native_);
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(WrapperTypePtr wrapper) noexcept
+{
+  if (!wrapper)
+    return {};
+
+  auto converted = ZS_DYNAMIC_PTR_CAST(WrapperImplType, wrapper);
+  ZS_ASSERT(converted);
+  if (!converted)
+    return {};
+  ZS_ASSERT(converted->native_);
+  if (!converted->native_)
+    return {};
+  return toWrapper(*(converted->native_));
 }

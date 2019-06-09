@@ -46,6 +46,7 @@ namespace wrapper {
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(const NativeType &native) noexcept;
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(const NativeType *native) noexcept;
           ZS_NO_DISCARD() static NativeTypePtr toNative(WrapperTypePtr wrapper) noexcept;
+          ZS_NO_DISCARD() static WrapperImplTypePtr clone(WrapperTypePtr wrapper) noexcept;
         };
 
       } // webRtc

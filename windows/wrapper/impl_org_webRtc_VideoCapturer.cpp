@@ -89,10 +89,7 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_dispose() noexcept
   if (!native_) return;
 
   teardownObserver();
-  if (!stopCalled_.exchange(true)) {
-    native_->Stop();
-  }
-  native_.reset();
+  native_ = {};
 }
 
 //------------------------------------------------------------------------------
@@ -101,6 +98,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   String name;
   String id;
   bool enableMrc {false};
+  ::cricket::VideoFormat format;
 
   UseFactoryPtr factory = UseFactory::toWrapper(params->factory);
 
@@ -108,16 +106,20 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     name = params->name;
     id = params->id;
     enableMrc = params->enableMrc;
+    format = *UseVideoFormat::toNative(params->format);
   }
 
-  std::unique_ptr<::cricket::VideoCapturer> capturer;
+  rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> capturer;
 
   if (factory) {
     auto capturerFactory = factory->videoDeviceCaptureFactory();
     if (capturerFactory) {
-      ::cricket::Device device;
+      ::webrtc::Device device;
       device.name = name;
       device.id = id;
+      if (params->format) {
+        device.format = format;
+      }
       capturer = capturerFactory->Create(device);
       if (!capturer)
         return {};
@@ -129,7 +131,8 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     props.name_ = name.c_str();
     props.id_ = id.c_str();
     props.mrcEnabled_ = enableMrc;
-    capturer = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
+    props.format_ = format;
+    capturer = webrtc::IVideoCapturer::create(props);
     if (!capturer) return {};
   }
 
@@ -140,247 +143,52 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   return result;
 }
 
-static bool alwaysTrue() { return true; }
-
-//------------------------------------------------------------------------------
-shared_ptr< PromiseWithHolderPtr< shared_ptr< list< wrapper::org::webRtc::VideoDeviceInfoPtr > > > > wrapper::org::webRtc::VideoCapturer::getDevices() noexcept
-{
-  typedef shared_ptr< PromiseWithHolderPtr< shared_ptr< list< wrapper::org::webRtc::VideoDeviceInfoPtr > > > > ResultType;
-  typedef shared_ptr< list< wrapper::org::webRtc::VideoDeviceInfoPtr > > ResultListType;
-
-  auto delegateQueue = UseWebrtcLib::delegateQueue();
-  if (!delegateQueue) {
-    auto failedResult = ResultType::element_type::create();
-    UseError::rejectPromise(failedResult, ::webrtc::RTCError(::webrtc::RTCErrorType::INVALID_STATE));
-    return failedResult;
-  }
-
-  auto promise = ResultType::element_type::create(delegateQueue);
-
-#ifdef CPPWINRT_VERSION
-  if (alwaysTrue()) {
-    //auto results = winrt::Windows::Devices::Enumeration::DeviceInformation::FindAllAsync();
-    //co_await results;
-    delegateQueue->postClosure([promise]() {
-
-      auto asyncResults = winrt::Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(winrt::Windows::Devices::Enumeration::DeviceClass::VideoCapture);
-
-      asyncResults.Completed([promise](auto &&asyncResults, ZS_MAYBE_USED() winrt::Windows::Foundation::AsyncStatus status) {
-        auto results = asyncResults.GetResults();
-        ZS_MAYBE_USED(status);
-        auto output = make_shared<ResultListType::element_type>();
-        for (auto device : results) {
-          auto wrapper = UseVideoDeviceInfo::toWrapper(device);
-          if (!wrapper) continue;
-          output->push_back(wrapper);
-        }
-        promise->resolve(output);
-      });
-    });
-    return promise;
-  }
-#endif // CPPWINRT_VERSION
-  
-  UseError::rejectPromise(promise, ::webrtc::RTCError(::webrtc::RTCErrorType::RESOURCE_EXHAUSTED));
-  return promise;
-}
-
-//------------------------------------------------------------------------------
-shared_ptr< list< wrapper::org::webRtc::VideoFormatPtr > > wrapper::impl::org::webRtc::VideoCapturer::getSupportedFormats() noexcept
-{
-  typedef shared_ptr< list< wrapper::org::webRtc::VideoFormatPtr > > ResultType;
-  ResultType result = make_shared< ResultType::element_type >();
-
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return result;
-  }
-
-  auto formats = native_->GetSupportedFormats();
-  if (!formats) return result;
-
-  for (auto iter = formats->begin(); iter != formats->end(); ++iter) {
-    auto converted = UseVideoFormat::toWrapper(*iter);
-    if (!converted) continue;
-    result->push_back(converted);
-  }
-
-  return result;
-}
-
-//------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoFormatPtr wrapper::impl::org::webRtc::VideoCapturer::getBestCaptureFormat(wrapper::org::webRtc::VideoFormatPtr desired) noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return wrapper::org::webRtc::VideoFormatPtr();
-  }
-
-  ZS_ASSERT(desired);
-  if (!desired) return wrapper::org::webRtc::VideoFormatPtr();
-
-  auto converted = UseVideoFormat::toNative(desired);
-  ZS_ASSERT(converted);
-  if (!converted) return wrapper::org::webRtc::VideoFormatPtr();
-
-  ::cricket::VideoFormat format;
-  if (!native_->GetBestCaptureFormat(*converted, &format)) return wrapper::org::webRtc::VideoFormatPtr();
-
-  return UseVideoFormat::toWrapper(format);
-}
-
-//------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoCaptureState wrapper::impl::org::webRtc::VideoCapturer::start(wrapper::org::webRtc::VideoFormatPtr captureFormat) noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed;
-  }
-
-  ZS_ASSERT(captureFormat);
-  if (!captureFormat) return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed;
-
-  auto converted = UseVideoFormat::toNative(captureFormat);
-  ZS_ASSERT(converted);
-  if (!converted) return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed;
-
-  return UseEnum::toWrapper(native_->Start(*converted));
-}
-
-//------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoFormatPtr wrapper::impl::org::webRtc::VideoCapturer::getCaptureFormat() noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return wrapper::org::webRtc::VideoFormatPtr();
-  }
-
-  return UseVideoFormat::toWrapper(native_->GetCaptureFormat());
-}
-
-//------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::VideoCapturer::stop() noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return;
-  }
-  stopCalled_ = true;
-  native_->Stop();
-}
-
-//------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::VideoCapturer::constrainSupportedFormats(wrapper::org::webRtc::VideoFormatPtr maxFormat) noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return;
-  }
-}
-
-//------------------------------------------------------------------------------
-String wrapper::impl::org::webRtc::VideoCapturer::get_id() noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return String();
-  }
-  return native_->GetId();
-}
-
-//------------------------------------------------------------------------------
-bool wrapper::impl::org::webRtc::VideoCapturer::get_enableCameraList() noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return false;
-  }
-  return native_->enable_camera_list();
-}
-
-//------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::VideoCapturer::set_enableCameraList(bool value) noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return;
-  }
-  return native_->set_enable_camera_list(value);
-}
-
-//------------------------------------------------------------------------------
-bool wrapper::impl::org::webRtc::VideoCapturer::get_enableVideoAdapter() noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return false;
-  }
-  return native_->enable_video_adapter();
-}
-
-//------------------------------------------------------------------------------
-void wrapper::impl::org::webRtc::VideoCapturer::set_enableVideoAdapter(bool value) noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return;
-  }
-  native_->set_enable_video_adapter(value);
-}
-
-//------------------------------------------------------------------------------
-bool wrapper::impl::org::webRtc::VideoCapturer::get_isRunning() noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return false;
-  }
-  return native_->IsRunning();
-}
-
-//------------------------------------------------------------------------------
-bool wrapper::impl::org::webRtc::VideoCapturer::get_applyRotation() noexcept
-{
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return false;
-  }
-  return native_->apply_rotation();
-}
-
 //------------------------------------------------------------------------------
 bool wrapper::impl::org::webRtc::VideoCapturer::get_isScreencast() noexcept
 {
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return false;
-  }
-  return native_->IsScreencast();
+  if (!native_)
+    return {};
+
+  return native_->is_screencast();
+}
+
+//------------------------------------------------------------------------------
+Optional< bool > wrapper::impl::org::webRtc::VideoCapturer::get_needsDenoising() noexcept
+{
+  if (!native_)
+    return {};
+
+  auto value = native_->needs_denoising();
+  if (!value.has_value())
+    return {};
+
+  return value.value();
 }
 
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::VideoCapturerInputSizePtr wrapper::impl::org::webRtc::VideoCapturer::get_inputSize() noexcept
 {
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return wrapper::org::webRtc::VideoCapturerInputSizePtr();
-  }
+  if (!native_)
+    return {};
 
-  int width{};
-  int height{};
-  if (!native_->GetInputSize(&width, &height)) return wrapper::org::webRtc::VideoCapturerInputSizePtr();
+  webrtc::VideoTrackSourceInterface *nativeBase = native_.get();
+  if (!nativeBase)
+    return {};
 
-  return UseVideoCapturerInputSize::toWrapper(width, height);
+  webrtc::VideoTrackSourceInterface::Stats stats;
+  auto result = nativeBase->GetStats(&stats);
+  if (!result)
+    return {};
+
+  return UseVideoCapturerInputSize::toWrapper(stats.input_width, stats.input_height);
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::VideoCaptureState wrapper::impl::org::webRtc::VideoCapturer::get_state() noexcept
+wrapper::org::webRtc::MediaSourceState wrapper::impl::org::webRtc::VideoCapturer::get_state() noexcept
 {
-  if (!native_) {
-    ZS_ASSERT_FAIL("Cannot call into VideoCapturer after VideoCapturer has been passed into to a VideoTrackSource.");
-    return wrapper::org::webRtc::VideoCaptureState::VideoCaptureState_failed;
-  }
-  return UseEnum::toWrapper(native_->capture_state());
+  if (!native_)
+    return {};
+  return UseEnum::toWrapper(native_->state());
 }
 
 //------------------------------------------------------------------------------

@@ -75,5 +75,6 @@ WrapperImplTypePtr WrapperImplType::toWrapper(
   result->thisWeak_ = result;
   result->isSpeaker_ = isSpeaker;
   result->isMicrophone_ = isMicrophone;
+  result->mute_ = mute;
   return result;
 }

@@ -6,6 +6,10 @@
 
 #include "impl_webrtc_AudioDeviceWasapi.h"
 
+#include "impl_org_webRtc_pre_include.h"
+#include "api/task_queue/global_task_queue_factory.h"
+#include "impl_org_webRtc_post_include.h"
+
 #ifdef CPPWINRT_VERSION
 
 #pragma warning(disable: 4995)  // name was marked as #pragma deprecated
@@ -967,7 +971,7 @@ namespace webrtc
     recWarning_ = 0;
     recError_ = 0;
 
-    ptrAudioBuffer_ = new AudioDeviceBuffer();
+    ptrAudioBuffer_ = new AudioDeviceBuffer(&(::webrtc::GlobalTaskQueueFactory()));
 
     // Inform the AudioBuffer about default settings for this implementation.
     // Set all values to zero here since the actual settings will be done by

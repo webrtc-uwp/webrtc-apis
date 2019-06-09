@@ -111,26 +111,6 @@ namespace org
       [static]
       VideoCapturer create(VideoCapturerCreationParameters params);
 
-      [getter,setter]
-      bool enableCameraList;
-
-      /// <summary>
-      /// If true, run video adaptation. By default, video adaptation is enabled
-      /// and users must call video_adapter()->OnOutputFormatRequest()
-      /// to receive frames.
-      /// </summary>
-      [getter,setter]
-      bool enableVideoAdapter;
-
-      /// <summary>
-      /// Check if the video capturer is running.
-      /// </summary>
-      [getter]
-      bool isRunning;
-
-      [getter]
-      bool applyRotation;
-
       /// <summary>
       /// Returns true if the capturer is screencasting. This can be used to
       /// implement screencast specific behavior.

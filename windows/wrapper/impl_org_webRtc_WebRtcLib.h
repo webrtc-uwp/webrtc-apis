@@ -8,6 +8,7 @@
 #include "impl_org_webRtc_pre_include.h"
 //#include "rtc_base/scoped_ref_ptr.h"
 //#include "media/base/videocapturerfactory.h"
+#include "rtc_base/win32_socket_init.h"
 #include "impl_org_webRtc_post_include.h"
 
 #include <zsLib/Singleton.h>
@@ -28,6 +29,7 @@ namespace wrapper {
           virtual ~WebRtcLib() noexcept;
 
           WebRtcLibWeakPtr thisWeak_;
+          ::rtc::WinsockInitializer socketInit_;
           std::atomic_flag setupCalledOnce_{};
           std::atomic_bool setupComplete_ {};
           std::atomic_bool alreadyCleaned_{};

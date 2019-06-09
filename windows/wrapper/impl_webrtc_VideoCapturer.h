@@ -6,9 +6,11 @@
 #ifdef CPPWINRT_VERSION
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
-#include "rtc_base/critical_section.h"
-#include "media/base/adapted_video_track_source.h"
-#include "system_wrappers/include/event_wrapper.h"
+#include <rtc_base/critical_section.h>
+#include <media/base/adapted_video_track_source.h>
+#include <system_wrappers/include/event_wrapper.h>
+#include <api/media_stream_interface.h>
+#include <rtc_base/ref_counted_object.h>
 #include <wrapper/impl_org_webRtc_post_include.h>
 
 #include <zsLib/types.h>
@@ -46,7 +48,7 @@ namespace webrtc
   };
 
   class VideoCapturer : public IVideoCapturer,
-    public rtc::AdaptedVideoTrackSource,
+    public ::rtc::RefCountedObject<rtc::AdaptedVideoTrackSource>,
     public CaptureDeviceListener,
     public DisplayOrientationListener
   {
@@ -60,7 +62,7 @@ namespace webrtc
     VideoCapturer(const make_private &);
     virtual ~VideoCapturer();
 
-    static VideoCapturerUniPtr create(const CreationProperties &info) noexcept;
+    static rtc::scoped_refptr<::rtc::AdaptedVideoTrackSource> create(const CreationProperties &info) noexcept;
 
     IVideoCapturerSubscriptionPtr subscribe(IVideoCapturerDelegatePtr delegate) override;
 
@@ -78,6 +80,12 @@ namespace webrtc
       winrt::Windows::Graphics::Display::DisplayOrientations orientation) override;
 
   private:
+    bool Start(const cricket::VideoFormat& capture_format) noexcept;
+    void Stop() noexcept;
+
+    void SetCaptureFormat(const cricket::VideoFormat* format) noexcept;
+    void SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState state) noexcept;
+
     // Overrides from CaptureDeviceListener
     virtual void OnIncomingFrame(
       uint8_t* video_frame,
@@ -103,6 +111,9 @@ namespace webrtc
     IVideoCapturerSubscriptionPtr defaultSubscription_;
 
     std::string id_;
+    std::unique_ptr<cricket::VideoFormat> capture_format_;
+
+    rtc::AdaptedVideoTrackSource::SourceState state_ {rtc::AdaptedVideoTrackSource::SourceState::kInitializing};
 
     char* deviceUniqueId_ { nullptr };
     rtc::CriticalSection apiCs_;

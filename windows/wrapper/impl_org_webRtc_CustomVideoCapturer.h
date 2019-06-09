@@ -6,6 +6,7 @@
 
 #include "impl_org_webRtc_pre_include.h"
 #include <media/base/adapted_video_track_source.h>
+#include <rtc_base/ref_counted_object.h>
 #include "impl_org_webRtc_post_include.h"
 
 
@@ -22,9 +23,11 @@ namespace wrapper {
 
           ZS_DECLARE_TYPEDEF_PTR(::rtc::AdaptedVideoTrackSource, UseAdaptedVideoTrackSource);
 
+          typedef rtc::scoped_refptr<UseAdaptedVideoTrackSource> UseAdaptedVideoTrackSourceScopedPtr;
+
           ZS_DECLARE_CLASS_PTR(Proxy);
 
-          class Proxy : public ::rtc::AdaptedVideoTrackSource
+          class Proxy : public ::rtc::RefCountedObject<::rtc::AdaptedVideoTrackSource>
           {
           public:
             WrapperImplTypePtr wrapper_;
@@ -32,11 +35,14 @@ namespace wrapper {
             Proxy(WrapperImplTypePtr wrapper) : wrapper_(wrapper) {}
             ~Proxy() noexcept { wrapper_->destroyProxyReference(); }
 
-            bool Start(const ::cricket::VideoFormat& capture_format) { return wrapper_->Start(capture_format); }
-            void Stop() { return wrapper_->Stop(); }
-            bool IsRunning() { return wrapper_->IsRunning(); }
-            bool IsScreencast() const { return wrapper_->IsScreencast(); }
-            bool GetPreferredFourccs(std::vector<uint32_t>* fourccs) { return wrapper_->GetPreferredFourccs(fourccs); }
+            // webrtc::MediaSourceInterface
+            SourceState state() const override { return wrapper_->state(); }
+            bool remote() const override { return wrapper_->remote(); }
+
+            // webrtc::VideoTrackSourceInterface
+            bool is_screencast() const { return wrapper_->is_screencast(); }
+            absl::optional<bool> needs_denoising() const { return wrapper_->needs_denoising(); }
+            bool GetStats(Stats* stats) override { return wrapper_->GetStats(stats); }
 
             void notifyOnFrame(const webrtc::VideoFrame& frame)
             {
@@ -69,21 +75,21 @@ namespace wrapper {
           wrapper::org::webRtc::MediaSourceState get_currentState() noexcept override;
           void set_currentState(wrapper::org::webRtc::MediaSourceState value) noexcept override;
 
-          void wrapper_onObserverCountChanged(size_t count) noexcept override;
+          // webrtc::MediaSourceInterface
+          webrtc::MediaSourceInterface::SourceState state() const noexcept;
+          bool remote() const noexcept;
 
-          // ::cricket::VideoCapturer
-          bool Start(const ::cricket::VideoFormat& capture_format);
-          void Stop();
-          bool IsRunning();
-          bool IsScreencast() const;
-          bool GetPreferredFourccs(std::vector<uint32_t>* fourccs);
+          // webrtc::VideoTrackSourceInterface
+          bool is_screencast() const noexcept;
+          absl::optional<bool> needs_denoising() const noexcept;
+          bool GetStats(webrtc::VideoTrackSourceInterface::Stats* stats) noexcept;
 
           void destroyProxyReference() noexcept;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr create() noexcept;
 
-          ZS_NO_DISCARD() static std::unique_ptr<UseAdaptedVideoTrackSource> toNative(WrapperType *wrapperType) noexcept;
-          ZS_NO_DISCARD() static std::unique_ptr<UseAdaptedVideoTrackSource> toNative(WrapperTypePtr wrapperType) noexcept;
+          ZS_NO_DISCARD() static UseAdaptedVideoTrackSourceScopedPtr toNative(WrapperType *wrapperType) noexcept;
+          ZS_NO_DISCARD() static UseAdaptedVideoTrackSourceScopedPtr toNative(WrapperTypePtr wrapperType) noexcept;
         };
 
       } // webRtc

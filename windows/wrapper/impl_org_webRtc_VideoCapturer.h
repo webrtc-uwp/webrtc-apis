@@ -73,12 +73,6 @@ namespace wrapper {
 
           // methods VideoCapturer
           // properties VideoCapturer
-          bool get_enableCameraList() noexcept override;
-          void set_enableCameraList(bool value) noexcept override;
-          bool get_enableVideoAdapter() noexcept override;
-          void set_enableVideoAdapter(bool value) noexcept override;
-          bool get_isRunning() noexcept override;
-          bool get_applyRotation() noexcept override;
           bool get_isScreencast() noexcept override;
           Optional< bool > get_needsDenoising() noexcept override;
           wrapper::org::webRtc::VideoCapturerInputSizePtr get_inputSize() noexcept override;

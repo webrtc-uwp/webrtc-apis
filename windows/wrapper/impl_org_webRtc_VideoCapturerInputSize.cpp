@@ -58,3 +58,24 @@ WrapperImplTypePtr WrapperImplType::toWrapper(int width, int height) noexcept
   result->height = SafeInt<decltype(result->height)>(height);
   return result;
 }
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(WrapperType *wrapper) noexcept
+{
+  if (!wrapper)
+    return {};
+
+  auto result = make_shared<WrapperImplType>();
+  result->thisWeak_ = result;
+  result->width = wrapper->width;
+  result->height = wrapper->height;
+  return result;
+}
+
+//------------------------------------------------------------------------------
+WrapperImplTypePtr WrapperImplType::clone(WrapperTypePtr wrapper) noexcept
+{
+  if (!wrapper)
+    return {};
+  return clone(wrapper.get());
+}

@@ -60,6 +60,12 @@ String wrapper::impl::org::webRtc::CustomVideoCapturerCreateEvent::get_deviceNam
 }
 
 //------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoFormatPtr wrapper::impl::org::webRtc::CustomVideoCapturerCreateEvent::get_format() noexcept
+{
+  return format_;
+}
+
+//------------------------------------------------------------------------------
 wrapper::org::webRtc::CustomVideoCapturerPtr wrapper::impl::org::webRtc::CustomVideoCapturerCreateEvent::get_createdCapturer() noexcept
 {
   return capturer_;
@@ -97,11 +103,13 @@ wrapper::org::webRtc::CustomVideoCapturerPtr WrapperImplType::extractCapturer(Wr
 //------------------------------------------------------------------------------
 WrapperImplTypePtr WrapperImplType::toWrapper(
   const std::string &deviceId,
-  const std::string &deviceName) noexcept
+  const std::string &deviceName,
+  wrapper::org::webRtc::VideoFormatPtr format) noexcept
 {
   auto result = std::make_shared<WrapperImplType>();
   result->thisWeak_ = result;
   result->deviceId_ = deviceId;
   result->deviceName_ = deviceName;
+  result->format_ = format;
   return result;
 }

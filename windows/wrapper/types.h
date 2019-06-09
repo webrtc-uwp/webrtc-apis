@@ -38,7 +38,6 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerCreateEvent);
         ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerFactory);
         ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerParameters);
-        ZS_DECLARE_STRUCT_PTR(CustomVideoCapturerStartEvent);
         ZS_DECLARE_STRUCT_PTR(EventQueue);
         ZS_DECLARE_STRUCT_PTR(EventQueueMaker);
         ZS_DECLARE_STRUCT_PTR(MediaElement);

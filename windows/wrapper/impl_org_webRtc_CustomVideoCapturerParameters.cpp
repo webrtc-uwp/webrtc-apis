@@ -1,6 +1,6 @@
 
 #include "impl_org_webRtc_CustomVideoCapturerParameters.h"
-#include "impl_org_webRtc_VideoFormat.h"
+#include "impl_org_webRtc_VideoCapturerInputSize.h"
 
 using ::zsLib::String;
 using ::zsLib::Optional;
@@ -23,6 +23,8 @@ using ::std::map;
 // borrow definitions from class
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::CustomVideoCapturerParameters::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
+
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturerInputSize, UseVideoCapturerInputSize);
 
 //------------------------------------------------------------------------------
 wrapper::impl::org::webRtc::CustomVideoCapturerParameters::CustomVideoCapturerParameters() noexcept
@@ -54,20 +56,7 @@ WrapperImplTypePtr WrapperImplType::clone(const WrapperType &base) noexcept
   auto result = std::make_shared<WrapperImplType>();
   result->thisWeak_ = result;
   ((WrapperType &)*result) = base;
-
-  result->supportedFormats = {};
-  if (base.supportedFormats) {
-    result->supportedFormats = std::make_shared< list< wrapper::org::webRtc::VideoFormatPtr > >();
-    for (auto iter = base.supportedFormats->begin(); iter != base.supportedFormats->end(); ++iter) {
-      auto &format = (*iter);
-      if (!format)
-        continue;
-      auto newFormat = VideoFormat::toWrapper(VideoFormat::toNative(format).get());
-      if (!newFormat)
-        continue;
-      result->supportedFormats->push_back(newFormat);
-    }
-  }
+  result->inputSize = UseVideoCapturerInputSize::clone(base.inputSize);
   return result;
 }
 

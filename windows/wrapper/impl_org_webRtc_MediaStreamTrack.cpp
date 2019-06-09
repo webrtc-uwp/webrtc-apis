@@ -49,13 +49,12 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::MediaStreamTrack::WrapperImpl
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::NativeType, NativeType);
 
-ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoTrackSource::WrapperImplType, UseVideoTrackSource);
-
 typedef WrapperImplType::NativeTypeScopedPtr NativeTypeScopedPtr;
 
 typedef wrapper::impl::org::webRtc::WrapperMapper<NativeType, WrapperImplType> UseWrapperMapper;
 
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
+ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, UseWebRtcFactory);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioTrackSource, UseAudioTrackSource);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoCapturer, UseVideoCapturer);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBuffer, UseVideoFrameBuffer);
@@ -133,6 +132,7 @@ void wrapper::impl::org::webRtc::MediaStreamTrack::wrapper_dispose() noexcept
 
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack::createAudioTrack(
+  wrapper::org::webRtc::WebRtcFactoryPtr factory,
   String label,
   wrapper::org::webRtc::AudioTrackSourcePtr source
   ) noexcept
@@ -142,37 +142,49 @@ wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack
 
   auto sourceImpl = UseAudioTrackSource::toWrapper(source);
   ZS_ASSERT(sourceImpl);
-  if (!sourceImpl) return WrapperTypePtr();
+  if (!sourceImpl)
+    return {};
 
-  auto factoryImpl = sourceImpl->factory();
+  auto factoryImpl = UseWebRtcFactory::toWrapper(factory);
   ZS_ASSERT(factoryImpl);
-  if (!factoryImpl) return WrapperTypePtr();
+  if (!factoryImpl)
+    return {};
 
-  auto factory = factoryImpl->peerConnectionFactory();
-  ZS_ASSERT(factory);
-  if (!factory) return WrapperTypePtr();
+  auto nativeFactory = factoryImpl->peerConnectionFactory();
+  ZS_ASSERT(nativeFactory);
+  if (!nativeFactory)
+    return {};
 
   auto nativeSource = UseAudioTrackSource::toNative(source);
 
-  auto native = factory->CreateAudioTrack(label, nativeSource);
+  auto native = nativeFactory->CreateAudioTrack(label, nativeSource);
 
   return WrapperImplType::toWrapper(native);
 }
 
 //------------------------------------------------------------------------------
 wrapper::org::webRtc::MediaStreamTrackPtr wrapper::org::webRtc::MediaStreamTrack::createVideoTrack(
+  wrapper::org::webRtc::WebRtcFactoryPtr factory,
   String label,
-  wrapper::org::webRtc::VideoCapturerPtr source
-  ) noexcept
+  wrapper::org::webRtc::VideoCapturerPtr source) noexcept
 {
   ZS_ASSERT(source);
-  if (!source) return WrapperTypePtr();
+  if (!source)
+    return {};
 
-  auto sourceImpl = UseVideoCapturer::toWrapper(source);
-  ZS_ASSERT(sourceImpl);
-  if (!sourceImpl) return WrapperTypePtr();
+  auto factoryImpl = UseWebRtcFactory::toWrapper(factory);
+  ZS_ASSERT(factoryImpl);
+  if (!factoryImpl)
+    return {};
 
-  auto native = factory->CreateVideoTrack(label, sourceImpl);
+  auto nativeFactory = factoryImpl->peerConnectionFactory();
+  ZS_ASSERT(nativeFactory);
+  if (!nativeFactory)
+    return {};
+
+  auto nativeSource = UseVideoCapturer::toNative(source);
+
+  auto native = nativeFactory->CreateVideoTrack(label, nativeSource.get());
 
   return WrapperImplType::toWrapper(native);
 }

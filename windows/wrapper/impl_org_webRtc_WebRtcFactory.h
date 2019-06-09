@@ -21,7 +21,7 @@ namespace wrapper {
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcFactory, WrapperImplType);
 
           ZS_DECLARE_TYPEDEF_PTR(::webrtc::AudioBuffer, NativeAudioBufferType);
-          ZS_DECLARE_TYPEDEF_PTR(::webrtc::VideoDeviceCapturerFactory, UseVideoDeviceCaptureFacrtory);
+          ZS_DECLARE_TYPEDEF_PTR(::webrtc::VideoDeviceCapturerFactory, UseVideoDeviceCaptureFactory);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioBufferEvent, UseAudioBufferEvent);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioProcessingInitializeEvent, UseAudioInitEvent);
           ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::AudioProcessingRuntimeSettingEvent, UseAudioRuntimeEvent);
@@ -64,7 +64,7 @@ namespace wrapper {
 
           zsLib::RecursiveLock lock_;
           PeerConnectionFactoryInterfaceScopedPtr peerConnectionFactory_;
-          UseVideoDeviceCaptureFacrtoryPtr videoDeviceCaptureFactory_;
+          UseVideoDeviceCaptureFactoryPtr videoDeviceCaptureFactory_;
 
           std::unique_ptr<rtc::Thread> networkThread;
           std::unique_ptr<rtc::Thread> workerThread;
@@ -89,7 +89,7 @@ namespace wrapper {
 
           PeerConnectionFactoryInterfaceScopedPtr peerConnectionFactory() noexcept;
           PeerConnectionFactoryScopedPtr realPeerConnectionFactory() noexcept;
-          UseVideoDeviceCaptureFacrtoryPtr videoDeviceCaptureFactory() noexcept;
+          UseVideoDeviceCaptureFactoryPtr videoDeviceCaptureFactory() noexcept;
 
           void onAudioPostCapture_Init(UseAudioInitEventPtr event);
           void onAudioPostCapture_SetRuntimeSetting(UseAudioRuntimeEventPtr event);
