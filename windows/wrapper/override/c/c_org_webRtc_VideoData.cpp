@@ -51,7 +51,7 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_wrapperDispose
 org_webRtc_VideoData_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_wrapperCreate_VideoData(uint64_t size)
 {
   auto wrapperThis = wrapper::org::webRtc::VideoData::wrapper_create();
-  wrapperThis->wrapper_init_org_webRtc_VideoData((size));
+  wrapperThis->wrapper_init_org_webRtc_VideoData(SafeInt<size_t>(size));
   return wrapper::org_webRtc_VideoData_wrapperToHandle(wrapperThis);
 }
 
@@ -95,7 +95,7 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data8bit(
   if (!ptr)
     return;
 
-  memcpy(ptr, data, sizeof(uint8_t)*size);
+  memcpy(ptr, data, SafeInt<size_t>(sizeof(uint8_t)*size));
 }
 
 //------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_set_data8bit(
   if (!ptr)
     return;
 
-  memcpy(data, ptr, sizeof(uint8_t)*size);
+  memcpy(data, ptr, SafeInt<size_t>(sizeof(uint8_t)*size));
 }
 
 //------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data16bit(
   if (!ptr)
     return;
 
-  memcpy(ptr, data, sizeof(uint16_t)*size);
+  memcpy(ptr, data, SafeInt<size_t>(sizeof(uint16_t)*size));
 }
 
 //------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_set_data16bit(
   if (!ptr)
     return;
 
-  memcpy(data, ptr, sizeof(uint16_t)*size);
+  memcpy(data, ptr, SafeInt<size_t>(sizeof(uint16_t)*size));
 }
 
 namespace wrapper

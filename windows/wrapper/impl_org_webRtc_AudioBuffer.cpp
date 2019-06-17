@@ -97,7 +97,7 @@ wrapper::org::webRtc::AudioDataPtr wrapper::impl::org::webRtc::AudioBuffer::spli
   ZS_ASSERT(native_);
   if (!native_)
     return {};
-  return UseAudioData::toWrapper(native_->split_bands(channel)[UseEnum::toNative(band)], native_->num_frames_per_band());
+  return UseAudioData::toWrapper(native_->split_bands(SafeInt<size_t>(channel))[UseEnum::toNative(band)], native_->num_frames_per_band());
 }
 
 //------------------------------------------------------------------------------

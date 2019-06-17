@@ -81,7 +81,7 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_get_data(
   if (!ptr)
     return;
 
-  memcpy(ptr, data, sizeof(int16_t)*size);
+  memcpy(ptr, data, SafeInt<size_t>(sizeof(int16_t)*size));
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_set_data(
   if (!ptr)
     return;
 
-  memcpy(data, ptr, sizeof(int16_t)*size);
+  memcpy(data, ptr, SafeInt<size_t>(sizeof(int16_t)*size));
 }
 
 //------------------------------------------------------------------------------
