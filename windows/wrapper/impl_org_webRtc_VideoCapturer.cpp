@@ -106,6 +106,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     name = params->name;
     id = params->id;
     enableMrc = params->enableMrc;
+    ZS_ASSERT(params->format);
     format = *UseVideoFormat::toNative(params->format);
   }
 

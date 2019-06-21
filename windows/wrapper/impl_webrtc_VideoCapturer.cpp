@@ -828,6 +828,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   VideoCapturer::~VideoCapturer()
   {
+    Stop();
     if (deviceUniqueId_ != nullptr)
       delete[] deviceUniqueId_;
     if (device_ != nullptr)
@@ -905,10 +906,7 @@ namespace webrtc
 
     device_->Initialize(device_id_);
 
-#pragma ZS_BUILD_NOTE("TODO","(mosa) fix me")
-    Start(props.format_);
-
-#if 0
+    VideoFormat selectedFormat;
     std::vector<VideoFormat> formats;
     auto mediaCapture = device_->GetMediaCapture();
     auto streamProperties =
@@ -922,12 +920,15 @@ namespace webrtc
       format.fourcc = CaptureDevice::GetFourCC(prop.Subtype());
       format.width = prop.Width();
       format.height = prop.Height();
-      format.interval = VideoFormat::FpsToInterval(prop.FrameRate().Numerator()/ prop.FrameRate().Denominator());
+      format.interval = VideoFormat::FpsToInterval(prop.FrameRate().Numerator()/prop.FrameRate().Denominator());
 
       formats.push_back(format);
+
+      if (format.width == props.format_.width && format.height == props.format_.height)
+        selectedFormat = format;
     }
-    SetSupportedFormats(formats);
-#endif //0
+
+    Start(selectedFormat);
   }
 
   //-----------------------------------------------------------------------------
