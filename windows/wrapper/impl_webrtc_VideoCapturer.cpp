@@ -906,29 +906,7 @@ namespace webrtc
 
     device_->Initialize(device_id_);
 
-    VideoFormat selectedFormat;
-    std::vector<VideoFormat> formats;
-    auto mediaCapture = device_->GetMediaCapture();
-    auto streamProperties =
-      mediaCapture.get().VideoDeviceController().GetAvailableMediaStreamProperties(
-        MediaStreamType::VideoRecord);
-    for (unsigned int i = 0; i < streamProperties.Size(); i++) {
-      IVideoEncodingProperties prop;
-      streamProperties.GetAt(i).as(prop);
-      
-      VideoFormat format;
-      format.fourcc = CaptureDevice::GetFourCC(prop.Subtype());
-      format.width = prop.Width();
-      format.height = prop.Height();
-      format.interval = VideoFormat::FpsToInterval(prop.FrameRate().Numerator()/prop.FrameRate().Denominator());
-
-      formats.push_back(format);
-
-      if (format.width == props.format_.width && format.height == props.format_.height)
-        selectedFormat = format;
-    }
-
-    Start(selectedFormat);
+    Start(props.format_);
   }
 
   //-----------------------------------------------------------------------------
@@ -954,13 +932,6 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  rtc::AdaptedVideoTrackSource::SourceState VideoCapturer::state() const
-  {
-    rtc::CritScope cs(&apiCs_);
-    return state_;
-  }
-
-  //-----------------------------------------------------------------------------
   bool VideoCapturer::remote() const
   {
     return false;
@@ -972,91 +943,155 @@ namespace webrtc
     ApplyDisplayOrientation(orientation);
   }
 
+//-----------------------------------------------------------------------------
+  bool VideoCapturer::ShouldSelectNewVideoSubtype(
+      winrt::hstring selected_subtype,
+      winrt::hstring subtype) {
+    static const std::vector<winrt::hstring> video_subtype_priority_list{
+        MediaEncodingSubtypes::Iyuv(),
+        MediaEncodingSubtypes::Nv12(),
+        MediaEncodingSubtypes::Yv12(),
+        MediaEncodingSubtypes::Yuy2(),
+        MediaEncodingSubtypes::Mjpg(),
+        MediaEncodingSubtypes::Rgb24(),
+        MediaEncodingSubtypes::Argb32()};
+
+    size_t selected_subtype_priority = video_subtype_priority_list.size();
+    size_t subtype_priority = video_subtype_priority_list.size();
+
+    for (size_t i = 0; i < video_subtype_priority_list.size(); i++) {
+      if (_wcsicmp(video_subtype_priority_list[i].c_str(), selected_subtype.c_str()) == 0) {
+        selected_subtype_priority = i;
+        break;
+      }
+    }
+
+    for (size_t i = 0; i < video_subtype_priority_list.size(); i++) {
+      if (_wcsicmp(video_subtype_priority_list[i].c_str(), subtype.c_str()) == 0) {
+        subtype_priority = i;
+        break;
+      }
+    }
+
+    return selected_subtype_priority > subtype_priority;
+  }
+
   //-----------------------------------------------------------------------------
   bool VideoCapturer::Start(const cricket::VideoFormat& capture_format) noexcept
   {
     rtc::CritScope cs(&apiCs_);
 
-    winrt::hstring subtype = CaptureDevice::GetVideoSubtype(capture_format.fourcc);
-    if (subtype.empty()) {
-      RTC_LOG(LS_ERROR) <<
-        "The specified raw video format is not supported on this platform.";
-      return false;
+    winrt::hstring preferred_subtype;
+    if (capture_format.fourcc != 0) {
+      preferred_subtype = CaptureDevice::GetVideoSubtype(capture_format.fourcc);
+      if (preferred_subtype.empty()) {
+        RTC_LOG(LS_WARNING)
+            << "The specified raw video format is not supported "
+               "on this platform.";
+        return false;
+      }
     }
-    if (_wcsicmp(subtype.c_str(),
-      MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
-      // MJPEG format is decoded internally by MF engine to NV12
-      subtype = MediaEncodingSubtypes::Nv12();
-    }
-
-    media_encoding_profile_ = MediaEncodingProfile();
-    media_encoding_profile_.Audio(nullptr);
-    media_encoding_profile_.Container(nullptr);
-    media_encoding_profile_.Video(VideoEncodingProperties::CreateUncompressed(
-      subtype, capture_format.width, capture_format.height));
-    media_encoding_profile_.Video().FrameRate().Numerator(VideoFormat::IntervalToFps(capture_format.interval));
-    media_encoding_profile_.Video().FrameRate().Denominator(1);
 
     video_encoding_properties_ = nullptr;
+    winrt::Windows::Media::MediaProperties::IVideoEncodingProperties
+        preferred_video_encoding_properties = nullptr;
     int min_width_diff = INT_MAX;
     int min_height_diff = INT_MAX;
     int min_fps_diff = INT_MAX;
     auto mediaCapture = device_->GetMediaCapture();
     auto streamProperties =
-      mediaCapture.get().VideoDeviceController().GetAvailableMediaStreamProperties(
-        MediaStreamType::VideoRecord);
+        mediaCapture.get() .VideoDeviceController()
+            .GetAvailableMediaStreamProperties(MediaStreamType::VideoRecord);
     for (unsigned int i = 0; i < streamProperties.Size(); i++) {
       IVideoEncodingProperties prop;
       streamProperties.GetAt(i).as(prop);
 
-      if (capture_format.fourcc != FOURCC_MJPG &&
-        _wcsicmp(prop.Subtype().c_str(), subtype.c_str()) != 0 ||
-        capture_format.fourcc == FOURCC_MJPG &&
-        _wcsicmp(prop.Subtype().c_str(),
-          MediaEncodingSubtypes::Mjpg().c_str()) != 0) {
-        continue;
-      }
-
       int width_diff = abs(static_cast<int>(prop.Width() - capture_format.width));
       int height_diff = abs(static_cast<int>(prop.Height() - capture_format.height));
       int prop_fps = static_cast<int>(
-        (static_cast<float>(prop.FrameRate().Numerator()) /
-          static_cast<float>(prop.FrameRate().Denominator())));
+          (static_cast<float>(prop.FrameRate().Numerator()) /
+           static_cast<float>(prop.FrameRate().Denominator())));
       int fps_diff = abs(static_cast<int>(prop_fps - VideoFormat::IntervalToFps(capture_format.interval)));
+
+      if (video_encoding_properties_ != nullptr &&
+          _wcsicmp(video_encoding_properties_.Subtype().c_str(), prop.Subtype().c_str()) != 0) {
+        if (ShouldSelectNewVideoSubtype(video_encoding_properties_.Subtype(), prop.Subtype())) {
+          min_width_diff = INT_MAX;
+          min_height_diff = INT_MAX;
+          min_fps_diff = INT_MAX;
+        } else {
+          continue;
+        }
+      }
 
       if (width_diff < min_width_diff) {
         video_encoding_properties_ = prop;
+        if (_wcsicmp(preferred_subtype.c_str(), prop.Subtype().c_str()) == 0)
+          preferred_video_encoding_properties = prop;
         min_width_diff = width_diff;
         min_height_diff = height_diff;
         min_fps_diff = fps_diff;
-      }
-      else if (width_diff == min_width_diff) {
+      } else if (width_diff == min_width_diff) {
         if (height_diff < min_height_diff) {
           video_encoding_properties_ = prop;
+          if (_wcsicmp(preferred_subtype.c_str(), prop.Subtype().c_str()) == 0)
+            preferred_video_encoding_properties = prop;
           min_height_diff = height_diff;
           min_fps_diff = fps_diff;
-        }
-        else if (height_diff == min_height_diff) {
+        } else if (height_diff == min_height_diff) {
           if (fps_diff < min_fps_diff) {
             video_encoding_properties_ = prop;
+            if (_wcsicmp(preferred_subtype.c_str(), prop.Subtype().c_str()) == 0)
+              preferred_video_encoding_properties = prop;
             min_fps_diff = fps_diff;
           }
         }
       }
     }
-    try {
-      ApplyDisplayOrientation(display_orientation_->Orientation());
-      device_->StartCapture(media_encoding_profile_,
-        video_encoding_properties_, mrc_enabled_);
-    }
-    catch (winrt::hresult_error const& e) {
-      RTC_LOG(LS_ERROR) << "Failed to start capture. "
-        << rtc::ToUtf8(e.message().c_str());
+
+    if (video_encoding_properties_ == nullptr) {
+      RTC_LOG(LS_ERROR) << "Video encoding properties not found.";
       return false;
     }
 
-    SetCaptureFormat(&capture_format);
-    SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState::kLive);
+    if (preferred_video_encoding_properties != nullptr)
+      video_encoding_properties_ = preferred_video_encoding_properties;
+
+    media_encoding_profile_ = MediaEncodingProfile();
+    media_encoding_profile_.Audio(nullptr);
+    media_encoding_profile_.Container(nullptr);
+    if (_wcsicmp(video_encoding_properties_.Subtype().c_str(),
+                 MediaEncodingSubtypes::Mjpg().c_str()) == 0) {
+      // MJPEG format is decoded internally by MF engine to NV12
+      media_encoding_profile_.Video(VideoEncodingProperties::CreateUncompressed(
+          MediaEncodingSubtypes::Nv12(), video_encoding_properties_.Width(),
+          video_encoding_properties_.Height()));
+    } else {
+      media_encoding_profile_.Video(VideoEncodingProperties::CreateUncompressed(
+          video_encoding_properties_.Subtype(),
+          video_encoding_properties_.Width(),
+          video_encoding_properties_.Height()));
+    }
+    media_encoding_profile_.Video().FrameRate().Numerator(
+        video_encoding_properties_.FrameRate().Numerator());
+    media_encoding_profile_.Video().FrameRate().Denominator(
+        video_encoding_properties_.FrameRate().Denominator());
+
+    try {
+      ApplyDisplayOrientation(display_orientation_->Orientation());
+      device_->StartCapture(media_encoding_profile_, video_encoding_properties_, mrc_enabled_);
+    } catch (winrt::hresult_error const& e) {
+      RTC_LOG(LS_ERROR) << "Failed to start capture. " << rtc::ToUtf8(e.message().c_str());
+      return false;
+    }
+
+    RTC_LOG(LS_INFO) << "==== Selected Format " << " "
+                     << video_encoding_properties_.Width() << "x"
+                     << video_encoding_properties_.Height() << " "
+                     << video_encoding_properties_.FrameRate().Numerator()  << "/"
+                     << video_encoding_properties_.FrameRate().Denominator() << " "
+                     << rtc::ToUtf8(video_encoding_properties_.Subtype().c_str());
+
     return true;
   }
 
@@ -1074,22 +1109,6 @@ namespace webrtc
         << rtc::ToUtf8(e.message().c_str());
       return;
     }
-    SetCaptureFormat(nullptr);
-    SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState::kEnded);
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCapturer::SetCaptureFormat(const cricket::VideoFormat* format) noexcept
-  {
-    rtc::CritScope cs(&apiCs_);
-    capture_format_.reset(format ? new cricket::VideoFormat(*format) : NULL);
-  }
-
-  //-----------------------------------------------------------------------------
-  void VideoCapturer::SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState state) noexcept
-  {
-    rtc::CritScope cs(&apiCs_);
-    state_ = state;
   }
 
   //-----------------------------------------------------------------------------

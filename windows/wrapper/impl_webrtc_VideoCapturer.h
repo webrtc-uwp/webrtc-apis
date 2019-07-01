@@ -80,11 +80,10 @@ namespace webrtc
       winrt::Windows::Graphics::Display::DisplayOrientations orientation) override;
 
   private:
+    bool ShouldSelectNewVideoSubtype(winrt::hstring selected_subtype,
+                                     winrt::hstring subtype);
     bool Start(const cricket::VideoFormat& capture_format) noexcept;
     void Stop() noexcept;
-
-    void SetCaptureFormat(const cricket::VideoFormat* format) noexcept;
-    void SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState state) noexcept;
 
     // Overrides from CaptureDeviceListener
     virtual void OnIncomingFrame(
@@ -111,9 +110,6 @@ namespace webrtc
     IVideoCapturerSubscriptionPtr defaultSubscription_;
 
     std::string id_;
-    std::unique_ptr<cricket::VideoFormat> capture_format_;
-
-    rtc::AdaptedVideoTrackSource::SourceState state_ {rtc::AdaptedVideoTrackSource::SourceState::kInitializing};
 
     char* deviceUniqueId_ { nullptr };
     rtc::CriticalSection apiCs_;
