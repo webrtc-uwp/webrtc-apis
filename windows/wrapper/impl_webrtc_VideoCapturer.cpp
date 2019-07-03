@@ -932,6 +932,13 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
+  rtc::AdaptedVideoTrackSource::SourceState VideoCapturer::state() const
+  {
+    rtc::CritScope cs(&apiCs_);
+    return state_;
+  }
+
+  //-----------------------------------------------------------------------------
   bool VideoCapturer::remote() const
   {
     return false;
@@ -1085,7 +1092,8 @@ namespace webrtc
       return false;
     }
 
-    RTC_LOG(LS_INFO) << "==== Selected Format " << " "
+    SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState::kLive);
+    RTC_LOG(LS_INFO) << "Selected Video Capturing Format: " << " "
                      << video_encoding_properties_.Width() << "x"
                      << video_encoding_properties_.Height() << " "
                      << video_encoding_properties_.FrameRate().Numerator()  << "/"
@@ -1109,6 +1117,7 @@ namespace webrtc
         << rtc::ToUtf8(e.message().c_str());
       return;
     }
+    SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState::kEnded);
   }
 
   //-----------------------------------------------------------------------------
@@ -1214,12 +1223,20 @@ namespace webrtc
     if (device_ != nullptr && device_->CaptureStarted()) {
       try {
         device_->StopCapture();
-      } catch (winrt::hresult_error const& ex) {
+      }
+      catch (winrt::hresult_error const& ex) {
         RTC_LOG(LS_WARNING) <<
           "Capture device failed: failed to stop ex='"
           << rtc::ToUtf8(ex.message().c_str()) << "'";
       }
     }
+  }
+
+  //-----------------------------------------------------------------------------
+  void VideoCapturer::SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState state) noexcept
+  {
+    rtc::CritScope cs(&apiCs_);
+    state_ = state;
   }
 
   //-----------------------------------------------------------------------------

@@ -85,6 +85,8 @@ namespace webrtc
     bool Start(const cricket::VideoFormat& capture_format) noexcept;
     void Stop() noexcept;
 
+    void SetCaptureState(rtc::AdaptedVideoTrackSource::SourceState state) noexcept;
+
     // Overrides from CaptureDeviceListener
     virtual void OnIncomingFrame(
       uint8_t* video_frame,
@@ -110,6 +112,8 @@ namespace webrtc
     IVideoCapturerSubscriptionPtr defaultSubscription_;
 
     std::string id_;
+
+    rtc::AdaptedVideoTrackSource::SourceState state_ {rtc::AdaptedVideoTrackSource::SourceState::kInitializing};
 
     char* deviceUniqueId_ { nullptr };
     rtc::CriticalSection apiCs_;
