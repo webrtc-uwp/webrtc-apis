@@ -50,6 +50,8 @@ namespace org
 
     struct AudioBufferConfiguration;
     struct AudioFrame;
+    struct CustomAudioPlayoutDeviceInfo;
+    struct CustomAudioRecordingDeviceInfo;
     struct VideoFormat;
     struct RTCOAuthCredential;
     struct RTCIceServer;
@@ -78,6 +80,8 @@ namespace org
     struct WebRtcFactoryConfiguration;
     interface AudioData;
     interface AudioBuffer;
+    interface CustomAudioDevice;
+    interface CustomVideoCapturerFactory;
     interface RTCError;
     interface RTCPeerConnection;
     interface RTCDtmfSender;
@@ -125,6 +129,8 @@ namespace org
     typedef std::list<RTCRtpReceiver> RTCRtpReceivers;
     typedef std::list<RTCRtpTransceiver> RTCRtpTransceivers;
     typedef std::list<RTCIceCandidate> RTCIceCandidates;
+    typedef std::list<CustomAudioPlayoutDeviceInfo> CustomAudioPlayoutDeviceInfoList;
+    typedef std::list<CustomAudioRecordingDeviceInfo> CustomAudioRecordingDeviceInfoList;
 
 
     [dictionary]
@@ -223,6 +229,17 @@ namespace org
       /// events. If not specified then the GUI queue is used.
       /// </summary>
       EventQueue videoFrameProcessingQueue;
+
+      /// <summary>
+      /// Gets or sets the default queue for processing audio frame
+      /// events related to custom audio processing.
+      /// </summary>
+      EventQueue customAudioQueue;
+      /// <summary>
+      /// Gets or sets the default queue for processing video frame
+      /// events related to custom video processing.
+      /// </summary>
+      EventQueue customVideoQueue;
     };
 
     /// <summary>

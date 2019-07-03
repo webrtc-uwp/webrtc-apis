@@ -48,6 +48,14 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_wrapperDispose
 }
 
 //------------------------------------------------------------------------------
+org_webRtc_VideoData_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_wrapperCreate_VideoData(uint64_t size)
+{
+  auto wrapperThis = wrapper::org::webRtc::VideoData::wrapper_create();
+  wrapperThis->wrapper_init_org_webRtc_VideoData((size));
+  return wrapper::org_webRtc_VideoData_wrapperToHandle(wrapperThis);
+}
+
+//------------------------------------------------------------------------------
 bool_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_is8BitColorSpace(org_webRtc_VideoData_t wrapperThisHandle)
 {
   auto wrapperThis = wrapper::org_webRtc_VideoData_wrapperFromHandle(wrapperThisHandle);
@@ -91,6 +99,28 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data8bit(
 }
 
 //------------------------------------------------------------------------------
+void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_set_data8bit(
+  org_webRtc_VideoData_t wrapperThisHandle,
+  uintptr_t buffer,
+  binary_size_t size)
+{
+  auto wrapperThis = wrapper::org_webRtc_VideoData_wrapperFromHandle(wrapperThisHandle);
+
+  auto data = wrapperThis->get_mutableData8bit();
+  auto actualSize = wrapperThis->get_size();
+  size = size > actualSize ? actualSize : size;
+
+  if (!data)
+    return;
+
+  auto ptr = reinterpret_cast<uint8_t *>(buffer);
+  if (!ptr)
+    return;
+
+  memcpy(data, ptr, sizeof(uint8_t)*size);
+}
+
+//------------------------------------------------------------------------------
 void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data16bit(
   org_webRtc_VideoData_t wrapperThisHandle,
   uintptr_t buffer,
@@ -112,6 +142,27 @@ void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_get_data16bit(
   memcpy(ptr, data, sizeof(uint16_t)*size);
 }
 
+//------------------------------------------------------------------------------
+void ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_VideoData_set_data16bit(
+  org_webRtc_VideoData_t wrapperThisHandle,
+  uintptr_t buffer,
+  binary_size_t size)
+{
+  auto wrapperThis = wrapper::org_webRtc_VideoData_wrapperFromHandle(wrapperThisHandle);
+
+  auto data = wrapperThis->get_mutableData16bit();
+  auto actualSize = wrapperThis->get_size();
+  size = size > actualSize ? actualSize : size;
+
+  if (!data)
+    return;
+
+  auto ptr = reinterpret_cast<uint16_t *>(buffer);
+  if (!ptr)
+    return;
+
+  memcpy(data, ptr, sizeof(uint16_t)*size);
+}
 
 namespace wrapper
 {

@@ -55,6 +55,7 @@ namespace webrtc
   struct RtpParameters;
 
   class AudioBuffer;
+  class AudioDeviceBuffer;
   class AudioFrame;
   class RtpSource;
   class AudioTrackInterface;

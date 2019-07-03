@@ -9,6 +9,7 @@
 #include "impl_org_webRtc_VideoFrameNativeBuffer.h"
 #include "impl_org_webRtc_VideoFramePlanarYuvBuffer.h"
 #include "impl_org_webRtc_MediaSample.h"
+#include "impl_org_webRtc_VideoFrameBuffer.h"
 #include "impl_org_webRtc_enums.h"
 
 #include "impl_org_webRtc_pre_include.h"
@@ -79,11 +80,41 @@ wrapper::org::webRtc::VideoFramePlanarYuvBufferPtr wrapper::impl::org::webRtc::V
 }
 
 //------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toARGB() noexcept
+{
+  return UseVideoFrameBuffer::toARGB(native_.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toBGRA() noexcept
+{
+  return UseVideoFrameBuffer::toBGRA(native_.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toABGR() noexcept
+{
+  return UseVideoFrameBuffer::toABGR(native_.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGBA() noexcept
+{
+  return UseVideoFrameBuffer::toRGBA(native_.get());
+}
+
+//------------------------------------------------------------------------------
+wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGB24() noexcept
+{
+  return UseVideoFrameBuffer::toRGB24(native_.get());
+}
+
+//------------------------------------------------------------------------------
 wrapper::org::webRtc::VideoFrameBufferType wrapper::impl::org::webRtc::VideoFrameNativeBuffer::get_type() noexcept
 {
   ZS_ASSERT(native_);
   if (!native_)
-    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_Native;
+    return wrapper::org::webRtc::VideoFrameBufferType::VideoFrameBufferType_native;
   return UseEnum::toWrapper(native_->type());
 }
 

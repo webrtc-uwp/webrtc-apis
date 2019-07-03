@@ -925,40 +925,64 @@ namespace org
       /// <summary>
       /// Active voice activity found.
       /// </summary>
-      Active = 0,
+      active = 0,
       /// <summary>
       /// Passive voice activity found.
       /// </summary>
-      Passive = 1,
+      passive = 1,
       /// <summary>
       /// Voice activity state is unknown.
       /// </summary>
-      Unknown = 2
+      unknown = 2
     };
 
     enum Band
     {
-      Band0To8kHz = 0,
-      Band8To16kHz = 1,
-      Band16To24kHz = 2
+      band0To8kHz = 0,
+      band8To16kHz = 1,
+      band16To24kHz = 2
     };
 
     enum RuntimeSetting
     {
-      NotSpecified,
-      CapturePreGain,
-      CustomRenderProcessingRuntimeSetting
+      notSpecified,
+      capturePreGain,
+      customRenderProcessingRuntimeSetting
     };
 
     enum VideoFrameBufferType
     {
-      Native,
-      I420,
-      I420A,
-      I444,
-      I010
+      native,
+      i420,
+      i420A,
+      i444,
+      i010
+    };
+
+    enum CustomAudioRequestState
+    {
+      initialize,
+      start,
+      stop,
+      terminate
+    };
+
+    enum CustomAudioState
+    {
+      unprepared,
+      initialized,
+      started,
+      stopped,
+      terminated
+    };
+
+    enum VideoRotation
+    {
+      rotation0 = 0,
+      rotation90 = 90,
+      rotation180 = 180,
+      rotation270 = 270
     };
 
   }
 }
-

@@ -1,0 +1,135 @@
+/*
+
+ Copyright (c) 2017, Optical Tone Ltd.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ The views and conclusions contained in the software and documentation are those
+ of the authors and should not be interpreted as representing official policies,
+ either expressed or implied, of the FreeBSD Project.
+ 
+ */
+
+
+namespace org
+{
+  namespace webRtc
+  {
+    [dictionary]
+    struct CustomVideoCapturerParameters
+    {
+      string id;
+      bool isScreencast;
+      VideoFormats supportedFormats;
+    };
+
+    /// <summary>
+    /// This event is called to update the start the video engine.
+    /// <summary>
+    [disposable]
+    interface CustomVideoCapturerStartEvent
+    {
+      [constructor, delete, default]
+      void CustomVideoCapturerStartEvent();
+
+      /// <summary>
+      /// Gets the format expected for the start of video.
+      /// <summary>
+      [getter]
+      VideoFormat format;
+    };
+
+    [disposable]
+    interface CustomVideoCapturer
+    {
+      [constructor, default, delete]
+      void CustomVideoCapturer();
+
+      [static]
+      CustomVideoCapturer create(CustomVideoCapturerParameters params);
+
+      /// <summary>
+      /// Gets or sets the current state of the custom audio capturer.
+      /// </summary>
+      [getter, setter]
+      VideoCaptureState currentState;
+
+      /// <summary>
+      /// Call this method when a frame has been captured and converted to a
+      /// VideoFrame. The origWidth and origHeight are used only to produce
+      /// stats.
+      /// </summary>
+      void notifyFrame(
+        VideoFrameBuffer frame,
+        int64 timestamp,
+        VideoRotation rotation,
+        int origWidth,
+        int origHeight
+        );
+
+      [event]
+      void onStart(CustomVideoCapturerStartEvent evt);
+
+      [event]
+      void onStop();
+    };
+
+    /// <summary>
+    /// This event is called to create the video capturer.
+    /// <summary>
+    [disposable]
+    interface CustomVideoCapturerCreateEvent
+    {
+      [constructor, delete, default]
+      void CustomVideoCapturerCreateEvent();
+
+      /// <summary>
+      /// Gets the device id to create.
+      /// <summary>
+      [getter]
+      string deviceId;
+
+      /// <summary>
+      /// Gets the device name to create.
+      /// <summary>
+      [getter]
+      string deviceName;
+
+      [getter, setter]
+      CustomVideoCapturer createdCapturer;
+    };
+   
+    [disposable]
+    interface CustomVideoCapturerFactory
+    {
+      [constructor, default, delete]
+      void CustomVideoCapturerFactory();
+
+      [static]
+      CustomVideoCapturerFactory create();
+
+      [event]
+      void onCreateCustomVideoCapturer(CustomVideoCapturerCreateEvent evt);
+    };
+ 
+  }
+}

@@ -39,6 +39,13 @@ namespace Org
             AudioData();
 
             /// <summary>
+            /// Contructs an audio frame. <summary> </summary>
+            /// </summary>
+            [method_name("AudioDataWithSize")]
+            [default_overload]
+            AudioData(UInt64 Size);
+
+            /// <summary>
             /// Cast from Org.WebRtc.IAudioData to Org.WebRtc.AudioData
             /// </summary>
             [default_overload]

@@ -5,6 +5,7 @@ using bool_t = System.Boolean;
 using box_bool_t = System.IntPtr;
 using std_list_uint8_t_t = System.IntPtr;
 using std_list_uint16_t_t = System.IntPtr;
+using uint64_t = System.UInt64;
 
 namespace Org
 {
@@ -27,10 +28,19 @@ namespace Org
             byte[] GetData8Bit();
 
             /// <summary>
+            /// Sets the video data.
+            /// </summary>
+            void SetData8Bit(byte[] buffer);
+
+            /// <summary>
             /// Gets the video 8 bit color space data. <summary>
             /// </summary>
             System.UInt16[] GetData16Bit();
 
+            /// <summary>
+            /// Sets the video data.
+            /// </summary>
+            void SetData16Bit(System.UInt16[] buffer);
         }
 
         public sealed class VideoData : System.IDisposable,
@@ -101,6 +111,12 @@ namespace Org
             // Org.WebRtc.VideoData
             //------------------------------------------------------------------
             //------------------------------------------------------------------
+            
+            public VideoData(ulong size)
+            {
+                uint64_t wrapper_c_size = (size);
+                this.native_ = Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_wrapperCreate_VideoData(wrapper_c_size);
+            }
 
             public bool Is8BitColorSpace
             {
@@ -147,6 +163,16 @@ namespace Org
                 return buffer;
             }
 
+
+            /// <summary>
+            /// Sets the video data.
+            /// </summary>
+            public void SetData8Bit(byte[] buffer)
+            {
+                Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_set_data8bit(this.native_, buffer, (System.UInt64)(buffer.Length));
+            }
+
+
             /// <summary>
             /// Gets or sets the video 8 bit color space data.
             /// </summary>
@@ -161,6 +187,14 @@ namespace Org
                 Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_get_data16bit(this.native_, buffer, size);
 
                 return buffer;
+            }
+
+            /// <summary>
+            /// Sets the video data.
+            /// </summary>
+            public void SetData16Bit(System.UInt16[] buffer)
+            {
+                Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_set_data16bit(this.native_, buffer, (System.UInt64)(buffer.Length));
             }
 
             #endregion // Org.WebRtc.VideoData
