@@ -497,8 +497,9 @@ wrapper::org::webRtc::VideoDataPtr WrapperImplType::toARGB(NativeType *native) n
   if (!i420Frame)
     return {};
 
-  size_t stride = (sizeof(uint8_t) * 4);
-  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  size_t bytesPerPixel = (sizeof(uint8_t) * 4);
+  size_t stride = bytesPerPixel * i420Frame->width();
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * bytesPerPixel);
   std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
 
   libyuv::I420ToARGB(
@@ -523,8 +524,9 @@ wrapper::org::webRtc::VideoDataPtr WrapperImplType::toBGRA(NativeType *native) n
   if (!i420Frame)
     return {};
 
-  size_t stride = (sizeof(uint8_t) * 4);
-  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  size_t bytesPerPixel = (sizeof(uint8_t) * 4);
+  size_t stride = bytesPerPixel * i420Frame->width();
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * bytesPerPixel);
   std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
 
   libyuv::I420ToBGRA(
@@ -549,8 +551,9 @@ wrapper::org::webRtc::VideoDataPtr WrapperImplType::toABGR(NativeType *native) n
   if (!i420Frame)
     return {};
 
-  size_t stride = (sizeof(uint8_t) * 4);
-  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  size_t bytesPerPixel = (sizeof(uint8_t) * 4);
+  size_t stride = bytesPerPixel * i420Frame->width();
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * bytesPerPixel);
   std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
 
   libyuv::I420ToABGR(
@@ -575,8 +578,9 @@ wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGBA(NativeType *native) n
   if (!i420Frame)
     return {};
 
-  size_t stride = (sizeof(uint8_t) * 4);
-  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  size_t bytesPerPixel = (sizeof(uint8_t) * 4);
+  size_t stride = bytesPerPixel * i420Frame->width();
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * bytesPerPixel);
   std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
 
   libyuv::I420ToRGBA(
@@ -601,8 +605,9 @@ wrapper::org::webRtc::VideoDataPtr WrapperImplType::toRGB24(NativeType *native) 
   if (!i420Frame)
     return {};
 
-  size_t stride = (sizeof(uint8_t) * 3);
-  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * stride);
+  size_t bytesPerPixel = (sizeof(uint8_t) * 3);
+  size_t stride = bytesPerPixel * i420Frame->width();
+  size_t size = SafeInt<size_t>(i420Frame->width() * i420Frame->height() * bytesPerPixel);
   std::unique_ptr<uint8_t> buffer(new uint8_t[size]);
 
   libyuv::I420ToRGB24(
