@@ -38,12 +38,12 @@ using ::std::map;
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::EventQueue::WrapperImplType, WrapperImplType);
 ZS_DECLARE_TYPEDEF_PTR(WrapperImplType::WrapperType, WrapperType);
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 wrapper::impl::org::webRtc::EventQueue::EventQueue() noexcept
 {
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::wrapper_create() noexcept
 {
   auto pThis = make_shared<wrapper::impl::org::webRtc::EventQueue>();
@@ -57,7 +57,7 @@ wrapper::impl::org::webRtc::EventQueue::~EventQueue() noexcept
   thisWeak_.reset();
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::getOrCreateThreadQueueByName(String queueName) noexcept
 {
   auto result = make_shared<WrapperImplType>();
@@ -66,7 +66,7 @@ wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::getOrCreat
   return result;
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::createThreadQueuePool(
   String queueName,
   uint64_t minimumNumberOfThreads
@@ -78,7 +78,7 @@ wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::createThre
   return result;
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::getDefaultForUi() noexcept
 {
   auto result = make_shared<WrapperImplType>();
@@ -89,6 +89,7 @@ wrapper::org::webRtc::EventQueuePtr wrapper::org::webRtc::EventQueue::getDefault
 
 #ifdef CPPWINRT_VERSION
 
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWrapper(winrt::Windows::UI::Core::CoreDispatcher queue) noexcept
 {  
   if (!queue)
@@ -99,6 +100,7 @@ wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWr
   return result;
 }
 
+//-----------------------------------------------------------------------------
 winrt::Windows::UI::Core::CoreDispatcher wrapper::impl::org::webRtc::EventQueue::toNative_winrtCoreDispatcher(WrapperTypePtr queue) noexcept
 {            
   if (!queue)
@@ -109,6 +111,7 @@ winrt::Windows::UI::Core::CoreDispatcher wrapper::impl::org::webRtc::EventQueue:
   return converted->coreDispatcher_;
 }
 
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWrapper(winrt::Windows::System::DispatcherQueue queue) noexcept
 {
   if (!queue)
@@ -119,6 +122,7 @@ wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWr
   return result;
 }
 
+//-----------------------------------------------------------------------------
 winrt::Windows::System::DispatcherQueue wrapper::impl::org::webRtc::EventQueue::toNative_winrtDispatcherQueue(WrapperTypePtr queue) noexcept
 {
   if (!queue)
@@ -131,6 +135,7 @@ winrt::Windows::System::DispatcherQueue wrapper::impl::org::webRtc::EventQueue::
 
 #endif // CPPWINRT_VERSION
 
+//-----------------------------------------------------------------------------
 wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWrapper(::zsLib::IMessageQueuePtr queue) noexcept
 {
   if (!queue)
@@ -141,6 +146,7 @@ wrapper::org::webRtc::EventQueuePtr wrapper::impl::org::webRtc::EventQueue::toWr
   return result;
 }
 
+//-----------------------------------------------------------------------------
 ::zsLib::IMessageQueuePtr wrapper::impl::org::webRtc::EventQueue::toNative(wrapper::org::webRtc::EventQueuePtr queue) noexcept
 {
   if (!queue)
