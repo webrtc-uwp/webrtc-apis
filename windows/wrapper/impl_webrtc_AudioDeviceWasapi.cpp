@@ -512,6 +512,9 @@ namespace webrtc
             "playBlockSize_     : %d", m_AudioDevice->playBlockSize_);
           WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, m_AudioDevice->id_,
             "playChannels_      : %d", m_AudioDevice->playChannels_);
+
+          // Set the flag not to enable upmix
+          m_AudioDevice->enableUpmix_ = false;
         } else {
           // IsFormatSupported failed, device is probably in surround mode.
           // Firstly generate mix format to initialize media engine
