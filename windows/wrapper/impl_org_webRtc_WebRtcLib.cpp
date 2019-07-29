@@ -142,17 +142,10 @@ bool wrapper::org::webRtc::WebRtcLib::startMediaTrace(
 }
 
 //------------------------------------------------------------------------------
-::zsLib::Milliseconds wrapper::org::webRtc::WebRtcLib::get_ntpServerTime() noexcept
+bool wrapper::org::webRtc::WebRtcLib::stopMediaTrace() noexcept
 {
   auto singleton = WrapperImplType::singleton();
-  return singleton->actual_get_ntpServerTime();
-}
-
-//------------------------------------------------------------------------------
-void wrapper::org::webRtc::WebRtcLib::set_ntpServerTime(::zsLib::Milliseconds value) noexcept
-{
-  auto singleton = WrapperImplType::singleton();
-  singleton->actual_set_ntpServerTime(value);
+  return singleton->actual_stopMediaTrace();
 }
 
 //------------------------------------------------------------------------------
@@ -213,8 +206,6 @@ void WrapperImplType::actual_setup(wrapper::org::webRtc::WebRtcLibConfigurationP
     customVideoQueue_ = nativeCustomVideoQueue ? nativeCustomVideoQueue : actual_delegateQueue();
   }
 
-  rtc::tracing::SetupInternalTracer();
-
   if (setupComplete_.exchange(true)) {
     ZS_ASSERT_FAIL("already setup WebRtc wrapper");
     return;
@@ -229,13 +220,12 @@ void WrapperImplType::actual_startMediaTracing() noexcept
   // prevent multiple calls to start or stop simultaneously
   if (isTracingStartOrStopping_.test_and_set()) return;
 
-  if (isTracing_.exchange(false)) {
+  if (isTracing_.exchange(true)) {
     isTracingStartOrStopping_.clear();
     return;
   }
 
-  //rtc::tracing::StartInternalCapture();
-#pragma ZS_BUILD_NOTE("TODO","(mosa) actual_startMediaTrace no options")
+  rtc::tracing::SetupInternalTracer();
 
   isTracingStartOrStopping_.clear();
 }
@@ -248,12 +238,12 @@ void WrapperImplType::actual_stopMediaTracing() noexcept
   // prevent multiple calls to start or stop simultaneously
   if (isTracingStartOrStopping_.test_and_set()) return;
 
-  if (isTracing_.exchange(false)) {
+  if (!isTracing_.exchange(false)) {
     isTracingStartOrStopping_.clear();
     return;
   }
 
-  rtc::tracing::StopInternalCapture();
+  rtc::tracing::ShutdownInternalTracer();
 
   isTracingStartOrStopping_.clear();
 }
@@ -273,8 +263,7 @@ bool WrapperImplType::actual_startMediaTrace(String filename) noexcept
   // prevent multiple calls to start or stop simultaneously
   if (isTracingStartOrStopping_.test_and_set()) return false;
 
-  ZS_ASSERT(!isTracing_);
-  if (isTracing_.exchange(true)) {
+  if (!isTracing_.load()) {
     isTracingStartOrStopping_.clear();
     return false;
   }
@@ -282,7 +271,8 @@ bool WrapperImplType::actual_startMediaTrace(String filename) noexcept
   rtc::tracing::StartInternalCapture(filename.c_str());
 
   isTracingStartOrStopping_.clear();
-  return false;
+
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -296,39 +286,36 @@ bool WrapperImplType::actual_startMediaTrace(
   // prevent multiple calls to start or stop simultaneously
   if (isTracingStartOrStopping_.test_and_set()) return false;
 
-  ZS_ASSERT(!isTracing_);
-  if (isTracing_.exchange(true)) {
+  if (!isTracing_.load()) {
     isTracingStartOrStopping_.clear();
     return false;
   }
 
-#pragma ZS_BUILD_NOTE("TODO","(mosa) actual_startMediaTrace host/port")
+  // There's no implementation yet for socket based tracing
 
   isTracingStartOrStopping_.clear();
-  return false;
-}
 
-
-//------------------------------------------------------------------------------
-::zsLib::Milliseconds WrapperImplType::actual_get_ntpServerTime() noexcept
-{
-  if (!actual_checkSetup()) return ::zsLib::Milliseconds();
-  zsLib::AutoLock lock(lock_);
-  return ntpServerTime_;
+  return true;
 }
 
 //------------------------------------------------------------------------------
-void WrapperImplType::actual_set_ntpServerTime(::zsLib::Milliseconds value) noexcept
+bool WrapperImplType::actual_stopMediaTrace() noexcept
 {
-  if (!actual_checkSetup()) return;
+  if (!actual_checkSetup()) return false;
 
-  {
-    zsLib::AutoLock lock(lock_);
-    ntpServerTime_ = value;
+  // prevent multiple calls to start or stop simultaneously
+  if (isTracingStartOrStopping_.test_and_set()) return false;
+
+  if (!isTracing_.load()) {
+    isTracingStartOrStopping_.clear();
+    return false;
   }
 
-#pragma ZS_BUILD_NOTE("TODO","(mosa) set the NTP time from the server inside webrtc engine here")
+  rtc::tracing::StopInternalCapture();
 
+  isTracingStartOrStopping_.clear();
+
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -388,12 +375,6 @@ void WrapperImplType::notifySingletonCleanup() noexcept
   if (!actual_checkSetup()) return;
   if (alreadyCleaned_.exchange(true)) return;
 
-  // Add what is needed to shutdown webrtc...
-
-#pragma ZS_BUILD_NOTE("TODO","(mosa) shutdown webrtc engine here")
-
-  rtc::tracing::ShutdownInternalTracer();
-
   rtc::CleanupSSL();
 }
 
@@ -422,9 +403,6 @@ WrapperImplTypePtr WrapperImplType::singleton() noexcept
                                  String,
                                  int
                                  ) noexcept final { return false; }
-
-      ::zsLib::Milliseconds actual_get_ntpServerTime() noexcept final { return zsLib::Milliseconds(); }
-      void actual_set_ntpServerTime(::zsLib::Milliseconds) noexcept final {}
 
       bool actual_checkSetup(bool) noexcept final { return false; }
 

@@ -261,15 +261,6 @@ namespace org
       void setup(WebRtcLibConfiguration configuration);
 
       /// <summary>
-      /// Gets or sets the NTP server time discovered in milliseconds since
-      /// NTP epoch. This property must only be set at the actual moment when
-      /// the server time was discovered to ensure the NTP clock is as closed
-      /// to accurate as possible.
-      /// </summary>
-      [static]
-      Milliseconds ntpServerTime;
-
-      /// <summary>
       /// Starts media engine trancing system. The collected traces can be
       /// saved to file or sent to TCP listener. Traces can be visualised
       /// further by importing the data into Chrome browser tool that can be
@@ -291,13 +282,19 @@ namespace org
       /// <summary>
       /// Saves media trace data to the file specified by filename.
       /// </summary>
-      [static]
+      [static, altname(startMediaTraceWithFilename)]
       bool startMediaTrace(string filename);
       /// <summary>
       /// Sends all traced data to TCP listener specified by host name and port.
+	  /// NOTE: Not implemented.
       /// </summary>
       [static, altname(startMediaTraceWithHostPort)]
       bool startMediaTrace(string host, int port);
+      /// <summary>
+      /// Stops media trace.
+      /// </summary>
+      [static]
+      bool stopMediaTrace();
     };
 
   }

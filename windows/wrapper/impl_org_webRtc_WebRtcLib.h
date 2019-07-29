@@ -35,7 +35,6 @@ namespace wrapper {
           std::atomic_flag isTracingStartOrStopping_ {};
           std::atomic_bool isTracing_ {};
           zsLib::Lock lock_;
-          ::zsLib::Milliseconds ntpServerTime_;
           ::zsLib::IMessageQueuePtr audioCaptureFrameProcessingQueue_;
           ::zsLib::IMessageQueuePtr audioRenderFrameProcessingQueue_;
           ::zsLib::IMessageQueuePtr videoFrameProcessingQueue_;
@@ -56,9 +55,7 @@ namespace wrapper {
                                              String host,
                                              int port
                                              ) noexcept;
-
-          virtual ::zsLib::Milliseconds actual_get_ntpServerTime() noexcept;
-          virtual void actual_set_ntpServerTime(::zsLib::Milliseconds value) noexcept;
+          virtual bool actual_stopMediaTrace() noexcept;
 
           // addition methods needed
           virtual bool actual_checkSetup(bool assert = true) noexcept;

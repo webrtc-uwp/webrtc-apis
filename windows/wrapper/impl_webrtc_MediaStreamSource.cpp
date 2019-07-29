@@ -480,8 +480,10 @@ bool MediaStreamSource::makeI420Sample(SampleData &sample)
   }
 
   try {
-
-#pragma ZS_BUILD_NOTE("FIX","(mosa) check if the frame is the correct type before just converting to this frame type")
+    if (sample.frame_->video_frame_buffer().get()->type() != VideoFrameBuffer::Type::kI420) {
+      imageBuffer->Unlock2D();
+      return false;
+    }
 
     // Convert to NV12
     rtc::scoped_refptr<webrtc::PlanarYuv8Buffer> frameBuffer = static_cast<webrtc::PlanarYuv8Buffer*>(sample.frame_->video_frame_buffer().get());

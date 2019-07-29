@@ -285,8 +285,6 @@ void WrapperImplType::notifySourceChanged(UseMediaSourcePtr source)
 //------------------------------------------------------------------------------
 void WrapperImplType::autoAttachSourceToElement()
 {
-#pragma ZS_BUILD_NOTE("VERIFY","(mosa) verify this is correct behaviour (REMOVE IF GOOD)")
-
   if (!native_) return;
 
   UseMediaElementPtr element;
@@ -339,17 +337,8 @@ void WrapperImplType::setupObserver() noexcept
 
     videoObserver_ = std::make_shared<WebrtcVideoObserver>(thisWeak_.lock(), UseWebrtcLib::delegateQueue());
 
-    rtc::VideoSinkWants wants;
-
-#pragma ZS_BUILD_NOTE("TODO","(mosa) you may want to tweak these properties -- not sure")
-
-    // wants.rotation_applied = ;
-    // wants.black_frames = ;
-    // wants.max_pixel_count = ;
-    // wants.target_pixel_count = ;
-    // wants.max_framerate_fps = ;
-
-    converted->AddOrUpdateSink(videoObserver_.get(), wants);
+    // no need to apply any transform on incoming frames - rtc::VidoSinkWants is set to the default value.
+    converted->AddOrUpdateSink(videoObserver_.get(), rtc::VideoSinkWants());
   }
 }
 
