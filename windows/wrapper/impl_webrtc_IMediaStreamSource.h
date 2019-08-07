@@ -49,6 +49,9 @@ namespace webrtc
 
       const char *id_{};
       float frameRateChangeTolerance_ {0.1f};
+      int width_{};
+      int height_{};
+      double framerate_{};
     };
 
     static IMediaStreamSourcePtr create(const CreationProperties &info) noexcept;

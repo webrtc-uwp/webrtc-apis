@@ -59,6 +59,7 @@ using winrt::Windows::Devices::Enumeration::DeviceInformationCollection;
 using winrt::Windows::Devices::Enumeration::Panel;
 using winrt::Windows::Graphics::Display::DisplayOrientations;
 using winrt::Windows::Graphics::Display::DisplayInformation;
+using winrt::Windows::Media::Capture::KnownVideoProfile;
 using winrt::Windows::Media::Capture::MediaCapture;
 using winrt::Windows::Media::Capture::MediaCaptureFailedEventArgs;
 using winrt::Windows::Media::Capture::MediaCaptureFailedEventHandler;
@@ -217,7 +218,7 @@ namespace webrtc
 
     virtual ~CaptureDevice();
 
-    void Initialize(winrt::hstring const& device_id);
+    void Initialize(winrt::hstring const& device_id, int width, int height, double framerate);
 
     void CleanupSink();
 
@@ -269,6 +270,11 @@ namespace webrtc
       media_sink_video_sample_event_registration_token_;
 
     CaptureDeviceListener* capture_device_listener_;
+
+    /// Constraints for video profile selection
+    int width_;
+    int height_;
+    double framerate_;
 
     bool audio_effect_added_;
     bool video_effect_added_;
@@ -358,9 +364,12 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void CaptureDevice::Initialize(winrt::hstring const& device_id) {
+  void CaptureDevice::Initialize(winrt::hstring const& device_id, int width, int height, double framerate) {
     RTC_LOG(LS_INFO) << "CaptureDevice::Initialize";
     device_id_ = device_id;
+    width_ = width;
+    height_ = height;
+    framerate_ = framerate;
   }
 
   //-----------------------------------------------------------------------------
@@ -649,6 +658,34 @@ namespace webrtc
         auto settings = MediaCaptureInitializationSettings();
         settings.VideoDeviceId(device_id_);
 
+        // Find video profile
+        auto profiles = MediaCapture::FindKnownVideoProfiles(device_id_, KnownVideoProfile::VideoConferencing);
+        bool profileFound = false;
+        for (auto&& profile : profiles) {
+          auto descriptions = profile.SupportedRecordMediaDescription();
+          for (auto&& desc : descriptions) {
+            // Apply filters
+            if ((width_ > 0) && (desc.Width() != (uint32_t)width_)) continue;
+            if ((height_ > 0) && (desc.Height() != (uint32_t)height_)) continue;
+            if ((framerate_ > 0.0) && (desc.FrameRate() != framerate_)) continue;
+            
+            settings.VideoProfile(profile);
+            settings.RecordMediaDescription(desc);
+            profileFound = true;
+            break;
+          }
+          if (profileFound) {
+            break;
+          }
+        }
+        if (!profileFound && ((width_ > 0) || (height_ > 0) || (framerate_ > 0.0))) {
+            RTC_LOG(LS_ERROR)
+              << "Failed to find constrained video profile for media capture device "
+              << rtc::ToUtf8(device_id_.c_str());
+            return nullptr;
+        }
+
+        // Open the capture device
         initialize_async_task = Concurrency::create_task([this, media_capture_agile, settings]() {
           return media_capture_agile.get().InitializeAsync(settings).get();
         }).then([this, media_capture_agile](Concurrency::task<void> initTask) {
@@ -901,9 +938,21 @@ namespace webrtc
       return;
     }
 
-    device_ = std::make_shared<CaptureDevice>(this);
+    int width = 0;
+    int height = 0;
+    double framerate = 0.0;
+    if (props.width_ > 0) {
+      width = props.width_;
+    }
+    if (props.height_ > 0) {
+      height = props.height_;
+    }
+    if (props.framerate_ > 0) {
+      framerate = props.framerate_;
+    }
 
-    device_->Initialize(device_id_);
+    device_ = std::make_shared<CaptureDevice>(this);
+    device_->Initialize(device_id_, width, height, framerate);
 
     std::vector<VideoFormat> formats;
     auto mediaCapture = device_->GetMediaCapture();

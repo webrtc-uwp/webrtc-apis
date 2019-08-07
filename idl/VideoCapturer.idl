@@ -100,6 +100,9 @@ namespace org
       string name;
       string id;
       bool enableMrc;
+      int width;
+      int height;
+      double framerate;
     };
 
     [disposable]
