@@ -218,7 +218,8 @@ namespace webrtc
 
     virtual ~CaptureDevice();
 
-    void Initialize(winrt::hstring const& device_id, int width, int height, double framerate);
+    void Initialize(winrt::hstring const& device_id, winrt::hstring const& video_profile_id,
+      int width, int height, double framerate);
 
     void CleanupSink();
 
@@ -263,6 +264,7 @@ namespace webrtc
   private:
     winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture> media_capture_;
     winrt::hstring device_id_;
+    winrt::hstring video_profile_id_;
     winrt::com_ptr<IMFMediaSink> media_sink_;
     winrt::event_token
       media_capture_failed_event_registration_token_;
@@ -364,9 +366,12 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
-  void CaptureDevice::Initialize(winrt::hstring const& device_id, int width, int height, double framerate) {
+  void CaptureDevice::Initialize(winrt::hstring const& device_id,
+      winrt::string const& video_profile_id,
+      int width, int height, double framerate) {
     RTC_LOG(LS_INFO) << "CaptureDevice::Initialize";
     device_id_ = device_id;
+    video_profile_id_ = video_profile_id;
     width_ = width;
     height_ = height;
     framerate_ = framerate;
@@ -659,30 +664,63 @@ namespace webrtc
         settings.VideoDeviceId(device_id_);
 
         // Find video profile
-        auto profiles = MediaCapture::FindKnownVideoProfiles(device_id_, KnownVideoProfile::VideoConferencing);
-        bool profileFound = false;
-        for (auto&& profile : profiles) {
-          auto descriptions = profile.SupportedRecordMediaDescription();
-          for (auto&& desc : descriptions) {
-            // Apply filters
-            if ((width_ > 0) && (desc.Width() != (uint32_t)width_)) continue;
-            if ((height_ > 0) && (desc.Height() != (uint32_t)height_)) continue;
-            if ((framerate_ > 0.0) && (desc.FrameRate() != framerate_)) continue;
-            
-            settings.VideoProfile(profile);
-            settings.RecordMediaDescription(desc);
-            profileFound = true;
-            break;
+        const bool hasConstraints = (width_ > 0) || (height_ > 0) || (framerate_ > 0.0);
+        if (MediaCapture::IsVideoProfileSupported(device_id_)) {
+          bool profileFound = false;
+          auto profiles = MediaCapture::FindAllVideoProfiles(device_id_);
+          for (auto&& profile : profiles) {
+            // Filter out profiles by unique ID if specified by caller
+            if (!video_profile_id_.empty() && (profile.Id() != video_profile_id_)) {
+              continue;
+            }
+            auto descriptions = profile.SupportedRecordMediaDescription();
+            for (auto&& desc : descriptions) {
+              // Apply filters
+              if ((width_ > 0) && (desc.Width() != (uint32_t)width_)) continue;
+              if ((height_ > 0) && (desc.Height() != (uint32_t)height_)) continue;
+              if ((framerate_ > 0.0) && (desc.FrameRate() != framerate_)) continue;
+              
+              settings.VideoProfile(profile);
+              settings.RecordMediaDescription(desc);
+              profileFound = true;
+              break;
+            }
+            if (profileFound) {
+              break;
+            }
           }
-          if (profileFound) {
-            break;
+          if (!profileFound) {
+            if (!video_profile_id_.empty()) {
+              RTC_LOG(LS_ERROR)
+                << "Failed to find video profile '"
+                << rtc::ToUtf8(video_profile_id_.c_str())
+                << "' for media capture device '"
+                << rtc::ToUtf8(device_id_.c_str())
+                << "'.";
+              return nullptr;
+            }
+            if (hasConstraints) {
+              RTC_LOG(LS_ERROR)
+                << "Failed to find constrained video profile for media capture device '"
+                << rtc::ToUtf8(device_id_.c_str())
+                << "'.";
+              return nullptr;
+            }
           }
         }
-        if (!profileFound && ((width_ > 0) || (height_ > 0) || (framerate_ > 0.0))) {
-            RTC_LOG(LS_ERROR)
-              << "Failed to find constrained video profile for media capture device "
-              << rtc::ToUtf8(device_id_.c_str());
-            return nullptr;
+        else if (!video_profile_id_.empty()) {
+          RTC_LOG(LS_WARNING)
+            << "Media capture device '"
+            << rtc::ToUtf8(device_id_.c_str())
+            << "' does not support video profiles. Ignoring requested profile ID value '"
+            << rtc::ToUtf8(video_profile_id_.c_str())
+            << "'.";
+        }
+        else if (hasConstraints) {
+          RTC_LOG(LS_WARNING)
+            << "Ignoring width/height/framerate constraints for media capture device '"
+            << rtc::ToUtf8(device_id_.c_str())
+            << "'; frame constraints on devices without video profile support is not implemented.";
         }
 
         // Open the capture device

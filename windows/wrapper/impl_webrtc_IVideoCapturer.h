@@ -61,6 +61,7 @@ namespace webrtc
 
       const char *name_ {};
       const char *id_ {};
+      const char *videoProfileId_ {};
       bool mrcEnabled_ {};
       int width_ {};
       int height_ {};

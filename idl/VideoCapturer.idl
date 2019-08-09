@@ -99,6 +99,7 @@ namespace org
       WebRtcFactory factory;
       string name;
       string id;
+      string videoProfileId;
       bool enableMrc;
       int width;
       int height;

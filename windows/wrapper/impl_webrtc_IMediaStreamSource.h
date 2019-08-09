@@ -48,6 +48,7 @@ namespace webrtc
       IMediaStreamSourceDelegatePtr delegate_;
 
       const char *id_{};
+      const char *videoProfileId_{};
       float frameRateChangeTolerance_ {0.1f};
       int width_{};
       int height_{};

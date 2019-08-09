@@ -111,6 +111,7 @@ namespace webrtc
     bool apply_rotation_ { false };
 
     winrt::hstring device_id_;
+    winrt::hstring video_profile_id_;
     std::shared_ptr<CaptureDevice> device_;
     winrt::Windows::Devices::Enumeration::Panel camera_location_;
     std::shared_ptr<DisplayOrientation> display_orientation_;

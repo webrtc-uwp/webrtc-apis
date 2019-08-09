@@ -99,6 +99,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
 {
   String name;
   String id;
+  String videoProfileId;
   bool enableMrc {false};
   int width {0};           // unconstrained
   int height {0};          // unconstrained
@@ -109,6 +110,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   if (params) {
     name = params->name;
     id = params->id;
+    videoProfileId = params->videoProfileId;
     enableMrc = params->enableMrc;
     width = params->width;
     height = params->height;
@@ -133,6 +135,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     webrtc::IVideoCapturer::CreationProperties props;
     props.name_ = name.c_str();
     props.id_ = id.c_str();
+    props.videoProfileId_ = videoProfileId.c_str();
     props.mrcEnabled_ = enableMrc;
     props.width_ = width;
     props.height_ = height;
