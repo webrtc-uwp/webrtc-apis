@@ -84,6 +84,7 @@ namespace wrapper {
 
           // methods WebRtcFactory
           void wrapper_init_org_webRtc_WebRtcFactory(wrapper::org::webRtc::WebRtcFactoryConfigurationPtr configuration) noexcept override;
+          PromisePtr setup() noexcept override;
 
           void wrapper_onObserverCountChanged(size_t count) noexcept override;
 
@@ -99,7 +100,7 @@ namespace wrapper {
           void onAudioPreRender_SetRuntimeSetting(UseAudioRuntimeEventPtr event);
           void onAudioPreRender_Process(UseAudioBufferEventPtr event);
 
-          void setup() noexcept;
+          void internalSetup() noexcept;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(WrapperTypePtr wrapper) noexcept;
         };

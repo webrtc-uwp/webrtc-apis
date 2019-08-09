@@ -150,6 +150,13 @@ namespace org
       void WebRtcFactory(WebRtcFactoryConfiguration configuration);
 
       /// <summary>
+      /// Setup the factory to ensure the properties of the factory are
+      /// fully prepared before attempting to use the factory in the
+      /// webrtc core. This method must be called if 
+      /// </summary>
+      Promise setup();
+
+      /// <summary>
       /// Fires events when capture audio processing is (re-)initialized.
       /// </summary>
       [event]

@@ -236,6 +236,28 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_init_org_webRtc_WebRtcFa
 }
 
 //------------------------------------------------------------------------------
+PromisePtr wrapper::impl::org::webRtc::WebRtcFactory::setup() noexcept {
+  auto pThis = thisWeak_.lock();
+
+  auto setupCompletePromise = Promise::create(UseWebRtcLib::delegateQueue());
+  auto result = Promise::create(UseWebRtcLib::delegateQueue());
+
+  auto setupThread =
+      std::make_shared<std::thread>([pThis, setupCompletePromise]() {
+        pThis->internalSetup();
+        setupCompletePromise->resolve();
+      });
+
+  setupCompletePromise->thenClosure(
+      [setupCompletePromise, result, setupThread]() {
+        setupThread->join();
+        result->resolve();
+      });
+
+  return result;
+}
+
+//------------------------------------------------------------------------------
 void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_onObserverCountChanged(size_t count) noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
@@ -314,7 +336,7 @@ void WrapperImplType::onAudioPreRender_Process(UseAudioBufferEventPtr event)
 }
 
 //------------------------------------------------------------------------------
-void WrapperImplType::setup() noexcept
+void WrapperImplType::internalSetup() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
 
