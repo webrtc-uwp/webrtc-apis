@@ -745,6 +745,66 @@ namespace webrtc
           auto settings = MediaCaptureInitializationSettings();
           settings.VideoDeviceId(device_id_);
 
+		  // Find video profile
+          const bool hasConstraints =
+              (width_ > 0) || (height_ > 0) || (framerate_ > 0.0);
+          if (MediaCapture::IsVideoProfileSupported(device_id_)) {
+            bool profileFound = false;
+            auto profiles = MediaCapture::FindAllVideoProfiles(device_id_);
+            for (auto&& profile : profiles) {
+              // Filter out profiles by unique ID if specified by caller
+              if (!video_profile_id_.empty() &&
+                  (profile.Id() != video_profile_id_)) {
+                continue;
+              }
+              auto descriptions = profile.SupportedRecordMediaDescription();
+              for (auto&& desc : descriptions) {
+                // Apply filters
+                if ((width_ > 0) && (desc.Width() != (uint32_t)width_))
+                  continue;
+                if ((height_ > 0) && (desc.Height() != (uint32_t)height_))
+                  continue;
+                if ((framerate_ > 0.0) && (desc.FrameRate() != framerate_))
+                  continue;
+
+                settings.VideoProfile(profile);
+                settings.RecordMediaDescription(desc);
+                profileFound = true;
+                break;
+              }
+              if (profileFound) {
+                break;
+              }
+            }
+            if (!profileFound) {
+              if (!video_profile_id_.empty()) {
+                RTC_LOG(LS_ERROR) << "Failed to find video profile '"
+                                  << rtc::ToUtf8(video_profile_id_.c_str())
+                                  << "' for media capture device '"
+                                  << rtc::ToUtf8(device_id_.c_str()) << "'.";
+                return nullptr;
+              }
+              if (hasConstraints) {
+                RTC_LOG(LS_ERROR) << "Failed to find constrained video profile "
+                                     "for media capture device '"
+                                  << rtc::ToUtf8(device_id_.c_str()) << "'.";
+                return nullptr;
+              }
+            }
+          } else if (!video_profile_id_.empty()) {
+            RTC_LOG(LS_WARNING)
+                << "Media capture device '" << rtc::ToUtf8(device_id_.c_str())
+                << "' does not support video profiles. Ignoring requested "
+                   "profile ID value '"
+                << rtc::ToUtf8(video_profile_id_.c_str()) << "'.";
+          } else if (hasConstraints) {
+            RTC_LOG(LS_WARNING) << "Ignoring width/height/framerate "
+                                   "constraints for media capture device '"
+                                << rtc::ToUtf8(device_id_.c_str())
+                                << "'; frame constraints on devices without "
+                                   "video profile support is not implemented.";
+          }
+
           // If Communications media category is configured, the
           // GetAvailableMediaStreamProperties will report only H264 frame format
           // for some devices (ex: Surface Pro 3). Since at the moment, WebRTC does
