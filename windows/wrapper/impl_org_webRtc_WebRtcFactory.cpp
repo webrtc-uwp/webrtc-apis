@@ -278,7 +278,7 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_onObserverCountChanged(s
 PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::peerConnectionFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
-  setup();
+  internalSetup();
   return peerConnectionFactory_;
 }
 
@@ -286,7 +286,7 @@ PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::peerConnectionFactory()
 PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
-  setup();
+  internalSetup();
   auto realInterface = unproxy(peerConnectionFactory_);
   return dynamic_cast<NativePeerConnectionFactory *>(realInterface);
 }
@@ -295,7 +295,7 @@ PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noex
 UseVideoDeviceCaptureFactoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
-  setup();
+  internalSetup();
   return videoDeviceCaptureFactory_;
 }
 
