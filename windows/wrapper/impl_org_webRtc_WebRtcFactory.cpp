@@ -254,10 +254,31 @@ void wrapper::impl::org::webRtc::WebRtcFactory::wrapper_onObserverCountChanged(s
 }
 
 //------------------------------------------------------------------------------
+PromisePtr WrapperImplType::setup() noexcept
+{
+  auto pThis = thisWeak_.lock();
+
+  auto setupCompletePromise = Promise::create(UseWebRtcLib::delegateQueue());
+  auto result = Promise::create(UseWebRtcLib::delegateQueue());
+
+  auto setupThread = std::make_shared<std::thread>([pThis, setupCompletePromise]() {
+    pThis->internalSetup();
+    setupCompletePromise->resolve();
+    });
+
+  setupCompletePromise->thenClosure([setupCompletePromise, result, setupThread]() {
+    setupThread->join();
+    result->resolve();
+    });
+
+  return result;
+}
+
+//------------------------------------------------------------------------------
 PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::peerConnectionFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
-  setup();
+  internalSetup();
   return peerConnectionFactory_;
 }
 
@@ -265,7 +286,7 @@ PeerConnectionFactoryInterfaceScopedPtr WrapperImplType::peerConnectionFactory()
 PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
-  setup();
+  internalSetup();
   auto realInterface = unproxy(peerConnectionFactory_);
   return dynamic_cast<NativePeerConnectionFactory *>(realInterface);
 }
@@ -274,7 +295,7 @@ PeerConnectionFactoryScopedPtr WrapperImplType::realPeerConnectionFactory() noex
 UseVideoDeviceCaptureFacrtoryPtr WrapperImplType::videoDeviceCaptureFactory() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
-  setup();
+  internalSetup();
   return videoDeviceCaptureFactory_;
 }
 
@@ -315,7 +336,7 @@ void WrapperImplType::onAudioPreRender_Process(UseAudioBufferEventPtr event)
 }
 
 //------------------------------------------------------------------------------
-void WrapperImplType::setup() noexcept
+void WrapperImplType::internalSetup() noexcept
 {
   zsLib::AutoRecursiveLock lock(lock_);
 

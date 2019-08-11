@@ -87,6 +87,8 @@ namespace wrapper {
 
           void wrapper_onObserverCountChanged(size_t count) noexcept override;
 
+          PromisePtr setup() noexcept override;
+
           PeerConnectionFactoryInterfaceScopedPtr peerConnectionFactory() noexcept;
           PeerConnectionFactoryScopedPtr realPeerConnectionFactory() noexcept;
           UseVideoDeviceCaptureFacrtoryPtr videoDeviceCaptureFactory() noexcept;
@@ -99,7 +101,7 @@ namespace wrapper {
           void onAudioPreRender_SetRuntimeSetting(UseAudioRuntimeEventPtr event);
           void onAudioPreRender_Process(UseAudioBufferEventPtr event);
 
-          void setup() noexcept;
+          void internalSetup() noexcept;
 
           ZS_NO_DISCARD() static WrapperImplTypePtr toWrapper(WrapperTypePtr wrapper) noexcept;
         };
