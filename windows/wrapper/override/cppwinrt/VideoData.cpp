@@ -199,20 +199,42 @@ uint64_t Org::WebRtc::implementation::VideoData::Length()
 //------------------------------------------------------------------------------
 uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(array_view<uint8_t> values)
 {
+  return GetData8bitWithPtr(SafeInt<uint64_t>(reinterpret_cast<uintptr_t>(values.data())), SafeInt<uint64_t>(values.size()));
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::SetData8bit(ZS_MAYBE_USED() array_view<uint8_t const> values)
+{
+  return SetData8bitWithPtr(SafeInt<uint64_t>(reinterpret_cast<uintptr_t>(values.data())), SafeInt<uint64_t>(values.size()));
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_t> values)
+{
+  return GetData16bitWithPtr(SafeInt<uint64_t>(reinterpret_cast<uintptr_t>(values.data())), SafeInt<uint64_t>(values.size()));
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::SetData16bit(ZS_MAYBE_USED() array_view<uint16_t const> values)
+{
+  return SetData16bitWithPtr(SafeInt<uint64_t>(reinterpret_cast<uintptr_t>(values.data())), SafeInt<uint64_t>(values.size()));
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::VideoData::GetData8bitWithPtr(uint64_t bufferPtr, uint64_t max8BitBufferCount)
+{
   if (!native_)
     return 0;
 
-  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
-
   uint64_t size = native_->get_size();
 
-  size = inSize < size ? inSize : size;
+  size = max8BitBufferCount < size ? max8BitBufferCount : size;
 
-  auto dest = values.data();
+  auto dest = reinterpret_cast<uint8_t *>(SafeInt<uintptr_t>(bufferPtr).Ref());
   auto source = native_->get_data8bit();
 
   if ((!dest) ||
-    (!source))
+      (!source))
     return 0;
 
   memcpy(dest, source, SafeInt<size_t>(sizeof(uint8_t) * size));
@@ -221,18 +243,16 @@ uint64_t Org::WebRtc::implementation::VideoData::GetData8bit(array_view<uint8_t>
 }
 
 //------------------------------------------------------------------------------
-uint64_t Org::WebRtc::implementation::VideoData::SetData8bit(ZS_MAYBE_USED() array_view<uint8_t const> values)
+uint64_t Org::WebRtc::implementation::VideoData::SetData8bitWithPtr(uint64_t bufferPtr, uint64_t max8BitBufferCount)
 {
   if (!native_)
     return 0;
 
-  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
-
   uint64_t size = native_->get_size();
 
-  size = inSize < size ? inSize : size;
+  size = max8BitBufferCount < size ? max8BitBufferCount : size;
 
-  auto source = values.data();
+  auto source = reinterpret_cast<uint8_t *>(SafeInt<uintptr_t>(bufferPtr).Ref());
   auto dest = native_->get_mutableData8bit();
 
   if ((!dest) ||
@@ -245,17 +265,16 @@ uint64_t Org::WebRtc::implementation::VideoData::SetData8bit(ZS_MAYBE_USED() arr
 }
 
 //------------------------------------------------------------------------------
-uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_t> values)
+uint64_t Org::WebRtc::implementation::VideoData::GetData16bitWithPtr(uint64_t bufferPtr, uint64_t max16BitBufferCount)
 {
   if (!native_)
     return 0;
 
-  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
   uint64_t size = native_->get_size();
 
-  size = inSize < size ? inSize : size;
+  size = max16BitBufferCount < size ? max16BitBufferCount : size;
 
-  auto dest = values.data();
+  auto dest = reinterpret_cast<uint16_t *>(SafeInt<uintptr_t>(bufferPtr).Ref());
   auto source = native_->get_data16bit();
 
   if ((!dest) ||
@@ -268,18 +287,16 @@ uint64_t Org::WebRtc::implementation::VideoData::GetData16bit(array_view<uint16_
 }
 
 //------------------------------------------------------------------------------
-uint64_t Org::WebRtc::implementation::VideoData::SetData16bit(ZS_MAYBE_USED() array_view<uint16_t const> values)
+uint64_t Org::WebRtc::implementation::VideoData::SetData16bitWithPtr(uint64_t bufferPtr, uint64_t max16BitBufferCount)
 {
   if (!native_)
     return 0;
 
-  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
-
   uint64_t size = native_->get_size();
 
-  size = inSize < size ? inSize : size;
+  size = max16BitBufferCount < size ? max16BitBufferCount : size;
 
-  auto source = values.data();
+  auto source = reinterpret_cast<uint16_t *>(SafeInt<uintptr_t>(bufferPtr).Ref());
   auto dest = native_->get_mutableData16bit();
 
   if ((!dest) ||

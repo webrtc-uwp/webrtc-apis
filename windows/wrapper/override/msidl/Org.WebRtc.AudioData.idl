@@ -27,6 +27,9 @@ namespace Org
 
             UInt64 GetData(ref Int16[] values);
             UInt64 SetData(Int16[] values);
+
+            UInt64 GetDataWithPtr(UInt64 bufferPtr, UInt64 BufferLengthInSamples);
+            UInt64 SetDataWithPtr(UInt64 bufferPtr, UInt64 BufferLengthInSamples);
         };
 
         runtimeclass AudioData : [default] IAudioData, Windows.Foundation.IClosable

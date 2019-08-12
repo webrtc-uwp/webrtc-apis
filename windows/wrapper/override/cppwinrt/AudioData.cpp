@@ -268,16 +268,26 @@ uint64_t Org::WebRtc::implementation::AudioData::Length()
 //------------------------------------------------------------------------------
 uint64_t Org::WebRtc::implementation::AudioData::GetData(array_view<int16_t> values)
 {
+  return GetDataWithPtr(SafeInt<uint64_t>(reinterpret_cast<uintptr_t>(values.data())), SafeInt<uint64_t>(values.size()));
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::AudioData::SetData(array_view<int16_t const> values)
+{
+  return SetDataWithPtr(SafeInt<uint64_t>(reinterpret_cast<uintptr_t>(values.data())), SafeInt<uint64_t>(values.size()));
+}
+
+//------------------------------------------------------------------------------
+uint64_t Org::WebRtc::implementation::AudioData::GetDataWithPtr(uint64_t bufferPtr, uint64_t bufferLengthInSamples)
+{
   if (!native_)
     return 0;
 
-  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
-
   uint64_t size = native_->size();
 
-  size = inSize < size ? inSize : size;
+  size = bufferLengthInSamples < size ? bufferLengthInSamples : size;
 
-  auto dest = values.data();
+  auto dest = reinterpret_cast<int16_t *>(SafeInt<uintptr_t>(bufferPtr).Ref());
   auto source = native_->data();
 
   if ((!dest) ||
@@ -290,18 +300,16 @@ uint64_t Org::WebRtc::implementation::AudioData::GetData(array_view<int16_t> val
 }
 
 //------------------------------------------------------------------------------
-uint64_t Org::WebRtc::implementation::AudioData::SetData(array_view<int16_t const> values)
+uint64_t Org::WebRtc::implementation::AudioData::SetDataWithPtr(uint64_t bufferPtr, uint64_t bufferLengthInSamples)
 {
   if (!native_)
     return 0;
 
-  uint64_t inSize = SafeInt<decltype(inSize)>(values.size());
-
   uint64_t size = native_->size();
 
-  size = inSize < size ? inSize : size;
+  size = bufferLengthInSamples < size ? bufferLengthInSamples : size;
 
-  auto source = values.data();
+  auto source = reinterpret_cast<int16_t *>(SafeInt<uintptr_t>(bufferPtr).Ref());
   auto dest = native_->mutableData();
 
   if ((!dest) ||
