@@ -24,6 +24,11 @@ namespace Org
             UInt64 GetData16bit(ref UInt16[] values);
             UInt64 SetData16bit(UInt16[] values);
 
+            UInt64 GetData8bitWithPtr(UInt64 bufferPtr, UInt64 max8BitBufferCount);
+            UInt64 SetData8bitWithPtr(UInt64 bufferPtr, UInt64 max8BitBufferCount);
+            UInt64 GetData16bitWithPtr(UInt64 bufferPtr, UInt64 max16BitBufferCount);
+            UInt64 SetData16bitWithPtr(UInt64 bufferPtr, UInt64 max16BitBufferCount);
+
             /// <summary>
             /// Gets or sets the video 8 bit color space data.
             /// </summary>

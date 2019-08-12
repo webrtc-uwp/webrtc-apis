@@ -80,6 +80,9 @@ namespace winrt {
           uint64_t Length();
           uint64_t GetData(array_view<int16_t> values);
           uint64_t SetData(array_view<int16_t const> values);
+
+          uint64_t GetDataWithPtr(uint64_t bufferPtr, uint64_t bufferLengthInSamples);
+          uint64_t SetDataWithPtr(uint64_t bufferPtr, uint64_t bufferLengthInSamples);
         };
 
       } // namespace implementation

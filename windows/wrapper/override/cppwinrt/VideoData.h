@@ -70,6 +70,11 @@ namespace winrt {
           uint64_t GetData16bit(array_view<uint16_t> values);
           uint64_t SetData16bit(array_view<uint16_t const> values);
 
+          uint64_t GetData8bitWithPtr(uint64_t bufferPtr, uint64_t max8BitBufferCount);
+          uint64_t SetData8bitWithPtr(uint64_t bufferPtr, uint64_t max8BitBufferCount);
+          uint64_t GetData16bitWithPtr(uint64_t bufferPtr, uint64_t max16BitBufferCount);
+          uint64_t SetData16bitWithPtr(uint64_t bufferPtr, uint64_t max16BitBufferCount);
+
           /// <summary>
           /// Gets or sets the video 8 bit color space data. <summary>
           /// </summary>
