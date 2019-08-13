@@ -480,6 +480,11 @@ namespace webrtc
     uint32_t fourcc = GetFourCC(media_encoding_profile.Video().Subtype());
     frame_info_.Construct(width, height, interval, fourcc);
 
+    RTC_LOG(LS_INFO) << "Starting device capture with sink video format "
+                     << rtc::ToUtf8(media_encoding_profile.Video().Subtype().c_str())
+                     << " (" << width << " x " << height << " @ " << fps
+                     << " FPS)";
+
     media_capture_ = GetMediaCapture();
     media_capture_failed_event_registration_token_ =
       media_capture_.get().Failed(
@@ -667,7 +672,7 @@ namespace webrtc
 
         // Find video profile
         const bool hasConstraints = (width_ > 0) || (height_ > 0) || (framerate_ > 0.0);
-        if (MediaCapture::IsVideoProfileSupported(device_id_)) {
+        if (!video_profile_id_.empty() && MediaCapture::IsVideoProfileSupported(device_id_)) {
           bool profileFound = false;
           auto profiles = MediaCapture::FindAllVideoProfiles(device_id_);
           for (auto&& profile : profiles) {
@@ -748,7 +753,7 @@ namespace webrtc
 		  // Find video profile
           const bool hasConstraints =
               (width_ > 0) || (height_ > 0) || (framerate_ > 0.0);
-          if (MediaCapture::IsVideoProfileSupported(device_id_)) {
+          if (!video_profile_id_.empty() && MediaCapture::IsVideoProfileSupported(device_id_)) {
             bool profileFound = false;
             auto profiles = MediaCapture::FindAllVideoProfiles(device_id_);
             for (auto&& profile : profiles) {
@@ -1137,6 +1142,13 @@ namespace webrtc
       subtype = MediaEncodingSubtypes::Nv12();
     }
 
+    RTC_LOG(LS_INFO) << "Trying to start video capture with video format "
+                     << rtc::ToUtf8(subtype.c_str()) << " ("
+                     << capture_format.width << " x " << capture_format.height
+                     << " @ "
+                     << VideoFormat::IntervalToFps(capture_format.interval)
+                     << " FPS)";
+
     media_encoding_profile_ = MediaEncodingProfile();
     media_encoding_profile_.Audio(nullptr);
     media_encoding_profile_.Container(nullptr);
@@ -1190,6 +1202,17 @@ namespace webrtc
         }
       }
     }
+
+	float actualFps =
+        (static_cast<float>(
+             video_encoding_properties_.FrameRate().Numerator()) /
+         static_cast<float>(
+             video_encoding_properties_.FrameRate().Denominator()));
+    RTC_LOG(LS_INFO) << "Found closest video encoding format ("
+                     << video_encoding_properties_.Width() << " x "
+                     << video_encoding_properties_.Height() << " @ "
+                     << actualFps << " FPS)";
+
     try {
       ApplyDisplayOrientation(display_orientation_->Orientation());
       device_->StartCapture(media_encoding_profile_,
