@@ -693,15 +693,14 @@ namespace webrtc
         initialize_task();
       } else {
         // Run asynchronously
-        std::mutex mutex;
         std::condition_variable condition_variable;
-        queue->postClosure([this, &initialize_task, &initialize_async_task,
-                            media_capture_agile, &condition_variable]() {
+        queue->postClosure([&initialize_task, &condition_variable]() {
           initialize_task();
           condition_variable.notify_one();
         });
 
         {
+          std::mutex mutex;
           std::unique_lock<std::mutex> lock(mutex);
           condition_variable.wait(lock);
         }
