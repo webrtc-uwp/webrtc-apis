@@ -452,22 +452,25 @@ namespace webrtc
     MediaEncodingProfile const& media_encoding_profile,
     IVideoEncodingProperties const& video_encoding_properties,
     bool mrc_enabled) {
+    // Ensure StartCapture() is not called twice
     if (capture_started_) {
       winrt::throw_hresult(ERROR_INVALID_STATE);
     }
 
+    // Ensure StopCapture() terminated, and capture device is ready to start again
     if (_stopped->Wait(5000) == kEventTimeout) {
       winrt::throw_hresult(ERROR_INVALID_STATE);
     }
-
-    CleanupSink();
-    CleanupMediaCapture();
 
     if (device_id_.empty()) {
       RTC_LOG(LS_WARNING) << "Capture device is not initialized.";
       return;
     }
 
+    // Construct the WebRTC frame info from the media encoding profile of the
+    // video stream coming out of the encoder, which is the same as the encoding
+    // coming out of the MF pipeline since the custom sink doesn't change the
+    // encoding of the video stream (it is just an adapter).
     int width = media_encoding_profile.Video().Width();
     int height = media_encoding_profile.Video().Height();
     int fps =
@@ -485,7 +488,14 @@ namespace webrtc
                      << " (" << width << " x " << height << " @ " << fps
                      << " FPS)";
 
-    media_capture_ = GetMediaCapture();
+    // MediaCapture must have been initialized, which must be the case since it's
+    // needed to select the media encoding profile passed to this method. So ensure
+    // the existing one is reused, and do not create a new one.
+    if (!media_capture_.get()) {
+      RTC_LOG(LS_ERROR)
+          << "StartCapture called with uninitialized MediaCapture object.";
+      winrt::throw_hresult(ERROR_INVALID_STATE);
+    }
     media_capture_failed_event_registration_token_ =
       media_capture_.get().Failed(
         MediaCaptureFailedEventHandler(this,
@@ -498,6 +508,7 @@ namespace webrtc
 #endif
 
     auto initTask = Concurrency::create_task([this, media_encoding_profile]() {
+      // Create the custom sink reading frames for the MF pipeline
       IVideoCaptureMediaSink::CreationProperties info;
       info.encodingProperties_ = media_encoding_profile.Video();
       info.callback_ = this;
@@ -509,6 +520,7 @@ namespace webrtc
       return mediaExtension;
     }).then([this, media_encoding_profile,
         video_encoding_properties, mrc_enabled](IMediaExtension const& media_extension) {
+      // Add MRC if the device supports it and caller requested it
       winrt::hstring deviceFamily = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo().DeviceFamily();
       if (std::wstring(deviceFamily.c_str()).compare((L"Windows.Holographic")) == 0 && mrc_enabled) {
         MrcVideoEffectDefinition mrcVideoEffectDefinition;
@@ -523,10 +535,15 @@ namespace webrtc
         Concurrency::create_task(addEffectTask).wait();
       }
       return Concurrency::create_task([this, video_encoding_properties]() {
+        // Configure the capture device to output raw frames
+        // with the media type previously selected
         return media_capture_.get().VideoDeviceController().SetMediaStreamPropertiesAsync(
           MediaStreamType::VideoRecord, video_encoding_properties).get();
         }).then([this, media_encoding_profile, media_extension]() {
         return Concurrency::create_task([this, media_encoding_profile, media_extension]() {
+          // Start capturing, and encode device frames into the
+          // specified format that the custom sink expects so it
+          // can deliver them as is to the rest of WebRTC
           return media_capture_.get().StartRecordToCustomSinkAsync(
             media_encoding_profile, media_extension).get();
           });
