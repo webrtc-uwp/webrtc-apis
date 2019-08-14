@@ -989,16 +989,7 @@ namespace webrtc
 
             // Find the video profile, if needed
             if (!video_profile_id_utf8.empty()) {
-              auto profiles = MediaCapture::FindAllVideoProfiles(device_id_);
-              const std::wstring video_profile_id_utf16 = rtc::ToUtf16(
-                  video_profile_id_utf8.data(), video_profile_id_utf8.size());
-              for (auto&& profile : profiles) {
-                if (profile.Id() == video_profile_id_utf16) {
-                  video_profile_id_ = video_profile_id_utf16;
-                  break;
-                }
-              }
-              if (video_profile_id_.empty()) {
+              if (!SetVideoProfile(video_profile_id_utf8)) {
                 RTC_LOG_F(LS_ERROR)
                     << "Failed to find video profile " << video_profile_id_utf8
                     << " for video capture device " << device_unique_id_utf8;
@@ -1045,12 +1036,23 @@ namespace webrtc
     for (unsigned int i = 0; i < streamProperties.Size(); i++) {
       IVideoEncodingProperties prop;
       streamProperties.GetAt(i).as(prop);
-      
+
+      const double propFramerate =
+          prop.FrameRate().Numerator() / prop.FrameRate().Denominator();
+
+      // Filter out formats by constraints
+      if ((width > 0) && (prop.Width() != (uint32_t)width))
+        continue;
+      if ((height > 0) && (prop.Height() != (uint32_t)height))
+        continue;
+      if ((framerate > 0) && (propFramerate != framerate))
+        continue;
+
       VideoFormat format;
       format.fourcc = CaptureDevice::GetFourCC(prop.Subtype());
       format.width = prop.Width();
       format.height = prop.Height();
-      format.interval = VideoFormat::FpsToInterval(prop.FrameRate().Numerator()/ prop.FrameRate().Denominator());
+      format.interval = VideoFormat::FpsToInterval((int)propFramerate);
 
       formats.push_back(format);
     }
@@ -1316,6 +1318,22 @@ namespace webrtc
     auto event = UseVideoFrameBufferEvent::toWrapper(wrapperBuffer);
 
     subscriptions_.delegate()->onVideoFrameReceived(event);
+  }
+
+  //-----------------------------------------------------------------------------
+  bool VideoCapturer::SetVideoProfile(std::string_view video_profile_id) {
+    RTC_CHECK(MediaCapture::IsVideoProfileSupported(device_id_));
+    const std::wstring video_profile_id_utf16 =
+        rtc::ToUtf16(video_profile_id.data(), video_profile_id.size());
+    auto profiles = MediaCapture::FindAllVideoProfiles(device_id_);
+    for (auto&& profile : profiles) {
+      if (profile.Id() != video_profile_id_utf16) {
+        continue;
+      }
+      video_profile_id_ = video_profile_id_utf16;
+      return true;
+    }
+    return false;
   }
 
   //-----------------------------------------------------------------------------

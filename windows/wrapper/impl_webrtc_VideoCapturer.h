@@ -96,6 +96,8 @@ namespace webrtc
       const winrt::com_ptr<IMFSample> &spMediaSample,
       rtc::scoped_refptr<I420BufferInterface> i420Frame);
 
+    bool SetVideoProfile(std::string_view video_profile_id);
+
   private:
     mutable zsLib::RecursiveLock lock_;
 
