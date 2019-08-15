@@ -258,8 +258,19 @@ namespace webrtc
       return false;
     }
 
+    // Filter a media type based on caller constraints or selected
+    // RecordMediaDescription. Returns true if the media type should be filtered
+    // out, or false if it is compatible with the current device configuration.
+    bool FilterMediaType(int width, int height, double framerate) const;
+
   private:
+    // Find a video profile by its unique ID |video_profile_id_| and set it on
+   // the given |settings| object. Also apply video format constraints to
+   // select a RecordMediaDescription and set it on |settings| too.
+   // Return true on success, and save the selected media type attributes in the
+   // |width_|, |height_|, and |framerate_| members.
     bool FindAndAddVideoProfile(MediaCaptureInitializationSettings& settings);
+
     void RemovePaddingPixels(uint8_t* video_frame, size_t& video_frame_length);
 
   private:
@@ -274,7 +285,10 @@ namespace webrtc
 
     CaptureDeviceListener* capture_device_listener_;
 
-    /// Constraints for video profile selection
+    // Constraints for video profile and record media description selection.
+    // After initializing the MediaCapture object, this contains the exact
+    // values of the selected media type (RecordMediaDescription) for supported
+    // video format gathering. See FindAndAddVideoProfile() for details.
     int width_;
     int height_;
     double framerate_;
@@ -731,6 +745,20 @@ namespace webrtc
   }
 
   //-----------------------------------------------------------------------------
+  bool CaptureDevice::FilterMediaType(int width,
+                                      int height,
+                                      double framerate) const {
+    RTC_CHECK(media_capture_);
+    if ((width_ > 0) && (width != width_))
+      return true;
+    if ((height_ > 0) && (height != height_))
+      return true;
+    if ((framerate_ > 0) && (framerate != framerate_))
+      return true;
+    return false;
+  }
+
+  //-----------------------------------------------------------------------------
   bool CaptureDevice::FindAndAddVideoProfile(
       MediaCaptureInitializationSettings& settings) {
     const bool hasConstraints =
@@ -766,6 +794,16 @@ namespace webrtc
           continue;
         if ((framerate_ > 0.0) && (desc.FrameRate() != framerate_))
           continue;
+
+        // Note that setting RecordMediaDescription will set the default media
+        // type of the device, and subsequent capture will use that. But WebRTC
+        // has a different heuristic to selecting a video format. So to avoid
+        // discrepancies, save the media type here, and only return that one
+        // media type in the list of supported video formats. See also
+        // FilterMediaType().
+        width_ = desc.Width();
+		    height_ = desc.Height();
+        framerate_ = desc.FrameRate();
 
         settings.VideoProfile(profile);
         settings.RecordMediaDescription(desc);
@@ -1047,15 +1085,20 @@ namespace webrtc
     device_->Initialize(device_id_, video_profile_id_, width, height,
                         framerate);
 
+    // Initialize the MediaCapture object with the given video profile (if any)
+    // and matching RecordMediaDescription based on the resolution and framerate
+    // filters provided by the caller. This updates the parameters for the
+    // FilterMediaType() call below.
+    auto mediaCapture = device_->GetMediaCapture();
+
     // Gather all supported media types to populate the list of WebRTC video
     // formats supported by the device.
     // Note that a MediaCapture object initialized with a specific video profile
     // will filter out results returned by GetAvailableMediaStreamProperties()
     // to the media types available for that profile alone, which is what we want.
 	// In addition, apply the resolution and framerate filters to remove media types
-	// that the caller does not want.
+	// that the caller does not want. See also FindAndAddVideoProfile().
     std::vector<VideoFormat> formats;
-    auto mediaCapture = device_->GetMediaCapture();
     auto streamProperties =
         mediaCapture.get()
             .VideoDeviceController()
@@ -1067,13 +1110,12 @@ namespace webrtc
       const double propFramerate =
           prop.FrameRate().Numerator() / prop.FrameRate().Denominator();
 
-      // Filter out formats by constraints
-      if ((width > 0) && (prop.Width() != (uint32_t)width))
+      // If a video profile is selected, only keep the exact media type selected
+      // in RecordMediaDescription.
+      if (device_->FilterMediaType(prop.Width(), prop.Height(),
+                                   propFramerate)) {
         continue;
-      if ((height > 0) && (prop.Height() != (uint32_t)height))
-        continue;
-      if ((framerate > 0) && (propFramerate != framerate))
-        continue;
+      }
 
       VideoFormat format;
       format.fourcc = CaptureDevice::GetFourCC(prop.Subtype());
