@@ -689,19 +689,17 @@ namespace webrtc
           FindAndAddVideoProfile(settings);
         }
         initialize_async_task =
-            Concurrency::create_task([this, media_capture_agile, settings]() {
+            Concurrency::create_task([media_capture_agile, settings]() {
               return media_capture_agile.get().InitializeAsync(settings).get();
-            })
-                .then([this,
-                       media_capture_agile](Concurrency::task<void> initTask) {
-                  try {
-                    initTask.get();
-                  } catch (winrt::hresult_error const& e) {
-                    RTC_LOG(LS_ERROR)
-                        << "Failed to initialize media capture device. "
-                        << rtc::ToUtf8(e.message().c_str());
-                  }
-                });
+            }).then([](Concurrency::task<void> initTask) {
+              try {
+                initTask.get();
+              } catch (winrt::hresult_error const& e) {
+                RTC_LOG(LS_ERROR)
+                    << "Failed to initialize media capture device. "
+                    << rtc::ToUtf8(e.message().c_str());
+              }
+            });
       };
 
       auto queue = UseWebrtcLib::delegateQueue();
@@ -929,12 +927,6 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   void VideoCapturer::init(const CreationProperties &props) noexcept
   {
-    SetId(String(props.id_));
-
-    if (props.delegate_) {
-      defaultSubscription_ = subscriptions_.subscribe(props.delegate_, UseWebrtcLib::videoFrameProcessingQueue());
-    }
-
     // Mandatory device ID
     if (!props.id_) {
       RTC_LOG_F(LS_ERROR) << "Invalid NULL video capture device ID.";
@@ -950,8 +942,23 @@ namespace webrtc
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties
         properties{};
 
+	// Everything from this point is protected by a lock
     rtc::CritScope cs(&apiCs_);
+
+    // Save device name as UTF8 string
+    deviceUniqueId_ = new (std::nothrow) char[device_unique_id_utf8.size() + 1];
+    if (!deviceUniqueId_) {
+      return;
+    }
+    memcpy(deviceUniqueId_, props.id_, device_unique_id_utf8.size() + 1);
+
+    SetId(String(props.id_));
     mrc_enabled_ = props.mrcEnabled_;
+
+    if (props.delegate_) {
+      defaultSubscription_ = subscriptions_.subscribe(
+          props.delegate_, UseWebrtcLib::videoFrameProcessingQueue());
+    }
 
     RTC_LOG(LS_INFO) << "Init called for device " << props.id_;
     if (!video_profile_id_utf8.empty()) {
@@ -960,9 +967,6 @@ namespace webrtc
 
     device_id_.clear();
     video_profile_id_.clear();
-
-    deviceUniqueId_ = new (std::nothrow) char[device_unique_id_utf8.size() + 1];
-    memcpy(deviceUniqueId_, props.id_, device_unique_id_utf8.size() + 1);
 
     Concurrency::create_task([this]() {
       return DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get().as<IVectorView<DeviceInformation> >();
@@ -975,7 +979,6 @@ namespace webrtc
           return;
         }
         // Look for the device in the collection.
-        DeviceInformation chosen_dev_info = nullptr;
         const std::wstring device_unique_id_utf16 = rtc::ToUtf16(
             device_unique_id_utf8.data(), device_unique_id_utf8.size());
         for (unsigned int i = 0; i < dev_info_collection.Size(); i++) {
@@ -996,7 +999,6 @@ namespace webrtc
           << rtc::ToUtf8(e.message().c_str());
       }
     }).wait();
-
     if (device_id_.empty()) {
       RTC_LOG(LS_ERROR) << "No video capture device found";
       return;
@@ -1016,66 +1018,22 @@ namespace webrtc
     }
 
     // Select the video profile, if requested
-    std::vector<VideoFormat> formats;
     if (!video_profile_id_utf8.empty()) {
       if (!MediaCapture::IsVideoProfileSupported(device_id_)) {
-        RTC_LOG_F(LS_ERROR) << "Video capture device " << device_unique_id_utf8
-                            << " does not support video profiles.";
+        RTC_LOG(LS_ERROR) << "Video capture device " << device_unique_id_utf8
+                          << " does not support video profiles, cannot assign "
+                             "requested video profile "
+                          << video_profile_id_utf8 << ".";
         return;
       }
       const std::wstring video_profile_id_utf16 = rtc::ToUtf16(
           video_profile_id_utf8.data(), video_profile_id_utf8.size());
       auto profiles = MediaCapture::FindAllVideoProfiles(device_id_);
       for (auto&& profile : profiles) {
-        if (profile.Id() != video_profile_id_utf16) {
-          continue;
+        if (profile.Id() == video_profile_id_utf16) {
+          video_profile_id_ = video_profile_id_utf16;
+          break;
         }
-
-        // Extract the list of media types to populate the list of supported
-        // WebRTC video formats associated with the selected profile only.
-        auto fsiList = profile.FrameSourceInfos();
-        for (auto&& fsi : fsiList) {
-          // RTC_LOG(LS_INFO) << "FrameSourceInfo: id="
-          //                 << rtc::ToUtf8(fsi.Id().c_str())
-          //                 << " type=" << (int)fsi.MediaStreamType()
-          //                 << " profileId="
-          //                 << rtc::ToUtf8(fsi.ProfileId().c_str())
-          //                 << " kind=" << (int)fsi.SourceKind();
-          RTC_CHECK(fsi.ProfileId() == video_profile_id_utf16);
-          if (fsi.MediaStreamType() != MediaStreamType::VideoRecord) {
-            continue;
-          }
-          auto descs = fsi.VideoProfileMediaDescription();
-          for (auto&& desc : descs) {
-            // RTC_LOG(LS_INFO)
-            //    << "- desc: (" << desc.Width() << " x " << desc.Height()
-            //    << ") @ " << desc.FrameRate() << " ["
-            //    << rtc::ToUtf8(desc.Subtype().c_str()) << "]";
-
-            // Filter out formats by constraints
-            if ((width > 0) && (desc.Width() != (uint32_t)width))
-              continue;
-            if ((height > 0) && (desc.Height() != (uint32_t)height))
-              continue;
-            if ((framerate > 0) && (desc.FrameRate() != framerate))
-              continue;
-
-            VideoFormat format;
-            format.fourcc = CaptureDevice::GetFourCC(desc.Subtype());
-            format.width = desc.Width();
-            format.height = desc.Height();
-            format.interval = VideoFormat::FpsToInterval((int)desc.FrameRate());
-            formats.push_back(format);
-          }
-        }
-		if (formats.empty()) {
-          RTC_LOG(LS_ERROR) << "Failed to find any supported video format.";
-		  return;
-		}
-		
-        // Profile found
-        video_profile_id_ = video_profile_id_utf16;
-        break;
       }
       if (video_profile_id_.empty()) {
         RTC_LOG_F(LS_ERROR)
@@ -1089,38 +1047,41 @@ namespace webrtc
     device_->Initialize(device_id_, video_profile_id_, width, height,
                         framerate);
 
-    // If not already collected from the video profile, gather all supported
-    // media types to populate the list of supported WebRTC video formats.
-    if (formats.empty()) {
-      auto mediaCapture = device_->GetMediaCapture();
-      auto streamProperties =
-          mediaCapture.get()
-              .VideoDeviceController()
-              .GetAvailableMediaStreamProperties(MediaStreamType::VideoRecord);
-      for (unsigned int i = 0; i < streamProperties.Size(); i++) {
-        IVideoEncodingProperties prop;
-        streamProperties.GetAt(i).as(prop);
+    // Gather all supported media types to populate the list of WebRTC video
+    // formats supported by the device.
+    // Note that a MediaCapture object initialized with a specific video profile
+    // will filter out results returned by GetAvailableMediaStreamProperties()
+    // to the media types available for that profile alone, which is what we want.
+	// In addition, apply the resolution and framerate filters to remove media types
+	// that the caller does not want.
+    std::vector<VideoFormat> formats;
+    auto mediaCapture = device_->GetMediaCapture();
+    auto streamProperties =
+        mediaCapture.get()
+            .VideoDeviceController()
+            .GetAvailableMediaStreamProperties(MediaStreamType::VideoRecord);
+    for (unsigned int i = 0; i < streamProperties.Size(); i++) {
+      IVideoEncodingProperties prop;
+      streamProperties.GetAt(i).as(prop);
 
-        const double propFramerate =
-            prop.FrameRate().Numerator() / prop.FrameRate().Denominator();
+      const double propFramerate =
+          prop.FrameRate().Numerator() / prop.FrameRate().Denominator();
 
-        // Filter out formats by constraints
-        if ((width > 0) && (prop.Width() != (uint32_t)width))
-          continue;
-        if ((height > 0) && (prop.Height() != (uint32_t)height))
-          continue;
-        if ((framerate > 0) && (propFramerate != framerate))
-          continue;
+      // Filter out formats by constraints
+      if ((width > 0) && (prop.Width() != (uint32_t)width))
+        continue;
+      if ((height > 0) && (prop.Height() != (uint32_t)height))
+        continue;
+      if ((framerate > 0) && (propFramerate != framerate))
+        continue;
 
-        VideoFormat format;
-        format.fourcc = CaptureDevice::GetFourCC(prop.Subtype());
-        format.width = prop.Width();
-        format.height = prop.Height();
-        format.interval = VideoFormat::FpsToInterval((int)propFramerate);
-        formats.push_back(format);
-      }
+      VideoFormat format;
+      format.fourcc = CaptureDevice::GetFourCC(prop.Subtype());
+      format.width = prop.Width();
+      format.height = prop.Height();
+      format.interval = VideoFormat::FpsToInterval((int)propFramerate);
+      formats.push_back(format);
     }
-
     RTC_CHECK(!formats.empty());
     SetSupportedFormats(formats);
   }
