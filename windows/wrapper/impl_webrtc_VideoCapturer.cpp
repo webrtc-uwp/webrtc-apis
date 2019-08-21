@@ -1114,7 +1114,7 @@ namespace webrtc
           break;
         }
       }
-      if (video_profile_id_.empty()) {
+      if (!video_profile_id_utf16.empty() && video_profile_id_.empty()) {
         RTC_LOG_F(LS_ERROR)
             << "Failed to find video profile " << video_profile_id_utf8
             << " for video capture device " << device_unique_id_utf8;
