@@ -47,12 +47,13 @@ namespace webrtc
       VideoFrameType frameType_ {};
       IMediaStreamSourceDelegatePtr delegate_;
 
-      const char *id_{};
-      const char *videoProfileId_{};
+      const char *id_ {};
+      const char *videoProfileId_ {};
+      int videoProfileKind_ {};
       float frameRateChangeTolerance_ {0.1f};
-      int width_{};
-      int height_{};
-      double framerate_{};
+      int width_ {};
+      int height_ {};
+      double framerate_ {};
     };
 
     static IMediaStreamSourcePtr create(const CreationProperties &info) noexcept;

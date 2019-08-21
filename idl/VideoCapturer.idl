@@ -93,16 +93,65 @@ namespace org
       int height;
     };
 
+	enum VideoProfileKind
+	{
+      /// <summary>
+      /// Unspecified video profile kind, for no filtering.
+      /// </summary>
+      unspecified,
+
+	    // These map 1:1 to values of MediaCapture.KnownVideoProfile (with +1 offset).
+      videoRecording,
+      highQualityPhoto,
+      balancedVideoAndPhoto,
+      videoConferencing,
+      photoSequence,
+      highFrameRate,
+      variablePhotoSequence,
+      hdrWithWcgVideo,
+      hdrWithWcgPhoto,
+      videoHdr8,
+	};
+
     [dictionary]
     struct VideoCapturerCreationParameters
     {
       WebRtcFactory factory;
       string name;
+
+      /// <summary>
+      /// Video capture device unique ID to use.
+      /// </summary>
       string id;
+
+      /// <summary>
+      /// Optional unique ID of a video profile to use.
+      /// </summary>
       string videoProfileId;
+
+      /// <summary>
+      /// Optional video profile kind to use.
+      /// </summary>
+      VideoProfileKind videoProfileKind;
+
+      /// <summary>
+      /// Enable Mixed Reality Capture on supported devices.
+      /// </summary>
       bool enableMrc;
+
+      /// <summary>
+      /// Optional constraint on width to select a capture media type (resolution + framerate), or zero for default.
+      /// </summary>
       int width;
+
+      /// <summary>
+      /// Optional constraint on height to select a capture media type (resolution + framerate), or zero for default.
+      /// </summary>
       int height;
+
+      /// <summary>
+      /// Optional constraint on framerate to select a capture media type (resolution + framerate), or zero for default.
+      /// </summary>
       double framerate;
     };
 

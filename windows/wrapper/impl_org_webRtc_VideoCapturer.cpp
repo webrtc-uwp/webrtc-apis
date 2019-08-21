@@ -100,6 +100,8 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   String name;
   String id;
   String videoProfileId;
+  wrapper::org::webRtc::VideoProfileKind videoProfileKind =
+      wrapper::org::webRtc::VideoProfileKind_unspecified;
   bool enableMrc {false};
   int width {0};           // unconstrained
   int height {0};          // unconstrained
@@ -111,6 +113,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     name = params->name;
     id = params->id;
     videoProfileId = params->videoProfileId;
+    videoProfileKind = params->videoProfileKind;
     enableMrc = params->enableMrc;
     width = params->width;
     height = params->height;
@@ -136,6 +139,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     props.name_ = name.c_str();
     props.id_ = id.c_str();
     props.videoProfileId_ = videoProfileId.c_str();
+    props.videoProfileKind_ = videoProfileKind;
     props.mrcEnabled_ = enableMrc;
     props.width_ = width;
     props.height_ = height;

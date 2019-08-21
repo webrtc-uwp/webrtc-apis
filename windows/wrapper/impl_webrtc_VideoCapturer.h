@@ -54,7 +54,7 @@ namespace webrtc
     struct make_private {};
 
   private:
-    void init(const CreationProperties &props) noexcept;
+    bool init(const CreationProperties &props) noexcept;
 
   public:
     VideoCapturer(const make_private &);
@@ -114,6 +114,7 @@ namespace webrtc
 
     winrt::hstring device_id_;
     winrt::hstring video_profile_id_;
+    int video_profile_kind_ {};
     std::shared_ptr<CaptureDevice> device_;
     winrt::Windows::Devices::Enumeration::Panel camera_location_;
     std::shared_ptr<DisplayOrientation> display_orientation_;
