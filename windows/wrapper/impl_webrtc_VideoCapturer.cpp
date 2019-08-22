@@ -1026,37 +1026,43 @@ namespace webrtc
     device_id_.clear();
     video_profile_id_.clear();
 
+    // Find the video capture device by unique ID.
     Concurrency::create_task([this]() {
-      return DeviceInformation::FindAllAsync(DeviceClass::VideoCapture).get().as<IVectorView<DeviceInformation> >();
-      }).then([this, device_unique_id_utf8](
-        IVectorView<DeviceInformation> const& collection) {
-        try {
-        DeviceInformationCollection dev_info_collection = collection.as<DeviceInformationCollection>();
-        if (dev_info_collection == nullptr || dev_info_collection.Size() == 0) {
-          RTC_LOG_F(LS_ERROR) << "No video capture device found";
-          return false;
-        }
-        // Look for the device in the collection.
-        const std::wstring device_unique_id_utf16 = rtc::ToUtf16(
-            device_unique_id_utf8.data(), device_unique_id_utf8.size());
-        for (unsigned int i = 0; i < dev_info_collection.Size(); i++) {
-          auto dev_info = dev_info_collection.GetAt(i);
-          if (dev_info.Id() == device_unique_id_utf16) {
-            device_id_ = dev_info.Id();
-            if (dev_info.EnclosureLocation() != nullptr) {
-              camera_location_ = dev_info.EnclosureLocation().Panel();
-            } else {
-              camera_location_ = Panel::Unknown;
+      return DeviceInformation::FindAllAsync(DeviceClass::VideoCapture)
+          .get()
+          .as<IVectorView<DeviceInformation> >();
+    })
+        .then([this, device_unique_id_utf8](
+                  IVectorView<DeviceInformation> const& collection) {
+          try {
+            DeviceInformationCollection dev_info_collection =
+                collection.as<DeviceInformationCollection>();
+            if (dev_info_collection == nullptr ||
+                dev_info_collection.Size() == 0) {
+              RTC_LOG_F(LS_ERROR) << "No video capture device found";
+              return;
             }
-            break;
+            // Look for the device in the collection.
+            const std::wstring device_unique_id_utf16 = rtc::ToUtf16(
+                device_unique_id_utf8.data(), device_unique_id_utf8.size());
+            for (unsigned int i = 0; i < dev_info_collection.Size(); i++) {
+              auto dev_info = dev_info_collection.GetAt(i);
+              if (dev_info.Id() == device_unique_id_utf16) {
+                device_id_ = dev_info.Id();
+                if (dev_info.EnclosureLocation() != nullptr) {
+                  camera_location_ = dev_info.EnclosureLocation().Panel();
+                } else {
+                  camera_location_ = Panel::Unknown;
+                }
+                break;
+              }
+            }
+          } catch (winrt::hresult_error const& e) {
+            RTC_LOG(LS_ERROR) << "Failed to retrieve device info collection. "
+                              << rtc::ToUtf8(e.message().c_str());
           }
-        }
-      } catch (winrt::hresult_error const& e) {
-        RTC_LOG(LS_ERROR)
-          << "Failed to retrieve device info collection. "
-          << rtc::ToUtf8(e.message().c_str());
-      }
-    }).wait();
+        })
+        .wait();
     if (device_id_.empty()) {
       RTC_LOG(LS_ERROR) << "No video capture device found";
       return false;
@@ -1077,7 +1083,7 @@ namespace webrtc
       framerate = props.framerate_;
     }
 
-    // Select the video profile, if requested
+    // Select a video profile if requested by exact unique ID or by kind.
     if (!video_profile_id_utf8.empty() || (props.videoProfileKind_ > 0)) {
       if (!MediaCapture::IsVideoProfileSupported(device_id_)) {
         RTC_LOG_F(LS_ERROR)
@@ -1088,9 +1094,12 @@ namespace webrtc
             << ".";
         return false;
       }
+
       const std::wstring video_profile_id_utf16 = rtc::ToUtf16(
           video_profile_id_utf8.data(), video_profile_id_utf8.size());
 
+      // Get all video profiles of the specified kind (if requested), or all
+      // available if no kind requested.
       IVectorView<MediaCaptureVideoProfile> profiles;
       if (video_profile_id_utf16.empty() && (props.videoProfileKind_ > 0)) {
         auto kvp = (KnownVideoProfile)(props.videoProfileKind_ - 1);
@@ -1098,26 +1107,65 @@ namespace webrtc
       } else {
         profiles = MediaCapture::FindAllVideoProfiles(device_id_);
       }
-      for (auto&& profile : profiles) {
+
 #if 1
-        RTC_LOG(LS_INFO)
-            << "Available video profile: " << rtc::ToUtf8(profile.Id().c_str());
+      for (auto&& profile : profiles) {
+        RTC_LOG(LS_INFO) << "Available video profile: "
+                         << rtc::ToUtf8(profile.Id().c_str());
         auto descs = profile.SupportedRecordMediaDescription();
         for (auto&& desc : descs) {
           RTC_LOG(LS_INFO) << "+ Supported format: " << desc.Width() << " x "
                            << desc.Height() << " @ " << desc.FrameRate() << " ("
                            << rtc::ToUtf8(desc.Subtype().c_str()) << ")";
         }
+      }
 #endif
+
+      // Find a video profile by unique ID (if requested) or pick one with a
+      // resolution matching the resolution filters if only a kind was specified.
+      for (auto&& profile : profiles) {
         if (profile.Id() == video_profile_id_utf16) {
           video_profile_id_ = video_profile_id_utf16;
           break;
         }
+        else if (video_profile_id_utf16.empty()) {
+          auto descs = profile.SupportedRecordMediaDescription();
+          bool found = false;
+          for (auto&& desc : descs) {
+            if ((width > 0) && (desc.Width() != (uint32_t)width)) {
+              continue;
+            }
+            if ((height > 0) && (desc.Height() != (uint32_t)height)) {
+              continue;
+            }
+            if ((framerate > 0) && (desc.FrameRate() != framerate)) {
+              continue;
+            }
+            // No video profile was requested by ID, only by kind, and the
+            // current one has a resolution matching all constraints, so pick
+            // that one.
+            video_profile_id_ = profile.Id();
+            found = true; 
+            break;
+          }
+          if (found) {
+            break;
+          }
+        }
       }
-      if (!video_profile_id_utf16.empty() && video_profile_id_.empty()) {
-        RTC_LOG_F(LS_ERROR)
-            << "Failed to find video profile " << video_profile_id_utf8
-            << " for video capture device " << device_unique_id_utf8;
+      if (video_profile_id_.empty()) {
+        if (!video_profile_id_utf16.empty()) {
+          RTC_LOG_F(LS_ERROR)
+              << "Failed to find video profile " << video_profile_id_utf8
+              << " for video capture device " << device_unique_id_utf8;
+        } else {
+          RTC_LOG_F(LS_ERROR)
+              << "Failed to find a video profile for video capture device "
+              << device_unique_id_utf8
+              << " with a resolution and framerate matching those requested. "
+                 "Try relaxing constraints or chose a different video profile "
+                 "kind.";
+        }
         return false;
       }
     }
