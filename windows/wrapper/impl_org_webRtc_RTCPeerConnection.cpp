@@ -499,7 +499,7 @@ void wrapper::impl::org::webRtc::RTCPeerConnection::close() noexcept
 }
 
 //------------------------------------------------------------------------------
-wrapper::org::webRtc::RTCRtpSenderPtr wrapper::impl::org::webRtc::RTCPeerConnection::addTrack(wrapper::org::webRtc::MediaStreamTrackPtr track) noexcept(false)
+wrapper::org::webRtc::RTCRtpSenderPtr wrapper::impl::org::webRtc::RTCPeerConnection::addTrack(wrapper::org::webRtc::MediaStreamTrackPtr track, shared_ptr< list< String > > streams) noexcept(false)
 {
   ZS_ASSERT(native_);
   if (!native_) return wrapper::org::webRtc::RTCRtpSenderPtr();
@@ -507,9 +507,9 @@ wrapper::org::webRtc::RTCRtpSenderPtr wrapper::impl::org::webRtc::RTCPeerConnect
   auto nativeTrack = UseMediaStreamTrack::toNative(track);
   if (!nativeTrack) return wrapper::org::webRtc::RTCRtpSenderPtr();
 
-  std::vector<std::string> ignored;
+  std::vector<std::string> nativeStreams(streams->begin(), streams->end());
 
-  auto errorOrValue = native_->AddTrack(nativeTrack, ignored);
+  auto errorOrValue = native_->AddTrack(nativeTrack, nativeStreams);
   if (!errorOrValue.ok()) {
     throw UseError::toWrapper(errorOrValue.error());
   }

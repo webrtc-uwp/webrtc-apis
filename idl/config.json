@@ -38,6 +38,7 @@
         "VideoTrackSource.idl",
         "VideoCapturer.idl",
         "MediaStreamTrack.idl",
+        "MediaStream.idl",
         "OAuthCredential.idl",
         "IceCandidate.idl",
         "IceServer.idl",
