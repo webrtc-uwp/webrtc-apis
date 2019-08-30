@@ -93,14 +93,14 @@ namespace org
       int height;
     };
 
-	enum VideoProfileKind
-	{
+    enum VideoProfileKind
+    {
       /// <summary>
       /// Unspecified video profile kind, for no filtering.
       /// </summary>
-      unspecified,
+      unspecified
 
-	    // These map 1:1 to values of MediaCapture.KnownVideoProfile (with +1 offset).
+      // These map 1:1 to values of MediaCapture.KnownVideoProfile (with +1 offset).
       videoRecording,
       highQualityPhoto,
       balancedVideoAndPhoto,
@@ -111,7 +111,7 @@ namespace org
       hdrWithWcgVideo,
       hdrWithWcgPhoto,
       videoHdr8,
-	};
+    };
 
     [dictionary]
     struct VideoCapturerCreationParameters
@@ -268,13 +268,12 @@ namespace org
 
       [getter]
       VideoCaptureState state;
-	  
+
       /// <summary>
       /// Event fires when a new video frame buffer is available.
       /// </summary>
       [event]
       void onVideoFrame(VideoFrameBufferEvent event);
-	  
     };
   }
 }

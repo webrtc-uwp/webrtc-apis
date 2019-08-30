@@ -817,7 +817,7 @@ namespace webrtc
         // media type in the list of supported video formats. See also
         // FilterMediaType().
         width_ = desc.Width();
-		    height_ = desc.Height();
+        height_ = desc.Height();
         framerate_ = desc.FrameRate();
 
         settings.VideoProfile(profile);
@@ -974,9 +974,9 @@ namespace webrtc
   {
     auto result = std::make_unique<VideoCapturer>(make_private{});
     if (result->init(info)) {
-	  return result;
+      return result;
     }
-	return {};
+    return {};
   }
 
   //-----------------------------------------------------------------------------
@@ -997,7 +997,7 @@ namespace webrtc
     winrt::Windows::Media::MediaProperties::VideoEncodingProperties
         properties{};
 
-	// Everything from this point is protected by a lock
+    // Everything from this point is protected by a lock
     rtc::CritScope cs(&apiCs_);
 
     // Save device name as UTF8 string
@@ -1185,8 +1185,8 @@ namespace webrtc
     // Note that a MediaCapture object initialized with a specific video profile
     // will filter out results returned by GetAvailableMediaStreamProperties()
     // to the media types available for that profile alone, which is what we want.
-	// In addition, apply the resolution and framerate filters to remove media types
-	// that the caller does not want. See also FindAndAddVideoProfile().
+    // In addition, apply the resolution and framerate filters to remove media types
+    // that the caller does not want. See also FindAndAddVideoProfile().
     std::vector<VideoFormat> formats;
     auto streamProperties =
         mediaCapture.get()
@@ -1221,9 +1221,9 @@ namespace webrtc
              "framerate";
       device_ = nullptr;
       return false;
-	}
+    }
     SetSupportedFormats(formats);
-	return true;
+    return true;
   }
 
   //-----------------------------------------------------------------------------
