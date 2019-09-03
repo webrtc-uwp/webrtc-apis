@@ -660,6 +660,8 @@ namespace webrtc
               << rtc::ToUtf8(e.message().c_str());
           }
         });
+
+        initialize_async_task.wait();
       } else {
         std::mutex mutex;
         std::condition_variable condition_variable;
