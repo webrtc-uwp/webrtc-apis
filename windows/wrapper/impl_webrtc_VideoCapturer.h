@@ -54,7 +54,7 @@ namespace webrtc
     struct make_private {};
 
   private:
-    void init(const CreationProperties &props) noexcept;
+    bool init(const CreationProperties &props) noexcept;
 
   public:
     VideoCapturer(const make_private &);
@@ -96,6 +96,8 @@ namespace webrtc
       const winrt::com_ptr<IMFSample> &spMediaSample,
       rtc::scoped_refptr<I420BufferInterface> i420Frame);
 
+    bool SetVideoProfile(std::string_view video_profile_id);
+
   private:
     mutable zsLib::RecursiveLock lock_;
 
@@ -111,6 +113,8 @@ namespace webrtc
     bool apply_rotation_ { false };
 
     winrt::hstring device_id_;
+    winrt::hstring video_profile_id_;
+    int video_profile_kind_ {};
     std::shared_ptr<CaptureDevice> device_;
     winrt::Windows::Devices::Enumeration::Panel camera_location_;
     std::shared_ptr<DisplayOrientation> display_orientation_;

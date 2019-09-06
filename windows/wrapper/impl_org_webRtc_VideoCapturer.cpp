@@ -99,14 +99,25 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
 {
   String name;
   String id;
+  String videoProfileId;
+  wrapper::org::webRtc::VideoProfileKind videoProfileKind =
+      wrapper::org::webRtc::VideoProfileKind_unspecified;
   bool enableMrc {false};
+  int width {0};           // unconstrained
+  int height {0};          // unconstrained
+  double framerate {0.0};  // unconstrained
 
   UseFactoryPtr factory = UseFactory::toWrapper(params->factory);
 
   if (params) {
     name = params->name;
     id = params->id;
+    videoProfileId = params->videoProfileId;
+    videoProfileKind = params->videoProfileKind;
     enableMrc = params->enableMrc;
+    width = params->width;
+    height = params->height;
+    framerate = params->framerate;
   }
 
   std::unique_ptr<::cricket::VideoCapturer> capturer;
@@ -127,7 +138,12 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     webrtc::IVideoCapturer::CreationProperties props;
     props.name_ = name.c_str();
     props.id_ = id.c_str();
+    props.videoProfileId_ = videoProfileId.c_str();
+    props.videoProfileKind_ = videoProfileKind;
     props.mrcEnabled_ = enableMrc;
+    props.width_ = width;
+    props.height_ = height;
+    props.framerate_ = framerate;
     capturer = NativeTypeUniPtr(dynamic_cast<webrtc::VideoCapturer*>(webrtc::IVideoCapturer::create(props).release()));
     if (!capturer) return {};
   }
