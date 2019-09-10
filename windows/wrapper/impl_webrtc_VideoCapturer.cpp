@@ -34,6 +34,7 @@
 
 #include <wrapper/impl_org_webRtc_pre_include.h>
 #include "media/base/videocommon.h"
+#include "rtc_base/event.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/Win32.h"
 #include "libyuv/planar_functions.h"
@@ -75,6 +76,7 @@ using winrt::Windows::Media::MediaProperties::VideoEncodingProperties;
 using winrt::Windows::UI::Core::DispatchedHandler;
 using winrt::Windows::UI::Core::CoreDispatcherPriority;
 using winrt::Windows::Foundation::IAsyncAction;
+using winrt::Windows::Foundation::AsyncStatus;
 using winrt::Windows::Foundation::TypedEventHandler;
 using winrt::Windows::System::Threading::ThreadPoolTimer;
 using winrt::Windows::System::Threading::TimerElapsedHandler;
@@ -683,7 +685,6 @@ namespace webrtc
 
   //-----------------------------------------------------------------------------
   winrt::agile_ref<MediaCapture> CaptureDevice::GetMediaCapture() {
-
     if (!media_capture_) {
 #if (defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP || \
                                 defined(WINDOWS_PHONE_APP)))
@@ -700,52 +701,43 @@ namespace webrtc
       // 10.0.10586.36
       media_capture_ = nullptr;
 #endif
-      winrt::agile_ref<winrt::Windows::Media::Capture::MediaCapture>
-        media_capture_agile = winrt::Windows::Media::Capture::MediaCapture();
+      winrt::agile_ref<MediaCapture> media_capture_agile = MediaCapture();
 
-      Concurrency::task<void> initialize_async_task;
-      auto initialize_task = [this, &media_capture_agile,
-                              &initialize_async_task]() {
+      // Wrap the MediaCapture.InitializeAsync() call into a task to be run on
+      // the main UI thread. This is a requirement from the docs, to allow
+      // displaying a user prompt asking for permissions.
+      rtc::Event initialized_event(true, false);
+      auto initialize_task = [this, &initialized_event,
+                              &media_capture_agile]() {
         auto settings = MediaCaptureInitializationSettings();
         settings.VideoDeviceId(device_id_);
         if (!video_profile_id_.empty()) {
           FindAndAddVideoProfile(settings);
         }
-        initialize_async_task =
-            Concurrency::create_task([media_capture_agile, settings]() {
-              return media_capture_agile.get().InitializeAsync(settings).get();
-            }).then([](Concurrency::task<void> initTask) {
-              try {
-                initTask.get();
-              } catch (winrt::hresult_error const& e) {
-                RTC_LOG(LS_ERROR)
-                    << "Failed to initialize media capture device. "
-                    << rtc::ToUtf8(e.message().c_str());
-              }
-            });
+        auto asyncAction = media_capture_agile.get().InitializeAsync(settings);
+        asyncAction.Completed([&initialized_event, &media_capture_agile](
+                                  auto&& /*asyncResults*/, AsyncStatus status) {
+          if (status != AsyncStatus::Completed) {
+            media_capture_agile = nullptr;  // clear to notify of error
+            RTC_LOG(LS_ERROR) << "Failed to initialize media capture device.";
+          }
+          initialized_event.Set();
+        });
       };
 
+      // Ensure that the initialize task is run on the UI thread, and because it
+      // needs to be waited on, that the current thread is not the UI thread.
+      // Otherwise a deadlock will occur.
       auto queue = UseWebrtcLib::delegateQueue();
       ZS_ASSERT(queue);
       if (queue->isCurrentThread()) {
-        // Run synchronously
-        initialize_task();
+        throw winrt::hresult_wrong_thread(winrt::to_hstring(
+            L"Cannot call GetMediaCapture() from the main UI thread."));
       } else {
-        // Run asynchronously
-        std::condition_variable condition_variable;
-        queue->postClosure([&initialize_task, &condition_variable]() {
-          initialize_task();
-          condition_variable.notify_one();
-        });
-
-        {
-          std::mutex mutex;
-          std::unique_lock<std::mutex> lock(mutex);
-          condition_variable.wait(lock);
-        }
-
-        initialize_async_task.wait();
+        // Dispatch to UI thred
+        queue->postClosure([&initialize_task]() { initialize_task(); });
       }
+      initialized_event.Wait(rtc::Event::kForever);
 
       // Cache the MediaCapture object so we don't recreate it later.
       media_capture_ = media_capture_agile;
