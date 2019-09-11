@@ -43,6 +43,8 @@ namespace webrtc
       winrt::com_ptr<IMFSample> spMediaSample) = 0;
     virtual void OnCaptureDeviceFailed(HRESULT code,
       winrt::hstring const& message) = 0;
+    virtual void BeginShutdown() = 0;
+    virtual void EndShutdown() = 0;
   };
 
   class VideoCapturer : public IVideoCapturer,
@@ -88,6 +90,16 @@ namespace webrtc
     virtual void OnCaptureDeviceFailed(HRESULT code,
       winrt::hstring const& message) override;
 
+    void BeginShutdown() override {
+      rtc::CritScope lock(&frame_cs_);
+      is_shutting_down_ = true;
+    }
+
+    void EndShutdown() override {
+      rtc::CritScope lock(&frame_cs_);
+      is_shutting_down_ = false;
+    }
+
     virtual void ApplyDisplayOrientation(
       winrt::Windows::Graphics::Display::DisplayOrientations orientation);
 
@@ -108,6 +120,15 @@ namespace webrtc
 
     char* deviceUniqueId_ { nullptr };
     rtc::CriticalSection apiCs_;
+
+    /// Lock used by the OnIncomingFrame() callback to synchronize with
+    /// StopCapture() without inducing any deadlock in MediaCapture. This is
+    /// completely uncontended, except possibly during capture shutdown.
+    rtc::CriticalSection frame_cs_;
+
+    /// Indicate that the capture is shutting down, and the apiCs_ lock will be
+    /// held so should not be acquired by OnIncomingFrame().
+    bool is_shutting_down_{false};
 
     VideoRotation rotateFrame_ { kVideoRotation_0 };
     bool apply_rotation_ { false };
