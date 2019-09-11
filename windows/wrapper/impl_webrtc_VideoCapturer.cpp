@@ -612,7 +612,7 @@ namespace webrtc
           "CaptureDevice::StopCapture: Stop failed, reason: '" <<
           rtc::ToUtf8(e.message().c_str()) << "'";
       }
-    });
+    }).wait();
   }
 
   //-----------------------------------------------------------------------------
