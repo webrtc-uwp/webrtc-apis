@@ -596,6 +596,15 @@ namespace webrtc
       return;
     }
 
+    // Mute the listener to avoid sending it frames.
+    // This prevents a deadlock where the VideoCapturer (the listener) tries to
+    // acquire a lock while receiving a frame, which is held by the clean-up
+    // task below, and consequently blocks the media capture sink, which in
+    // turns blocks StopRecordAsync().
+    if (capture_device_listener_) {
+      capture_device_listener_->BeginShutdown();
+    }
+
     Concurrency::create_task([this]() {
       return media_capture_.get().StopRecordAsync().get();
       }).then([this](Concurrency::task<void> async_info) {
@@ -612,7 +621,12 @@ namespace webrtc
           "CaptureDevice::StopCapture: Stop failed, reason: '" <<
           rtc::ToUtf8(e.message().c_str()) << "'";
       }
-    });
+    }).wait();
+
+    // Restore the state for next capture
+    if (capture_device_listener_) {
+      capture_device_listener_->EndShutdown();
+    }
   }
 
   //-----------------------------------------------------------------------------
@@ -1400,6 +1414,11 @@ namespace webrtc
     const VideoFormat& frameInfo,
     winrt::com_ptr<IMFSample> spMediaSample)
   {
+    rtc::CritScope frame_lock(&frame_cs_);
+    if (is_shutting_down_) {
+      return;
+    }
+
     rtc::CritScope cs(&apiCs_);
 
     const int32_t width = frameInfo.width;
