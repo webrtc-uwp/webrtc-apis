@@ -1122,51 +1122,66 @@ namespace webrtc
 #endif
 
       // Find a video profile by unique ID (if requested) or pick one with a
-      // resolution matching the resolution filters if only a kind was specified.
-      for (auto&& profile : profiles) {
-        if (profile.Id() == video_profile_id_utf16) {
-          video_profile_id_ = video_profile_id_utf16;
-          break;
-        }
-        else if (video_profile_id_utf16.empty()) {
+      // resolution matching the resolution filters if only a kind was
+      // specified.
+      if (video_profile_id_utf16.empty()) {
+        // Use video profile with closest capture format.
+        for (auto&& profile : profiles) {
           auto descs = profile.SupportedRecordMediaDescription();
           bool found = false;
+          double bestDeltaFramerate = 1.0;  // max acceptable
           for (auto&& desc : descs) {
+            // Match resolution by exact width/height pixel value
             if ((width > 0) && (desc.Width() != (uint32_t)width)) {
               continue;
             }
             if ((height > 0) && (desc.Height() != (uint32_t)height)) {
               continue;
             }
-            if ((framerate > 0) && (desc.FrameRate() != framerate)) {
-              continue;
+            // Match framerate by closest match within a limit of 1 FPS
+            if (framerate > 0) {
+              double deltaFramerate = std::fabs(desc.FrameRate() - framerate);
+              if (deltaFramerate >= bestDeltaFramerate) {
+                continue;
+              }
+              bestDeltaFramerate = deltaFramerate;
             }
             // No video profile was requested by ID, only by kind, and the
             // current one has a resolution matching all constraints, so pick
             // that one.
             video_profile_id_ = profile.Id();
-            found = true; 
-            break;
+            found = true;
+            if ((framerate == 0) || (bestDeltaFramerate == 0.0)) {
+              break;
+            }
           }
           if (found) {
             break;
           }
         }
-      }
-      if (video_profile_id_.empty()) {
-        if (!video_profile_id_utf16.empty()) {
-          RTC_LOG_F(LS_ERROR)
-              << "Failed to find video profile " << video_profile_id_utf8
-              << " for video capture device " << device_unique_id_utf8;
-        } else {
+        if (video_profile_id_.empty()) {
           RTC_LOG_F(LS_ERROR)
               << "Failed to find a video profile for video capture device "
               << device_unique_id_utf8
               << " with a resolution and framerate matching those requested. "
                  "Try relaxing constraints or chose a different video profile "
                  "kind.";
+          return false;
         }
-        return false;
+      } else {
+        // Find video profile by ID
+        for (auto&& profile : profiles) {
+          if (profile.Id() == video_profile_id_utf16) {
+            video_profile_id_ = video_profile_id_utf16;
+            break;
+          }
+        }
+        if (video_profile_id_.empty()) {
+          RTC_LOG_F(LS_ERROR)
+              << "Failed to find video profile " << video_profile_id_utf8
+              << " for video capture device " << device_unique_id_utf8;
+          return false;
+        }
       }
     }
 
