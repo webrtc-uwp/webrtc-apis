@@ -394,7 +394,9 @@ namespace webrtc
                                  int width,
                                  int height,
                                  double framerate) {
-    RTC_LOG(LS_INFO) << "CaptureDevice::Initialize";
+    RTC_LOG(LS_INFO) << "CaptureDevice::Initialize("
+                     << rtc::ToUtf8(device_id.c_str()) << ", w=" << width
+                     << ", h=" << height << ", f=" << framerate << ")";
     device_id_ = device_id;
     video_profile_id_ = video_profile_id;
     video_profile_kind_ = video_profile_kind;
@@ -757,12 +759,13 @@ namespace webrtc
   bool CaptureDevice::FilterMediaType(int width,
                                       int height,
                                       double framerate) const {
-    RTC_CHECK(media_capture_);
     if ((width_ > 0) && (width != width_))
       return true;
     if ((height_ > 0) && (height != height_))
       return true;
-    if ((framerate_ > 0) && (framerate != framerate_))
+    // Compare framerate with 2 decimals, to distinguish between 29.97 FPS
+    // and 30.0 FPS.
+    if ((framerate_ > 0) && (std::fabs(framerate - framerate_) >= 0.01))
       return true;
     return false;
   }
@@ -803,11 +806,7 @@ namespace webrtc
       auto descriptions = profile.SupportedRecordMediaDescription();
       for (auto&& desc : descriptions) {
         // Apply filters
-        if ((width_ > 0) && (desc.Width() != (uint32_t)width_))
-          continue;
-        if ((height_ > 0) && (desc.Height() != (uint32_t)height_))
-          continue;
-        if ((framerate_ > 0.0) && (desc.FrameRate() != framerate_))
+        if (FilterMediaType(desc.Width(), desc.Height(), desc.FrameRate()))
           continue;
 
         // Note that setting RecordMediaDescription will set the default media
@@ -1124,12 +1123,15 @@ namespace webrtc
       // Find a video profile by unique ID (if requested) or pick one with a
       // resolution matching the resolution filters if only a kind was
       // specified.
+      RTC_LOG(LS_INFO) << "Constraints: w=" << width << " h=" << height << " f=" << framerate;
       if (video_profile_id_utf16.empty()) {
         // Use video profile with closest capture format.
         for (auto&& profile : profiles) {
+          RTC_LOG(LS_INFO) << "Checking profile " << rtc::ToUtf8(profile.Id().c_str());
           auto descs = profile.SupportedRecordMediaDescription();
           bool found = false;
-          double bestDeltaFramerate = 1.0;  // max acceptable
+          double bestDeltaFramerate = 1.0;  // min non-acceptable value
+          RTC_LOG(LS_INFO) << "bestDeltaFramerate=" << bestDeltaFramerate;
           for (auto&& desc : descs) {
             // Match resolution by exact width/height pixel value
             if ((width > 0) && (desc.Width() != (uint32_t)width)) {
@@ -1140,7 +1142,10 @@ namespace webrtc
             }
             // Match framerate by closest match within a limit of 1 FPS
             if (framerate > 0) {
-              double deltaFramerate = std::fabs(desc.FrameRate() - framerate);
+              alignas(8) double curFramerate = desc.FrameRate();
+              alignas(8) double deltaFramerate =
+                  std::fabs(curFramerate - framerate);
+              RTC_LOG(LS_INFO) << "deltaFramerate=" << deltaFramerate;
               if (deltaFramerate >= bestDeltaFramerate) {
                 continue;
               }
@@ -1149,6 +1154,10 @@ namespace webrtc
             // No video profile was requested by ID, only by kind, and the
             // current one has a resolution matching all constraints, so pick
             // that one.
+            RTC_LOG(LS_INFO)
+                << "found profile " << rtc::ToUtf8(profile.Id().c_str())
+                << " (f=" << framerate << "; best=" << bestDeltaFramerate
+                << ")";
             video_profile_id_ = profile.Id();
             found = true;
             if ((framerate == 0) || (bestDeltaFramerate == 0.0)) {
@@ -1212,12 +1221,16 @@ namespace webrtc
       streamProperties.GetAt(i).as(prop);
 
       const double propFramerate =
-          prop.FrameRate().Numerator() / prop.FrameRate().Denominator();
+          static_cast<double>(prop.FrameRate().Numerator()) /
+          static_cast<double>(prop.FrameRate().Denominator());
 
       // If a video profile is selected, only keep the exact media type selected
       // in RecordMediaDescription.
       if (device_->FilterMediaType(prop.Width(), prop.Height(),
                                    propFramerate)) {
+        RTC_LOG(LS_INFO) << "Ignoring capture format (w=" << prop.Width()
+                         << ", h=" << prop.Height() << ", f=" << propFramerate
+                         << "); filtered out by selection.";
         continue;
       }
 
