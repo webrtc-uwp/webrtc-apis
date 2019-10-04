@@ -1123,15 +1123,12 @@ namespace webrtc
       // Find a video profile by unique ID (if requested) or pick one with a
       // resolution matching the resolution filters if only a kind was
       // specified.
-      RTC_LOG(LS_INFO) << "Constraints: w=" << width << " h=" << height << " f=" << framerate;
       if (video_profile_id_utf16.empty()) {
         // Use video profile with closest capture format.
         for (auto&& profile : profiles) {
-          RTC_LOG(LS_INFO) << "Checking profile " << rtc::ToUtf8(profile.Id().c_str());
           auto descs = profile.SupportedRecordMediaDescription();
           bool found = false;
           double bestDeltaFramerate = 1.0;  // min non-acceptable value
-          RTC_LOG(LS_INFO) << "bestDeltaFramerate=" << bestDeltaFramerate;
           for (auto&& desc : descs) {
             // Match resolution by exact width/height pixel value
             if ((width > 0) && (desc.Width() != (uint32_t)width)) {
@@ -1142,10 +1139,8 @@ namespace webrtc
             }
             // Match framerate by closest match within a limit of 1 FPS
             if (framerate > 0) {
-              alignas(8) double curFramerate = desc.FrameRate();
-              alignas(8) double deltaFramerate =
-                  std::fabs(curFramerate - framerate);
-              RTC_LOG(LS_INFO) << "deltaFramerate=" << deltaFramerate;
+              double curFramerate = desc.FrameRate();
+              double deltaFramerate = std::fabs(curFramerate - framerate);
               if (deltaFramerate >= bestDeltaFramerate) {
                 continue;
               }
@@ -1154,10 +1149,6 @@ namespace webrtc
             // No video profile was requested by ID, only by kind, and the
             // current one has a resolution matching all constraints, so pick
             // that one.
-            RTC_LOG(LS_INFO)
-                << "found profile " << rtc::ToUtf8(profile.Id().c_str())
-                << " (f=" << framerate << "; best=" << bestDeltaFramerate
-                << ")";
             video_profile_id_ = profile.Id();
             found = true;
             if ((framerate == 0) || (bestDeltaFramerate == 0.0)) {
@@ -1177,6 +1168,10 @@ namespace webrtc
                  "kind.";
           return false;
         }
+        RTC_LOG(LS_INFO) << "Found video profile "
+                         << rtc::ToUtf8(video_profile_id_.c_str())
+                         << " matching constraints.";
+
       } else {
         // Find video profile by ID
         for (auto&& profile : profiles) {
@@ -1228,9 +1223,6 @@ namespace webrtc
       // in RecordMediaDescription.
       if (device_->FilterMediaType(prop.Width(), prop.Height(),
                                    propFramerate)) {
-        RTC_LOG(LS_INFO) << "Ignoring capture format (w=" << prop.Width()
-                         << ", h=" << prop.Height() << ", f=" << propFramerate
-                         << "); filtered out by selection.";
         continue;
       }
 
