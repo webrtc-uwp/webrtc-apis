@@ -144,7 +144,11 @@ namespace webrtc
     winrt::Windows::Media::MediaProperties::MediaEncodingProfile
       media_encoding_profile_;
 
-    bool mrc_enabled_{ false };
+	/// Enable Mixed Reality Capture.
+    bool mrc_enabled_{false};
+
+	/// Enable the on-screen recording indicator when MRC is active.
+    bool mrc_recording_indicator_enabled_{true};
   };
 }
 

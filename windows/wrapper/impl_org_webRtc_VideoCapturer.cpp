@@ -103,6 +103,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
   wrapper::org::webRtc::VideoProfileKind videoProfileKind =
       wrapper::org::webRtc::VideoProfileKind_unspecified;
   bool enableMrc {false};
+  bool enableMrcRecordingIndicator {true};
   int width {0};           // unconstrained
   int height {0};          // unconstrained
   double framerate {0.0};  // unconstrained
@@ -115,6 +116,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     videoProfileId = params->videoProfileId;
     videoProfileKind = params->videoProfileKind;
     enableMrc = params->enableMrc;
+    enableMrcRecordingIndicator = params->enableMrcRecordingIndicator;
     width = params->width;
     height = params->height;
     framerate = params->framerate;
@@ -141,6 +143,7 @@ wrapper::org::webRtc::VideoCapturerPtr wrapper::org::webRtc::VideoCapturer::crea
     props.videoProfileId_ = videoProfileId.c_str();
     props.videoProfileKind_ = videoProfileKind;
     props.mrcEnabled_ = enableMrc;
+    props.mrcRecordingIndicatorEnabled_ = enableMrcRecordingIndicator;
     props.width_ = width;
     props.height_ = height;
     props.framerate_ = framerate;
