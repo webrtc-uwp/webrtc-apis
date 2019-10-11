@@ -145,6 +145,9 @@ namespace webrtc
       media_encoding_profile_;
 
     bool mrc_enabled_{ false };
+
+	class I420BufferPool;
+    const std::unique_ptr<I420BufferPool> pool_;
   };
 }
 

@@ -89,8 +89,116 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::WebRtcLib, UseWebrtcLib);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameNativeBuffer, UseVideoFrameNativeBuffer);
 ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBufferEvent, UseVideoFrameBufferEvent);
 
-namespace webrtc
-{
+// Aligning pointer to 64 bytes for improved performance, e.g. use SIMD.
+static const int kBufferAlignment = 64;
+static const int kNumBuffersInPool = 2;
+
+namespace webrtc {
+
+// Pool of buffers for I420 frames.
+class VideoCapturer::I420BufferPool {
+ private:
+  struct BufferData {
+    int width_{0};
+    int height_{0};
+    int stride_y_{0};
+    int stride_u_{0};
+    int stride_v_{0};
+    std::unique_ptr<uint8_t, AlignedFreeDeleter> data_;
+  };
+
+  using Buffer = rtc::RefCountedObject<BufferData>;
+  using BufferPtr = rtc::scoped_refptr<Buffer>;
+
+ public:
+  // Handle to a buffer produced by the pool. Can be either one of the pool
+  // buffers or a temporarily allocated external buffer.
+  class BufferHandle : public I420BufferInterface {
+   public:
+    int width() const override { return buffer_->width_; }
+    int height() const override { return buffer_->height_; }
+    const uint8_t* DataY() const override { return buffer_->data_.get(); }
+    const uint8_t* DataU() const override {
+      return buffer_->data_.get() + buffer_->stride_y_ * buffer_->height_;
+    }
+    const uint8_t* DataV() const override {
+      return buffer_->data_.get() + buffer_->stride_y_ * buffer_->height_ +
+             buffer_->stride_u_ * ((buffer_->height_ + 1) / 2);
+    }
+
+    int StrideY() const override { return buffer_->stride_y_; }
+    int StrideU() const override { return buffer_->stride_u_; }
+    int StrideV() const override { return buffer_->stride_v_; }
+
+    uint8_t* MutableDataY() { return const_cast<uint8_t*>(DataY()); }
+    uint8_t* MutableDataU() { return const_cast<uint8_t*>(DataU()); }
+    uint8_t* MutableDataV() { return const_cast<uint8_t*>(DataV()); }
+
+   protected:
+    BufferHandle(BufferPtr buffer) : buffer_(std::move(buffer)) {}
+    ~BufferHandle() override = default;
+
+   private:
+    const BufferPtr buffer_;
+  };
+
+ public:
+  I420BufferPool() {
+    for (BufferPtr& ptr : buffers_) {
+      ptr = new Buffer();
+    }
+  }
+
+  // Produce a buffer, either from the pool or a new one.
+  // Not thread-safe.
+  rtc::scoped_refptr<BufferHandle> Create(int width,
+                                          int height,
+                                          int stride_y,
+                                          int stride_u,
+                                          int stride_v) {
+    RTC_DCHECK_GT(width, 0);
+    RTC_DCHECK_GT(height, 0);
+    RTC_DCHECK_GE(stride_y, width);
+    RTC_DCHECK_GE(stride_u, (width + 1) / 2);
+    RTC_DCHECK_GE(stride_v, (width + 1) / 2);
+
+    // Find the first unused buffer.
+    auto first_free_buffer = std::find_if(
+        std::begin(buffers_), std::end(buffers_), [](const BufferPtr& buffer) {
+          // If the buffer has just one reference any handle to it has been
+          // destructed, so it can be used again.
+          return buffer->HasOneRef();
+        });
+    BufferPtr res_buffer;
+    if (first_free_buffer != std::end(buffers_)) {
+      res_buffer = *first_free_buffer;
+    } else {
+      // Allocate a new reference-counted buffer out of the pool.
+      res_buffer = new Buffer();
+    }
+
+    if (width != res_buffer->width_ || height != res_buffer->height_ ||
+        stride_y != res_buffer->stride_y_ ||
+        stride_u != res_buffer->stride_u_ ||
+        stride_v != res_buffer->stride_v_) {
+      // If the frame size has changed, resize the used buffer.
+      res_buffer->width_ = width;
+      res_buffer->height_ = height;
+      res_buffer->stride_y_ = stride_y;
+      res_buffer->stride_u_ = stride_u;
+      res_buffer->stride_v_ = stride_v;
+      size_t buffer_size =
+          stride_y * height + (stride_u + stride_v) * ((height + 1) / 2);
+      res_buffer->data_.reset(
+          static_cast<uint8_t*>(AlignedMalloc(buffer_size, kBufferAlignment)));
+    }
+
+    return new rtc::RefCountedObject<BufferHandle>(std::move(res_buffer));
+  }
+
+ private:
+  BufferPtr buffers_[kNumBuffersInPool];
+};
   // Used to store a IMFSample native handle buffer for a VideoFrame
   class MFNativeHandleBuffer : public NativeHandleBuffer {
   public:
@@ -969,7 +1077,8 @@ namespace webrtc
     display_orientation_(nullptr),
     video_encoding_properties_(nullptr),
     media_encoding_profile_(nullptr),
-    subscriptions_(decltype(subscriptions_)::create())
+    subscriptions_(decltype(subscriptions_)::create()),
+        pool_(new I420BufferPool())
   {
     RTC_LOG(LS_INFO) << "Using local detection for orientation source";
     display_orientation_ = std::make_shared<DisplayOrientation>(this);
@@ -1481,8 +1590,9 @@ namespace webrtc
       }
     }
 
-    rtc::scoped_refptr<I420Buffer> buffer = I420Buffer::Create(
-      target_width, abs(target_height), stride_y, stride_uv, stride_uv);
+    rtc::scoped_refptr<I420BufferPool::BufferHandle> buffer =
+      pool_->Create(target_width, abs(target_height), stride_y, stride_uv,
+                    stride_uv);
 
     libyuv::RotationMode rotation_mode = libyuv::kRotate0;
     if (apply_rotation) {
