@@ -1078,7 +1078,7 @@ class VideoCapturer::I420BufferPool {
     video_encoding_properties_(nullptr),
     media_encoding_profile_(nullptr),
     subscriptions_(decltype(subscriptions_)::create()),
-        pool_(new I420BufferPool())
+    pool_(new I420BufferPool())
   {
     RTC_LOG(LS_INFO) << "Using local detection for orientation source";
     display_orientation_ = std::make_shared<DisplayOrientation>(this);
