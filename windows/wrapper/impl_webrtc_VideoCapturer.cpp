@@ -663,8 +663,51 @@ namespace webrtc
     if (SUCCEEDED(hr)) {
       hr = sample->GetSampleTime(&hnsSampleTime);
     }
+
+    winrt::com_ptr<IMF2DBuffer> buffer2d;
     if (SUCCEEDED(hr)) {
-      hr = spMediaBuffer->Lock(&pbBuffer, &cbMaxLength, &cbCurrentLength);
+      // Lock the buffer in memory. Attempt to access the buffer through the
+      // faster Lock2D/Lock2DSize API.
+      if (buffer2d = spMediaBuffer.try_as<IMF2DBuffer>()) {
+        BYTE* pbScanline0 = nullptr;
+        LONG lPitch = 0;
+        HRESULT lockResult;
+        if (auto buffer2d2 = spMediaBuffer.try_as<IMF2DBuffer2>()) {
+          BYTE* pbBufferStart;
+          lockResult =
+              buffer2d2->Lock2DSize(MF2DBuffer_LockFlags_Read, &pbScanline0,
+                                    &lPitch, &pbBufferStart, &cbCurrentLength);
+        } else {
+          lockResult = buffer2d->Lock2D(&pbScanline0, &lPitch);
+        }
+        if (SUCCEEDED(lockResult)) {
+          // TODO(fibann): the surrounding code expects a contiguous buffer
+          // with positive pitch. This limitation can be relaxed, but for now
+          // simply fall back to Lock() if outside of the simple case. We need
+          // to call IsContiguousFormat after Lock2D[Size] because the result
+          // may change if the buffer is locked.
+          BOOL isContiguous;
+          if (lPitch > 0 &&
+              SUCCEEDED(buffer2d->IsContiguousFormat(&isContiguous)) &&
+              isContiguous &&
+              (cbCurrentLength ||
+               SUCCEEDED(buffer2d->GetContiguousLength(&cbCurrentLength)))) {
+            // Use the buffer pointer.
+            pbBuffer = pbScanline0;
+          } else {
+            // Release the buffer and fall back to Lock().
+            buffer2d->Unlock2D();
+          }
+        }
+      }
+
+      if (!pbBuffer) {
+        // Ensure that buffer2d is null as we check it later to call the correct
+        // unlock method.
+        buffer2d = nullptr;
+        // Fall back to IMFMediaBuffer::Lock
+        hr = spMediaBuffer->Lock(&pbBuffer, &cbMaxLength, &cbCurrentLength);
+      }
     }
     if (SUCCEEDED(hr)) {
       uint8_t* video_frame;
@@ -686,8 +729,11 @@ namespace webrtc
         video_frame_length,
         frame_info_,
         sample);
-
-      hr = spMediaBuffer->Unlock();
+      if (buffer2d) {
+        hr = buffer2d->Unlock2D();
+      } else {
+        hr = spMediaBuffer->Unlock();
+      }
     }
     if (FAILED(hr)) {
       RTC_LOG(LS_ERROR) << "Failed to send media sample. " << hr;
