@@ -140,6 +140,11 @@ namespace org
       bool enableMrc;
 
       /// <summary>
+      /// If Mixed Reality Capture is enabled, enable the recording indicator on screen.
+      /// </summary>
+      bool enableMrcRecordingIndicator;
+
+      /// <summary>
       /// Optional constraint on width to select a capture media type (resolution + framerate), or zero for default.
       /// </summary>
       int width;
