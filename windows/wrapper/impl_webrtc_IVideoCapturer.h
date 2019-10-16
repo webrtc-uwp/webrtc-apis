@@ -64,6 +64,7 @@ namespace webrtc
       const char *videoProfileId_ {};
       int videoProfileKind_ {};
       bool mrcEnabled_ {};
+      bool mrcRecordingIndicatorEnabled_ {};
       int width_ {};
       int height_ {};
       double framerate_ {};

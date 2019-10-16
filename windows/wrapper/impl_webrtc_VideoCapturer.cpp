@@ -237,7 +237,7 @@ namespace webrtc
 
     void StartCapture(winrt::Windows::Media::MediaProperties::MediaEncodingProfile const& media_encoding_profile,
       winrt::Windows::Media::MediaProperties::IVideoEncodingProperties const& video_encoding_properties,
-      bool mrc_enabled);
+      bool mrc_enabled, bool mrc_recording_indicator_enabled);
 
     void StopCapture();
 
@@ -479,7 +479,7 @@ namespace webrtc
   void CaptureDevice::StartCapture(
     MediaEncodingProfile const& media_encoding_profile,
     IVideoEncodingProperties const& video_encoding_properties,
-    bool mrc_enabled) {
+    bool mrc_enabled, bool mrc_recording_indicator_enabled) {
     // Ensure StartCapture() is not called twice
     if (capture_started_) {
       winrt::throw_hresult(ERROR_INVALID_STATE);
@@ -547,12 +547,13 @@ namespace webrtc
       mediaExtension.as(media_sink_);
       return mediaExtension;
     }).then([this, media_encoding_profile,
-        video_encoding_properties, mrc_enabled](IMediaExtension const& media_extension) {
+        video_encoding_properties, mrc_enabled, mrc_recording_indicator_enabled](IMediaExtension const& media_extension) {
       // Add MRC if the device supports it and caller requested it
       winrt::hstring deviceFamily = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo().DeviceFamily();
       if (std::wstring(deviceFamily.c_str()).compare((L"Windows.Holographic")) == 0 && mrc_enabled) {
         MrcVideoEffectDefinition mrcVideoEffectDefinition;
         mrcVideoEffectDefinition.StreamType(MediaStreamType::VideoRecord);
+        mrcVideoEffectDefinition.RecordingIndicatorEnabled(mrc_recording_indicator_enabled);
         auto addEffectTask = Concurrency::create_task([this, &mrcVideoEffectDefinition]() {
           return media_capture_.get().AddVideoEffectAsync(mrcVideoEffectDefinition, MediaStreamType::VideoRecord).get();
         }).then([this](IMediaExtension const& /* videoExtension */)
@@ -1024,6 +1025,7 @@ namespace webrtc
 
     SetId(String(props.id_));
     mrc_enabled_ = props.mrcEnabled_;
+    mrc_recording_indicator_enabled_ = props.mrcRecordingIndicatorEnabled_;
 
     if (props.delegate_) {
       defaultSubscription_ = subscriptions_.subscribe(
@@ -1380,7 +1382,7 @@ namespace webrtc
     try {
       ApplyDisplayOrientation(display_orientation_->Orientation());
       device_->StartCapture(media_encoding_profile_,
-        video_encoding_properties_, mrc_enabled_);
+        video_encoding_properties_, mrc_enabled_, mrc_recording_indicator_enabled_);
     } catch (winrt::hresult_error const& e) {
       RTC_LOG(LS_ERROR) << "Failed to start capture. "
         << rtc::ToUtf8(e.message().c_str());
