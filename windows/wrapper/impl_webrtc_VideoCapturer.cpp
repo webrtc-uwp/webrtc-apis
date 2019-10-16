@@ -107,8 +107,7 @@ class VideoCapturer::I420BufferPool {
     std::unique_ptr<uint8_t, AlignedFreeDeleter> data_;
   };
 
-  using Buffer = rtc::RefCountedObject<BufferData>;
-  using BufferPtr = rtc::scoped_refptr<Buffer>;
+  using RefCountedBuffer = rtc::RefCountedObject<BufferData>;
 
  public:
   // Handle to a buffer produced by the pool. Can be either one of the pool
@@ -135,17 +134,18 @@ class VideoCapturer::I420BufferPool {
     uint8_t* MutableDataV() { return const_cast<uint8_t*>(DataV()); }
 
    protected:
-    BufferHandle(BufferPtr buffer) : buffer_(std::move(buffer)) {}
+    BufferHandle(rtc::scoped_refptr<RefCountedBuffer> buffer)
+        : buffer_(std::move(buffer)) {}
     ~BufferHandle() override = default;
 
    private:
-    const BufferPtr buffer_;
+    const rtc::scoped_refptr<RefCountedBuffer> buffer_;
   };
 
  public:
   I420BufferPool() {
-    for (BufferPtr& ptr : buffers_) {
-      ptr = new Buffer();
+    for (rtc::scoped_refptr<RefCountedBuffer>& ptr : buffers_) {
+      ptr = new RefCountedBuffer();
     }
   }
 
@@ -163,18 +163,18 @@ class VideoCapturer::I420BufferPool {
     RTC_DCHECK_GE(stride_v, (width + 1) / 2);
 
     // Find the first unused buffer.
-    auto first_free_buffer = std::find_if(
-        std::begin(buffers_), std::end(buffers_), [](const BufferPtr& buffer) {
+    auto first_free_buffer = std::find_if(std::begin(buffers_), std::end(buffers_),
+                     [](const rtc::scoped_refptr<RefCountedBuffer>& buffer) {
           // If the buffer has just one reference any handle to it has been
           // destructed, so it can be used again.
           return buffer->HasOneRef();
         });
-    BufferPtr res_buffer;
+    rtc::scoped_refptr<RefCountedBuffer> res_buffer;
     if (first_free_buffer != std::end(buffers_)) {
       res_buffer = *first_free_buffer;
     } else {
       // Allocate a new reference-counted buffer out of the pool.
-      res_buffer = new Buffer();
+      res_buffer = new RefCountedBuffer();
     }
 
     if (width != res_buffer->width_ || height != res_buffer->height_ ||
@@ -197,7 +197,7 @@ class VideoCapturer::I420BufferPool {
   }
 
  private:
-  BufferPtr buffers_[kNumBuffersInPool];
+  rtc::scoped_refptr<RefCountedBuffer> buffers_[kNumBuffersInPool];
 };
   // Used to store a IMFSample native handle buffer for a VideoFrame
   class MFNativeHandleBuffer : public NativeHandleBuffer {
@@ -1078,7 +1078,7 @@ class VideoCapturer::I420BufferPool {
     video_encoding_properties_(nullptr),
     media_encoding_profile_(nullptr),
     subscriptions_(decltype(subscriptions_)::create()),
-    pool_(new I420BufferPool())
+    pool_(std::make_unique<I420BufferPool>())
   {
     RTC_LOG(LS_INFO) << "Using local detection for orientation source";
     display_orientation_ = std::make_shared<DisplayOrientation>(this);
