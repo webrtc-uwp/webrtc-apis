@@ -91,7 +91,8 @@ ZS_DECLARE_TYPEDEF_PTR(wrapper::impl::org::webRtc::VideoFrameBufferEvent, UseVid
 
 // Aligning pointer to 64 bytes for improved performance, e.g. use SIMD.
 static const int kBufferAlignment = 64;
-static const int kNumBuffersInPool = 2;
+static const int kInitialNumBuffersInPool = 2;
+static const int kMaxNumBuffersInPool = 16;
 
 namespace webrtc {
 
@@ -143,7 +144,7 @@ class VideoCapturer::I420BufferPool {
   };
 
  public:
-  I420BufferPool() {
+  I420BufferPool() : buffers_(kInitialNumBuffersInPool) {
     for (rtc::scoped_refptr<RefCountedBuffer>& ptr : buffers_) {
       ptr = new RefCountedBuffer();
     }
@@ -163,15 +164,29 @@ class VideoCapturer::I420BufferPool {
     RTC_DCHECK_GE(stride_v, (width + 1) / 2);
 
     // Find the first unused buffer.
-    auto first_free_buffer = std::find_if(std::begin(buffers_), std::end(buffers_),
-                     [](const rtc::scoped_refptr<RefCountedBuffer>& buffer) {
-          // If the buffer has just one reference any handle to it has been
-          // destructed, so it can be used again.
-          return buffer->HasOneRef();
-        });
+    auto first_free_buffer =
+        std::find_if(std::begin(buffers_), std::end(buffers_), IsFree);
     rtc::scoped_refptr<RefCountedBuffer> res_buffer;
     if (first_free_buffer != std::end(buffers_)) {
+      // Found a free buffer.
       res_buffer = *first_free_buffer;
+
+	  const bool found_in_first_quarter =
+          std::distance(std::begin(buffers_), first_free_buffer) <=
+          (int)buffers_.size() / 4;
+      if (found_in_first_quarter &&
+          std::all_of(std::begin(buffers_) + buffers_.size() / 4,
+                      std::end(buffers_), IsFree)) {
+        // If 3/4 are free, halve pool size.
+        buffers_.resize(buffers_.size() / 2);
+      }
+    } else if (buffers_.size() * 2 <= kMaxNumBuffersInPool) {
+      // Double pool size and pick first free.
+      buffers_.resize(buffers_.size() * 2);
+      for (size_t i = buffers_.size() / 2; i < buffers_.size(); ++i) {
+        buffers_[i] = new RefCountedBuffer();
+      }
+      res_buffer = buffers_[buffers_.size() / 2];
     } else {
       // Allocate a new reference-counted buffer out of the pool.
       res_buffer = new RefCountedBuffer();
@@ -181,7 +196,7 @@ class VideoCapturer::I420BufferPool {
         stride_y != res_buffer->stride_y_ ||
         stride_u != res_buffer->stride_u_ ||
         stride_v != res_buffer->stride_v_) {
-      // If the frame size has changed, resize the used buffer.
+      // On first use or if the frame size has changed, resize the buffer.
       res_buffer->width_ = width;
       res_buffer->height_ = height;
       res_buffer->stride_y_ = stride_y;
@@ -197,7 +212,14 @@ class VideoCapturer::I420BufferPool {
   }
 
  private:
-  rtc::scoped_refptr<RefCountedBuffer> buffers_[kNumBuffersInPool];
+  static bool IsFree(const rtc::scoped_refptr<RefCountedBuffer>& buffer) {
+    // If the buffer has just one reference any handle to it
+    // has been destructed, so it can be used again.
+    return buffer->HasOneRef();
+  }
+
+ private:
+  std::vector<rtc::scoped_refptr<RefCountedBuffer>> buffers_;
 };
   // Used to store a IMFSample native handle buffer for a VideoFrame
   class MFNativeHandleBuffer : public NativeHandleBuffer {
