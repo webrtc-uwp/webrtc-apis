@@ -208,15 +208,19 @@ void wrapper::impl::org::webRtc::VideoCapturer::wrapper_onObserverCountChanged(s
       return;
 
     if (!needObservers) {
+      if (!subscription_)
+        return;
+
       subscription_->cancel();
       subscription_.reset();
       return;
     }
 
     auto capturer = (dynamic_cast<webrtc::VideoCapturer*>(native_.get()));
-    ZS_ASSERT(capturer);
 
-    subscription_ = capturer->subscribe(videoObserver_);
+    if (capturer) {
+      subscription_ = capturer->subscribe(videoObserver_);
+    }
   }
 }
 
