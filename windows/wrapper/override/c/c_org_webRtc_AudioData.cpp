@@ -56,6 +56,14 @@ org_webRtc_AudioData_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioD
 }
 
 //------------------------------------------------------------------------------
+org_webRtc_AudioData_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_wrapperCreate_AudioDataWithSize(binary_size_t size)
+{
+  auto wrapperThis = wrapper::org::webRtc::AudioData::wrapper_create();
+  wrapperThis->wrapper_init_org_webRtc_AudioData(size);
+  return wrapper::org_webRtc_AudioData_wrapperToHandle(wrapperThis);
+}
+
+//------------------------------------------------------------------------------
 bool_t ORG_WEBRTC_WRAPPER_C_CALLING_CONVENTION org_webRtc_AudioData_get_readOnly(org_webRtc_AudioData_t wrapperThisHandle)
 {
   auto wrapperThis = wrapper::org_webRtc_AudioData_wrapperFromHandle(wrapperThisHandle);

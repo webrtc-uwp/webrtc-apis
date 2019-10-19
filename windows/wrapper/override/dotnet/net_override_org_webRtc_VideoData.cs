@@ -142,7 +142,7 @@ namespace Org
             {
                 get
                 {
-                    var result = Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_size(this.native_);
+                    var result = Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_get_size(this.native_);
                     return (result);
                 }
             }
@@ -152,7 +152,7 @@ namespace Org
             /// </summary>
             public byte[] GetData8Bit()
             {
-                var size = Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_size(this.native_);
+                var size = Wrapper.Org_WebRtc.OverrideApi.org_webRtc_VideoData_get_size(this.native_);
                 if (size < 1)
                     return null;
 
