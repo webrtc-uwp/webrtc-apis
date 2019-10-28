@@ -111,6 +111,13 @@ namespace Org
                 this.native_ = Wrapper.Org_WebRtc.OverrideApi.org_webRtc_AudioData_wrapperCreate_AudioData();
             }
             /// <summary>
+            /// Constructs a new audio data object with a size.
+            /// </summary>
+            public AudioData(System.UInt64 size)
+            {
+                this.native_ = Wrapper.Org_WebRtc.OverrideApi.org_webRtc_AudioData_wrapperCreate_AudioDataWithSize(size);
+            }
+            /// <summary>
             /// Gets if the data is read-only.
             /// </summary>
             public bool ReadOnly

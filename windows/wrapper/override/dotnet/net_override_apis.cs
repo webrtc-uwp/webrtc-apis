@@ -107,6 +107,9 @@ namespace Wrapper
             public extern static org_webRtc_AudioData_t org_webRtc_AudioData_wrapperCreate_AudioData();
 
             [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
+            public extern static org_webRtc_AudioData_t org_webRtc_AudioData_wrapperCreate_AudioDataWithSize(binary_size_t size);
+
+            [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
             [return: MarshalAs(UseBoolMashal)]
             public extern static bool_t org_webRtc_AudioData_get_readOnly(org_webRtc_AudioData_t thisHandle);
 
@@ -241,7 +244,7 @@ namespace Wrapper
             public extern static bool_t org_webRtc_VideoData_get_is16BitColorSpace(org_webRtc_VideoData_t thisHandle);
 
             [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
-            public extern static binary_size_t org_webRtc_VideoData_size(org_webRtc_VideoData_t thisHandle);
+            public extern static binary_size_t org_webRtc_VideoData_get_size(org_webRtc_VideoData_t thisHandle);
 
             [DllImport(UseDynamicLib, CallingConvention = UseCallingConvention)]
             public extern static void org_webRtc_VideoData_get_data8bit(
