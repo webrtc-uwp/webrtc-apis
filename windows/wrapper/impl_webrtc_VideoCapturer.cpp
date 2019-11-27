@@ -561,26 +561,36 @@ class VideoCapturer::I420BufferPool {
     if (!media_capture_) {
       return;
     }
-    winrt::Windows::Media::Capture::MediaCapture media_capture = media_capture_.get();
+    MediaCapture media_capture = media_capture_.get();
     if (capture_started_) {
       if (_stopped->Wait(5000) == kEventTimeout) {
         Concurrency::create_task([this, media_capture]() {
-          media_capture.StopRecordAsync().get();
-        }).then([this](Concurrency::task<void> async_info) {
           try {
-            async_info.get();
-            CleanupSink();
-            CleanupMediaCapture();
-            device_id_.clear();
-            _stopped->Set();
-          } catch (winrt::hresult_error const& /*e*/) {
-            CleanupSink();
-            CleanupMediaCapture();
-            device_id_.clear();
-            _stopped->Set();
-            throw;
+            // This may fail with MF_E_SAMPLEALLOCATOR_EMPTY when stopping takes
+            // too long and the recording continue producing frames which are
+            // not consumed. This doesn't matter here.
+            // get() is used to wait for the call to complete, but will throw on
+            // error, so catch any exception and ignore it.
+            media_capture.StopRecordAsync().get();
+          } catch (...) {
           }
-        }).wait();
+        })
+            .then([this](Concurrency::task<void> async_info) {
+              try {
+                async_info.get();
+                CleanupSink();
+                CleanupMediaCapture();
+                device_id_.clear();
+                _stopped->Set();
+              } catch (winrt::hresult_error const&) {
+                CleanupSink();
+                CleanupMediaCapture();
+                device_id_.clear();
+                _stopped->Set();
+                throw;
+              }
+            })
+            .wait();
       }
     } else {
       CleanupSink();
@@ -741,22 +751,32 @@ class VideoCapturer::I420BufferPool {
     }
 
     Concurrency::create_task([this]() {
-      return media_capture_.get().StopRecordAsync().get();
-      }).then([this](Concurrency::task<void> async_info) {
       try {
-        async_info.get();
-        CleanupSink();
-        CleanupMediaCapture();
-        _stopped->Set();
-      } catch (winrt::hresult_error const& e) {
-        CleanupSink();
-        CleanupMediaCapture();
-        _stopped->Set();
-        RTC_LOG(LS_ERROR) <<
-          "CaptureDevice::StopCapture: Stop failed, reason: '" <<
-          rtc::ToUtf8(e.message().c_str()) << "'";
+        // This may fail with MF_E_SAMPLEALLOCATOR_EMPTY when stopping takes
+        // too long and the recording continue producing frames which are
+        // not consumed. This doesn't matter here.
+        // get() is used to wait for the call to complete, but will throw on
+        // error, so catch any exception and ignore it.
+        return media_capture_.get().StopRecordAsync().get();
+      } catch (...) {
       }
-    }).wait();
+    })
+        .then([this](Concurrency::task<void> async_info) {
+          try {
+            async_info.get();
+            CleanupSink();
+            CleanupMediaCapture();
+            _stopped->Set();
+          } catch (winrt::hresult_error const& e) {
+            CleanupSink();
+            CleanupMediaCapture();
+            _stopped->Set();
+            RTC_LOG(LS_ERROR)
+                << "CaptureDevice::StopCapture: Stop failed, reason: '"
+                << rtc::ToUtf8(e.message().c_str()) << "'";
+          }
+        })
+        .wait();
 
     // Restore the state for next capture
     if (capture_device_listener_) {
