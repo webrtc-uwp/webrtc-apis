@@ -274,7 +274,7 @@ namespace org
       /// Adds a new track to the RTCPeerConnection, and indicates that it is
       /// contained in the specified MediaStreams.
       /// </summary>
-      RTCRtpSender addTrack(MediaStreamTrack track) throws (RTCError);
+      RTCRtpSender addTrack(MediaStreamTrack track, StringList streams) throws (RTCError);
 
       /// <summary>
       /// Stops sending media from sender. The RTCRtpSender will still
