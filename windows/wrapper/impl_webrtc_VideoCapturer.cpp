@@ -68,6 +68,7 @@ using winrt::Windows::Media::Capture::MediaCaptureFailedEventHandler;
 using winrt::Windows::Media::Capture::MediaCaptureInitializationSettings;
 using winrt::Windows::Media::Capture::MediaCaptureVideoProfile;
 using winrt::Windows::Media::Capture::MediaStreamType;
+using winrt::Windows::Media::Capture::StreamingCaptureMode;
 using winrt::Windows::Media::IMediaExtension;
 using winrt::Windows::Media::MediaProperties::IVideoEncodingProperties;
 using winrt::Windows::Media::MediaProperties::MediaEncodingProfile;
@@ -923,6 +924,7 @@ class VideoCapturer::I420BufferPool {
       auto initialize_task = [this, &initialized_event,
                               &media_capture_agile]() {
         auto settings = MediaCaptureInitializationSettings();
+        settings.StreamingCaptureMode(StreamingCaptureMode::Video);
         settings.VideoDeviceId(device_id_);
         if (!video_profile_id_.empty()) {
           FindAndAddVideoProfile(settings);
