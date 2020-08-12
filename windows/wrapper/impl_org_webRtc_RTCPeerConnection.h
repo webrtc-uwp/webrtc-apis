@@ -152,7 +152,7 @@ namespace wrapper {
           void removeIceCandidates(shared_ptr< list< wrapper::org::webRtc::RTCIceCandidatePtr > > candidates) noexcept override;
           void setBitrate(wrapper::org::webRtc::RTCBitrateParametersPtr params) noexcept(false) override; // throws wrapper::org::webRtc::RTCErrorPtr
           void close() noexcept override;
-          wrapper::org::webRtc::RTCRtpSenderPtr addTrack(wrapper::org::webRtc::MediaStreamTrackPtr track, shared_ptr< list< String > > streams) noexcept(false) override; // throws wrapper::org::webRtc::RTCErrorPtr
+          wrapper::org::webRtc::RTCRtpSenderPtr addTrack(wrapper::org::webRtc::MediaStreamTrackPtr track) noexcept(false) override; // throws wrapper::org::webRtc::RTCErrorPtr
           bool removeTrack(wrapper::org::webRtc::RTCRtpSenderPtr sender) noexcept override;
           wrapper::org::webRtc::RTCRtpTransceiverPtr addTransceiver(wrapper::org::webRtc::MediaStreamTrackPtr track) noexcept(false) override; // throws wrapper::org::webRtc::RTCErrorPtr
           wrapper::org::webRtc::RTCRtpTransceiverPtr addTransceiver(

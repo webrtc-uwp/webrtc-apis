@@ -47,7 +47,6 @@ namespace wrapper {
         ZS_DECLARE_STRUCT_PTR(MediaElementMaker);
         ZS_DECLARE_STRUCT_PTR(MediaSample);
         ZS_DECLARE_STRUCT_PTR(MediaSource);
-        ZS_DECLARE_STRUCT_PTR(MediaStream);
         ZS_DECLARE_STRUCT_PTR(MediaStreamTrack);
         ZS_DECLARE_STRUCT_PTR(MediaTrackSource);
         ZS_DECLARE_STRUCT_PTR(MessageEvent);
