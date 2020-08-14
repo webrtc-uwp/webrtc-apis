@@ -350,6 +350,8 @@ void WrapperImplType::internalSetup() noexcept
   String audioCaptureDeviceId = configuration_ ? configuration_->audioCaptureDeviceId : String();
   String audioRenderDeviceId = configuration_ ? configuration_->audioRenderDeviceId : String();
   bool enableAudioProcessingEvents = configuration_ ? configuration_->enableAudioBufferEvents : false;
+  auto customAudioMixer = reinterpret_cast<webrtc::AudioMixer*>(
+      configuration_ ? configuration_->customAudioMixer : 0);
 
   networkThread = rtc::Thread::CreateWithSocketServer();
   networkThread->Start();
@@ -424,7 +426,7 @@ void WrapperImplType::internalSetup() noexcept
     ::webrtc::CreateBuiltinAudioDecoderFactory(),
     encoderFactory,
     decoderFactory,
-    nullptr,
+    customAudioMixer,
     enableAudioProcessingEvents ? audioProcessing : nullptr
   );
 
