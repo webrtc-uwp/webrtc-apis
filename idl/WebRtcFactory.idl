@@ -134,6 +134,13 @@ namespace org
       /// Gets or sets if a custom factory should be used for capturering.
       /// </summary>
       CustomVideoCapturerFactory customVideoFactory;
+
+      /// <summary>
+      /// Gets or sets the custom audio mixer.
+      /// Must contain a pointer to a native webrtc::AudioMixer (0 if null).
+      /// Pass as an integer since void* is not supported by the IDL parser.
+      /// </summary>
+      uint64 customAudioMixer;
     };
 
     /// <summary>
