@@ -667,7 +667,7 @@ namespace webrtc
     m_activateCompletedHandle = ::CreateEventEx(NULL, NULL, 0, EVENT_ALL_ACCESS);
 
     co_await winrt::resume_on_signal(m_activateCompletedHandle);
-		
+
     ::CloseHandle(m_activateCompletedHandle);
     m_activateCompletedHandle = NULL;
 
@@ -1482,7 +1482,7 @@ namespace webrtc
     if (ptrClientOut_ == NULL) {
       return -1;
     }
-    
+
     // Set the speaker system mute state.
     hr = ptrClientOut_->GetService(__uuidof(ISimpleAudioVolume),
       reinterpret_cast<void**>(&pVolume));
@@ -1940,6 +1940,11 @@ namespace webrtc
     }
 
     renderDevice_ = GetDefaultDevice(DeviceClass::AudioRender, outputDeviceRole_);
+    if (!renderDevice_) {
+      WEBRTC_TRACE(kTraceError, kTraceAudioDevice, id_,
+                   "Cannot get default audio device");
+      return -1;
+    }
     deviceIdStringOut_ = renderDevice_.Id();
 
     // Get the endpoint device's friendly-name
@@ -4093,7 +4098,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   bool AudioDeviceWasapi::BuiltInAGCIsAvailable() const {
     if (!playoutEnabled_)
-      return false; 
+      return false;
 
     return CheckBuiltInRenderCapability(winrt::Windows::Media::Effects::AudioEffectType::AutomaticGainControl);
   }
@@ -4101,7 +4106,7 @@ namespace webrtc
   //-----------------------------------------------------------------------------
   bool AudioDeviceWasapi::BuiltInNSIsAvailable() const {
     if (!recordingEnabled_)
-      return false; 
+      return false;
 
     return CheckBuiltInCaptureCapability(winrt::Windows::Media::Effects::AudioEffectType::NoiseSuppression);
   }
@@ -4156,8 +4161,10 @@ namespace webrtc
 
     if (!deviceIdStringIn_.empty()) {
       deviceId = deviceIdStringIn_;
-    } else {
+    } else if (captureDevice_) {
       deviceId = captureDevice_.Id();
+    } else {
+      return false;
     }
 
     effManager = winrt::Windows::Media::Effects::AudioEffectsManager::CreateAudioCaptureEffectsManager(
@@ -4186,10 +4193,12 @@ namespace webrtc
 
     winrt::hstring deviceId;
 
-    if (!deviceIdStringOut_.empty()) {
-      deviceId = deviceIdStringOut_;
-    } else {
+    if (!deviceIdStringIn_.empty()) {
+      deviceId = deviceIdStringIn_;
+    } else if (renderDevice_) {
       deviceId = renderDevice_.Id();
+    } else {
+      return false;
     }
 
     try {
@@ -4257,7 +4266,7 @@ namespace webrtc
   // ----------------------------------------------------------------------------
   int32_t AudioDeviceWasapi::RefreshDeviceList(DeviceClass cls) {
     WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_, "%s", __FUNCTION__);
-    
+
     try {
       Concurrency::create_task([this, cls]() {
         return DeviceInformation::FindAllAsync(cls).get().as<winrt::Windows::Foundation::Collections::
@@ -4430,10 +4439,16 @@ namespace webrtc
     DeviceClass cls, AudioDeviceRole role) {
     WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, id_, "%s", __FUNCTION__);
     if (cls == DeviceClass::AudioRender && playoutEnabled_) {
+      winrt::hstring deviceId = MediaDevice::GetDefaultAudioRenderId(role);
+      if (deviceId.empty()) {
+        return nullptr;
+      }
       DeviceInformation defaultRenderDevice = nullptr;
-      Concurrency::create_task([this, role]() {
-        return winrt::Windows::Devices::Enumeration::DeviceInformation::CreateFromIdAsync(
-          MediaDevice::GetDefaultAudioRenderId(role)).get().as<winrt::Windows::Devices::Enumeration::IDeviceInformation>();
+      Concurrency::create_task([this, deviceId]() {
+        return winrt::Windows::Devices::Enumeration::DeviceInformation::
+            CreateFromIdAsync(deviceId)
+                .get()
+                .as<winrt::Windows::Devices::Enumeration::IDeviceInformation>();
       }).then(
         [this, &defaultRenderDevice](winrt::Windows::Devices::Enumeration::IDeviceInformation
           const &deviceInformation) {
@@ -4441,10 +4456,16 @@ namespace webrtc
       }).wait();
       return defaultRenderDevice;
     } else if (cls == DeviceClass::AudioCapture && recordingEnabled_) {
+      winrt::hstring deviceId = MediaDevice::GetDefaultAudioCaptureId(role);
+      if (deviceId.empty()) {
+        return nullptr;
+      }
       DeviceInformation defaultCaptureDevice = nullptr;
-      Concurrency::create_task([this, role]() {
-        return winrt::Windows::Devices::Enumeration::DeviceInformation::CreateFromIdAsync(
-          MediaDevice::GetDefaultAudioCaptureId(role)).get().as<winrt::Windows::Devices::Enumeration::IDeviceInformation>();
+      Concurrency::create_task([this, deviceId]() {
+        return winrt::Windows::Devices::Enumeration::DeviceInformation::
+            CreateFromIdAsync(deviceId)
+                .get()
+                .as<winrt::Windows::Devices::Enumeration::IDeviceInformation>();
       }).then(
         [this, &defaultCaptureDevice](winrt::Windows::Devices::Enumeration::IDeviceInformation
           const &deviceInformation) {
